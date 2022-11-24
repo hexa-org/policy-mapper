@@ -11,18 +11,20 @@ var mapper = GoogleConditionMapper{}
 
 func TestParseFilter(t *testing.T) {
 	for _, example := range []string{
+
 		"userName sw \"J\"",
 		"test.name sw \"J\"",
 		"subject.common_name eq \"google.com\" and subject.country_code eq \"US\" or subject.country_code eq \"IR\"",
+
 		// Following tests that parenthesis and logic preserved
 		"subject.common_name eq \"google.com\" and (subject.country_code eq \"US\" or subject.country_code eq \"IR\")",
-		"subject.common_name eq \"google.com\" and (subject.country_code eq \"US\" or not subject.country_code eq \"IR\")",
+		"subject.common_name eq \"google.com\" and (subject.country_code eq \"US\" or not (subject.country_code eq \"IR\"))",
 
 		"userName eq \"bjensen\"",
 		"userName Eq \"bjensen\"",
 		"name.familyName co \"O'Malley\"",
 
-		//"title pr",
+		//"title pr",   // Not implemented
 		"meta.lastModified gt \"2011-05-13T04:42:34Z\"",
 		"meta.lastModified ge \"2011-05-13T04:42:34Z\"",
 		"meta.lastModified lt \"2011-05-13T04:42:34Z\"",
@@ -32,7 +34,7 @@ func TestParseFilter(t *testing.T) {
 		"userType eq \"Employee\" and (emails co \"example.com\" or emails.value co \"example.org\")",
 		"userType eq \"Employee\" and (emails.type eq \"work\")",
 		"userType ne \"Employee\" and not (emails co \"example.com\" or emails.value co \"example.org\")",
-		//"userType eq \"Employee\" and emails[type eq \"work\" and value co \"@example.com\"]",
+		//"userType eq \"Employee\" and emails[type eq \"work\" and value co \"@example.com\"]",  // ValueFilter not implemented
 		//"emails[type eq \"work\" and value co \"@example.com\"] or ims[type eq \"xmpp\" and value co \"@foo.com\"]",
 
 		//"name pr and userName pr and title pr",

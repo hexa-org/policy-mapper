@@ -8,7 +8,7 @@ import (
 	"fmt"
 	celv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/access_loggers/filters/cel/v3"
 	"github.com/google/cel-go/cel"
-	"github.com/hexa-org/scim-filter-parser/v2"
+	"github.com/scim2/filter-parser/v2"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	conditions "policy-conditions/policySupport/conditions"
 )
@@ -38,49 +38,38 @@ func (mapper *GoogleConditionMapper) MapConditionToProvider(condition conditions
 		return "", err
 	}
 
-	return MapFilter(ast)
+	return MapFilter(ast, false)
 
 }
 
-func MapFilter(ast interface{}) (string, error) {
+func MapFilter(ast interface{}, isChild bool) (string, error) {
 
 	switch ast.(type) {
 	case *filter.NotExpression:
-		return mapFilterNot(ast.(*filter.NotExpression))
+		return mapFilterNot(ast.(*filter.NotExpression), isChild)
 
 	case *filter.LogicalExpression:
-		return mapFilterLogical(ast.(*filter.LogicalExpression))
+		return mapFilterLogical(ast.(*filter.LogicalExpression), isChild)
 
 	case *filter.AttributeExpression:
 		return mapFilterAttrExpr(ast.(*filter.AttributeExpression))
 
-	case *filter.PrecedenceExpression:
-		return mapPrecedence(ast.(*filter.PrecedenceExpression))
 	}
 
 	return "", fmt.Errorf("Unimplemented IDQL expression term type(%T): %v", ast, ast)
 }
 
-func mapPrecedence(predFilter *filter.PrecedenceExpression) (string, error) {
-	subExpression := predFilter.Expression
-	celFilter, err := MapFilter(subExpression)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("(%v)", celFilter), nil
-}
-
-func mapFilterNot(notFilter *filter.NotExpression) (string, error) {
+func mapFilterNot(notFilter *filter.NotExpression, isChild bool) (string, error) {
 	subExpression := notFilter.Expression
 	var celFilter string
 	var err error
 	switch subExpression.(type) {
 	case *filter.LogicalExpression:
-		celFilter, err = mapFilterLogical(subExpression.(*filter.LogicalExpression))
+		celFilter, err = mapFilterLogical(subExpression.(*filter.LogicalExpression), true)
 		celFilter = "(" + celFilter + ")"
 		break
 	default:
-		celFilter, err = MapFilter(subExpression)
+		celFilter, err = MapFilter(subExpression, true)
 	}
 	if err != nil {
 		return "", err
@@ -88,18 +77,23 @@ func mapFilterNot(notFilter *filter.NotExpression) (string, error) {
 	return fmt.Sprintf("!%v", celFilter), nil
 }
 
-func mapFilterLogical(logicFilter *filter.LogicalExpression) (string, error) {
-	celLeft, err := MapFilter(logicFilter.Left)
+func mapFilterLogical(logicFilter *filter.LogicalExpression, isChild bool) (string, error) {
+	celLeft, err := MapFilter(logicFilter.Left, true)
 	if err != nil {
 		return "", err
 	}
-	celRight, err := MapFilter(logicFilter.Right)
+	celRight, err := MapFilter(logicFilter.Right, true)
 
 	switch logicFilter.Operator {
 	case filter.AND:
 		return fmt.Sprintf("%v && %v", celLeft, celRight), nil
 	case filter.OR:
-		return fmt.Sprintf("%v || %v", celLeft, celRight), nil
+		if isChild {
+			// Add precedence to preserve order
+			return fmt.Sprintf("(%v || %v)", celLeft, celRight), nil
+		} else {
+			return fmt.Sprintf("%v || %v", celLeft, celRight), nil
+		}
 	}
 	return "", errors.New("Invalid logic operator detected: " + logicFilter.String())
 }
@@ -169,8 +163,15 @@ func (mapper *GoogleConditionMapper) MapProviderToCondition(expression string) (
 			Rule: "",
 		}, err
 	}
+
+	condString, err := conditions.SerializeExpression(idqlAst)
+	if err != nil {
+		return conditions.ConditionInfo{
+			Rule: "",
+		}, err
+	}
 	return conditions.ConditionInfo{
-		Rule:   fmt.Sprint(idqlAst),
+		Rule:   condString,
 		Action: "allow",
 	}, nil
 }
@@ -194,7 +195,7 @@ func mapCallExpr(expression *expr.Expr_Call, isChild bool) (filter.Expression, e
 	case "_||_":
 		return mapCelLogical(expression.Args, false, isChild)
 	case "_!_", "!_":
-		return mapCelNot(expression.Args, isChild), nil
+		return mapCelNot(expression.Args, true), nil
 	case "_==_":
 		return mapCelAttrCompare(expression.Args, filter.EQ), nil
 	case "_!=_":
@@ -347,10 +348,7 @@ func mapCelLogical(expressions []*expr.Expr, isAnd bool, isChild bool) (filter.E
 		filters[i-2] = subFilter
 		filters = filters[0 : i-1 : i-1]
 	}
-	if isAnd || !isChild {
-		return filters[0], nil
-	}
 
 	// Surround with precedence to preserve order
-	return &filter.PrecedenceExpression{Expression: filters[0]}, nil
+	return filters[0], nil
 }

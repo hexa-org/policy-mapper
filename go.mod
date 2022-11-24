@@ -9,7 +9,7 @@ require (
 	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c
 )
 
-require github.com/hexa-org/scim-filter-parser/v2 v2.0.0-20221120214814-e2b97cd6aa2f
+require github.com/scim2/filter-parser/v2 v2.2.0
 
 require (
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220418222510-f25a4f6275ed // indirect
