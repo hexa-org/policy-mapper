@@ -67,11 +67,12 @@ func (mapper *GoogleConditionMapper) mapFilterNot(notFilter *filter.NotExpressio
 	var err error
 	switch subExpression.(type) {
 	case *filter.LogicalExpression:
-		celFilter, err = mapper.mapFilterLogical(subExpression.(*filter.LogicalExpression), true)
+		// For the purpose of a not filter, the logical expression is not a child
+		celFilter, err = mapper.mapFilterLogical(subExpression.(*filter.LogicalExpression), false)
 		celFilter = "(" + celFilter + ")"
 		break
 	default:
-		celFilter, err = mapper.MapFilter(subExpression, true)
+		celFilter, err = mapper.MapFilter(subExpression, false)
 	}
 	if err != nil {
 		return "", err
@@ -199,7 +200,7 @@ func (mapper *GoogleConditionMapper) mapCallExpr(expression *expr.Expr_Call, isC
 	case "_||_":
 		return mapper.mapCelLogical(expression.Args, false, isChild)
 	case "_!_", "!_":
-		return mapper.mapCelNot(expression.Args, true), nil
+		return mapper.mapCelNot(expression.Args, isChild), nil //was false
 	case "_==_":
 		return mapper.mapCelAttrCompare(expression.Args, filter.EQ), nil
 	case "_!=_":
@@ -311,7 +312,9 @@ func (mapper *GoogleConditionMapper) mapCelAttrCompare(expressions []*expr.Expr,
 }
 
 func (mapper *GoogleConditionMapper) mapCelNot(expressions []*expr.Expr, isChild bool) filter.Expression {
+
 	expression, _ := mapper.mapCelExpr(expressions[0], false) // ischild is ignored because of not
+
 	notFilter := &filter.NotExpression{
 		Expression: expression,
 	}

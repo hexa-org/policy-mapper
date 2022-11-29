@@ -105,7 +105,7 @@ func walk(e filter.Expression, isChild bool) (string, error) {
 	case *filter.NotExpression:
 		subExpression := v.Expression
 		// Note, because of not() brackets, can treat as top level
-		subExpressionString, err := walk(subExpression, true)
+		subExpressionString, err := walk(subExpression, false)
 		if err != nil {
 			return "", err
 		}

@@ -2,6 +2,7 @@ package conditions
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -39,5 +40,37 @@ func TestParseFilter(t *testing.T) {
 				t.Error(err)
 			}
 		})
+	}
+}
+
+func TestNewNameMapper(t *testing.T) {
+	mapper := NewNameMapper(map[string]string{
+		"a":           "b",
+		"c":           "d",
+		"username":    "userid",
+		"emails.type": "mail.type",
+	})
+
+	//Test Provider mapping
+	assert.Equal(t, "b", mapper.GetProviderAttributeName("a"), "a produces b")
+	assert.Equal(t, "userid", mapper.GetProviderAttributeName("userName"), "userName prodeuces userid")
+	assert.Equal(t, "undefined", mapper.GetProviderAttributeName("undefined"), "undefined maps as undefined")
+	assert.Equal(t, "mail.type", mapper.GetProviderAttributeName("emails.type"), "emails.type maps to mail.type")
+
+	// Test ReversMapping
+	path := mapper.GetHexaFilterAttributePath("mail.type")
+
+	assert.Equal(t, "emails", path.AttributeName, "Main attribute is emails")
+	assert.Equal(t, "type", *path.SubAttribute, "Sub attribute is type")
+
+	path = mapper.GetHexaFilterAttributePath("unknown.type")
+	assert.Equal(t, "unknown", path.AttributeName, "Main attribute is unknown")
+	assert.Equal(t, "type", *path.SubAttribute, "Sub attribute is type")
+
+	path = mapper.GetHexaFilterAttributePath("d")
+	assert.Equal(t, "c", path.AttributeName, "Main attribute is c")
+	if path.SubAttribute != nil {
+		t.Logf("Subattribute was not nil")
+		t.Fail()
 	}
 }
