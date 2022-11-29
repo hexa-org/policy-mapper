@@ -1,4 +1,4 @@
-package googlecloud
+package googleCel
 
 import (
 	"fmt"
@@ -7,7 +7,13 @@ import (
 	"testing"
 )
 
-var mapper = GoogleConditionMapper{}
+var mapper = GoogleConditionMapper{
+	NameMapper: conditions.NewNameMapper(map[string]string{
+		"a":        "b",
+		"c":        "d",
+		"username": "userid",
+	}),
+}
 
 func TestParseFilter(t *testing.T) {
 	for _, example := range []string{
