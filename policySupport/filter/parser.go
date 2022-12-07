@@ -185,8 +185,8 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 						wordIndex = -1
 						if strings.EqualFold(cond, "pr") {
 							attrFilter := AttributeExpression{
-								Attribute: attr,
-								Op:        CompareOperator("pr"),
+								AttributePath: attr,
+								Operator:      CompareOperator("pr"),
 							}
 							attr = ""
 							isAttr = false
@@ -207,9 +207,9 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 								filterAttr = parentAttr + "." + attr
 							}
 							attrFilter := AttributeExpression{
-								Attribute: filterAttr,
-								Op:        CompareOperator(strings.ToLower(cond)),
-								Value:     value,
+								AttributePath: filterAttr,
+								Operator:      CompareOperator(strings.ToLower(cond)),
+								CompareValue:  value,
 							}
 							attr = ""
 							isAttr = false
@@ -317,9 +317,9 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 			}
 
 			attrexp := AttributeExpression{
-				Attribute: filterAttr,
-				Op:        CompareOperator(strings.ToLower(cond)),
-				Value:     value,
+				AttributePath: filterAttr,
+				Operator:      CompareOperator(strings.ToLower(cond)),
+				CompareValue:  value,
 			}
 			clauses = append(clauses, attrexp)
 		} else {
@@ -328,8 +328,8 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 				cond = expression[wordIndex:]
 			}
 			attrexp := AttributeExpression{
-				Attribute: filterAttr,
-				Op:        CompareOperator("pr"),
+				AttributePath: filterAttr,
+				Operator:      CompareOperator("pr"),
 			}
 			clauses = append(clauses, attrexp)
 

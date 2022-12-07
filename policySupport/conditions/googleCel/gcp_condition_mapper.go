@@ -8,7 +8,8 @@ import (
 	"fmt"
 	celv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/access_loggers/filters/cel/v3"
 	"github.com/google/cel-go/cel"
-	"github.com/scim2/filter-parser/v2"
+	"policy-conditions/policySupport/filter"
+
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	conditions "policy-conditions/policySupport/conditions"
 )
@@ -47,28 +48,30 @@ func (mapper *GoogleConditionMapper) MapConditionToProvider(condition conditions
 func (mapper *GoogleConditionMapper) MapFilter(ast interface{}, isChild bool) (string, error) {
 
 	switch ast.(type) {
-	case *filter.NotExpression:
-		return mapper.mapFilterNot(ast.(*filter.NotExpression), isChild)
+	case filter.NotExpression:
+		return mapper.mapFilterNot(ast.(filter.NotExpression), isChild)
+	case filter.PrecedenceExpression:
+		return mapper.mapFilterPrecedence(ast.(filter.PrecedenceExpression), true)
 
-	case *filter.LogicalExpression:
-		return mapper.mapFilterLogical(ast.(*filter.LogicalExpression), isChild)
+	case filter.LogicalExpression:
+		return mapper.mapFilterLogical(ast.(filter.LogicalExpression), isChild)
 
-	case *filter.AttributeExpression:
-		return mapper.mapFilterAttrExpr(ast.(*filter.AttributeExpression))
+	case filter.AttributeExpression:
+		return mapper.mapFilterAttrExpr(ast.(filter.AttributeExpression))
 
 	}
 
 	return "", fmt.Errorf("Unimplemented IDQL expression term type(%T): %v", ast, ast)
 }
 
-func (mapper *GoogleConditionMapper) mapFilterNot(notFilter *filter.NotExpression, isChild bool) (string, error) {
+func (mapper *GoogleConditionMapper) mapFilterNot(notFilter filter.NotExpression, isChild bool) (string, error) {
 	subExpression := notFilter.Expression
 	var celFilter string
 	var err error
 	switch subExpression.(type) {
-	case *filter.LogicalExpression:
+	case filter.LogicalExpression:
 		// For the purpose of a not filter, the logical expression is not a child
-		celFilter, err = mapper.mapFilterLogical(subExpression.(*filter.LogicalExpression), false)
+		celFilter, err = mapper.mapFilterLogical(subExpression.(filter.LogicalExpression), false)
 		celFilter = "(" + celFilter + ")"
 		break
 	default:
@@ -80,12 +83,44 @@ func (mapper *GoogleConditionMapper) mapFilterNot(notFilter *filter.NotExpressio
 	return fmt.Sprintf("!%v", celFilter), nil
 }
 
-func (mapper *GoogleConditionMapper) mapFilterLogical(logicFilter *filter.LogicalExpression, isChild bool) (string, error) {
-	celLeft, err := mapper.MapFilter(logicFilter.Left, true)
+func (mapper *GoogleConditionMapper) mapFilterPrecedence(pfilter filter.PrecedenceExpression, isChild bool) (string, error) {
+	subExpression := pfilter.Expression
+	var celFilter string
+	var err error
+	switch subExpression.(type) {
+	case filter.LogicalExpression:
+		// For the purpose of a not filter, the logical expression is not a child
+		celFilter, err = mapper.mapFilterLogical(subExpression.(filter.LogicalExpression), false)
+		celFilter = "(" + celFilter + ")"
+		break
+	default:
+		celFilter, err = mapper.MapFilter(subExpression, false)
+	}
 	if err != nil {
 		return "", err
 	}
-	celRight, err := mapper.MapFilter(logicFilter.Right, true)
+	return fmt.Sprintf("%v", celFilter), nil
+}
+
+func (mapper *GoogleConditionMapper) mapFilterLogical(logicFilter filter.LogicalExpression, isChild bool) (string, error) {
+	isDouble := false
+	var celLeft, celRight string
+	var err error
+	switch subFilter := logicFilter.Left.(type) {
+	case filter.LogicalExpression:
+		if subFilter.Operator == logicFilter.Operator {
+			isDouble = true
+		}
+	}
+
+	celLeft, err = mapper.MapFilter(logicFilter.Left, !isDouble)
+	if err != nil {
+		return "", err
+	}
+	celRight, err = mapper.MapFilter(logicFilter.Right, !isDouble)
+	if err != nil {
+		return "", err
+	}
 
 	switch logicFilter.Operator {
 	case filter.AND:
@@ -101,10 +136,10 @@ func (mapper *GoogleConditionMapper) mapFilterLogical(logicFilter *filter.Logica
 	return "", errors.New("Invalid logic operator detected: " + logicFilter.String())
 }
 
-func (mapper *GoogleConditionMapper) mapFilterAttrExpr(attrExpr *filter.AttributeExpression) (string, error) {
+func (mapper *GoogleConditionMapper) mapFilterAttrExpr(attrExpr filter.AttributeExpression) (string, error) {
 	compareValue := prepareValue(attrExpr)
 
-	mapPath := mapper.NameMapper.GetProviderAttributeName(attrExpr.AttributePath.String())
+	mapPath := mapper.NameMapper.GetProviderAttributeName(attrExpr.AttributePath)
 
 	switch attrExpr.Operator {
 	case filter.EQ:
@@ -135,7 +170,7 @@ func (mapper *GoogleConditionMapper) mapFilterAttrExpr(attrExpr *filter.Attribut
 /*
 If the value type is string, it needs to be quoted.
 */
-func prepareValue(attrExpr *filter.AttributeExpression) string {
+func prepareValue(attrExpr filter.AttributeExpression) string {
 	if attrExpr.CompareValue == nil {
 		return ""
 	}
@@ -226,7 +261,7 @@ func (mapper *GoogleConditionMapper) mapCelAttrFunction(expression *expr.Expr_Ca
 	operand := selection.GetOperand()
 	//subattr := selection.Field
 	name := operand.GetIdentExpr().GetName()
-	var path filter.AttributePath
+	var path string
 	if name == "" {
 		name = target.GetIdentExpr().GetName()
 		path = mapper.NameMapper.GetHexaFilterAttributePath(name)
@@ -271,7 +306,7 @@ func (mapper *GoogleConditionMapper) mapCelAttrFunction(expression *expr.Expr_Ca
 func (mapper *GoogleConditionMapper) mapCelAttrCompare(expressions []*expr.Expr, operator filter.CompareOperator) filter.Expression {
 	//target :=
 
-	path := filter.AttributePath{}
+	path := ""
 	isNot := false
 	callExpr := expressions[0].GetCallExpr()
 	lhExpression := expressions[0]
@@ -288,15 +323,13 @@ func (mapper *GoogleConditionMapper) mapCelAttrCompare(expressions []*expr.Expr,
 	ident := lhExpression.GetIdentExpr()
 	if ident == nil {
 		selectExpr := lhExpression.GetSelectExpr()
-		path.AttributeName = selectExpr.GetOperand().GetIdentExpr().Name
-		subAttr := selectExpr.GetField()
-		path.SubAttribute = &subAttr
+		path = selectExpr.GetOperand().GetIdentExpr().Name + "." + selectExpr.GetField()
 	} else {
-		path.AttributeName = ident.GetName()
+		path = ident.GetName()
 	}
 
 	// map the path name
-	path = mapper.NameMapper.GetHexaFilterAttributePath(path.String())
+	path = mapper.NameMapper.GetHexaFilterAttributePath(path)
 	rh := expressions[1].GetConstExpr().GetStringValue()
 	attrFilter := &filter.AttributeExpression{
 		AttributePath: path,

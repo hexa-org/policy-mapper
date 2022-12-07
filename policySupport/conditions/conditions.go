@@ -3,7 +3,8 @@ package conditions
 import (
 	"errors"
 	"fmt"
-	"github.com/scim2/filter-parser/v2"
+	"policy-conditions/policySupport/filter"
+
 	"strings"
 )
 
@@ -22,7 +23,7 @@ type NameMapper interface {
 	GetProviderAttributeName(hexaName string) string
 
 	// GetHexaFilterAttributePath returns a filterAttributePath which is used to build a SCIM Filter AST
-	GetHexaFilterAttributePath(provName string) filter.AttributePath
+	GetHexaFilterAttributePath(provName string) string
 }
 
 type ConditionMapper interface {
@@ -61,26 +62,21 @@ func (n *AttributeMap) GetProviderAttributeName(hexaName string) string {
 	return hexaName
 }
 
-func nameToAttributePath(name string) filter.AttributePath {
-	if strings.Contains(name, ".") {
-		parts := strings.Split(name, ".")
-		return filter.AttributePath{AttributeName: parts[0],
-			SubAttribute: &parts[1]}
-	}
-	return filter.AttributePath{AttributeName: name}
-}
-
-func (n *AttributeMap) GetHexaFilterAttributePath(provName string) filter.AttributePath {
+func (n *AttributeMap) GetHexaFilterAttributePath(provName string) string {
 	val, exists := n.reverse[provName]
 	if !exists {
 		val = provName
 	}
-	return nameToAttributePath(val)
+	return val
 }
 
 // ParseConditionRuleAst is used by mapping providers to get the IDQL condition rule AST tree
 func ParseConditionRuleAst(condition ConditionInfo) (filter.Expression, error) {
-	return filter.ParseFilter([]byte(condition.Rule))
+	return filter.ParseFilter(condition.Rule)
+}
+
+func ParseExpressionAst(expression string) (filter.Expression, error) {
+	return filter.ParseFilter(expression)
 }
 
 // SerializeExpression walks the AST and emits the condition in string form. It preserves precedence over the normal filter.String() method
@@ -89,16 +85,33 @@ func SerializeExpression(ast filter.Expression) (string, error) {
 	return walk(ast, false)
 }
 
+func checkRepeatLogic(e filter.Expression, op filter.LogicalOperator) (string, error) {
+	// if the child is a repeat of the parent eliminate brackets (e.g. a or b or c)
+	switch v := e.(type) {
+	case *filter.LogicalExpression:
+		if v.Operator == op {
+			return walk(v, false)
+		} else {
+			return walk(v, true)
+		}
+	default:
+		return walk(v, true)
+	}
+}
+
 func walk(e filter.Expression, isChild bool) (string, error) {
 	switch v := e.(type) {
 	case *filter.LogicalExpression:
-		lhVal, err := walk(v.Left, true)
-		rhVal, err := walk(v.Right, true)
+		lhVal, err := checkRepeatLogic(v.Left, v.Operator)
+		if err != nil {
+			return "", err
+		}
+		rhVal, err := checkRepeatLogic(v.Right, v.Operator)
 		if err != nil {
 			return "", err
 		}
 		if isChild && v.Operator == filter.OR {
-			return fmt.Sprintf("(%v %v %v)", lhVal, v.Operator, rhVal), nil
+			return fmt.Sprintf("(%v or %v)", lhVal, rhVal), nil
 		} else {
 			return fmt.Sprintf("%v %v %v", lhVal, v.Operator, rhVal), nil
 		}
@@ -111,8 +124,8 @@ func walk(e filter.Expression, isChild bool) (string, error) {
 		}
 		return fmt.Sprintf("not(%v)", subExpressionString), nil
 
-	case *filter.ValuePath:
-		return walk(v.ValueFilter, true)
+	case *filter.ValuePathExpression:
+		return walk(v.VPathFilter, true)
 	case *filter.AttributeExpression:
 		return fmt.Sprintf("%s %s %q", v.AttributePath, v.Operator, v.CompareValue), nil
 	default:

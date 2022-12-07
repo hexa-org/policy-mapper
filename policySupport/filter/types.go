@@ -72,22 +72,22 @@ func (e PrecedenceExpression) String() string {
 }
 
 type AttributeExpression struct {
-	Attribute string
-	Op        CompareOperator
-	Value     interface{}
+	AttributePath string
+	Operator      CompareOperator
+	CompareValue  interface{}
 }
 
 func (AttributeExpression) exprNode() {}
 
 func (e AttributeExpression) String() string {
-	if e.Op == "pr" {
-		return fmt.Sprintf("%s pr", e.Attribute)
+	if e.Operator == "pr" {
+		return fmt.Sprintf("%s pr", e.AttributePath)
 	}
-	switch e.Value.(type) {
+	switch e.CompareValue.(type) {
 	case string:
-		return fmt.Sprintf("%s %s \"%s\"", e.Attribute, e.Op, e.Value.(string))
+		return fmt.Sprintf("%s %s \"%s\"", e.AttributePath, e.Operator, e.CompareValue.(string))
 	default:
-		return fmt.Sprintf("%s %s %v", e.Attribute, e.Op, e.Value)
+		return fmt.Sprintf("%s %s %v", e.AttributePath, e.Operator, e.CompareValue)
 	}
 
 }

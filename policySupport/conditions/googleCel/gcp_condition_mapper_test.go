@@ -21,6 +21,14 @@ func TestParseFilter(t *testing.T) {
 		{"userName sw \"J\"", "username sw \"J\""},
 		{"test.name sw \"J\"", "test.name sw \"J\""},
 		{
+			"username eq \"june\" or username eq fred or username eq alice",
+			"username eq \"june\" or username eq \"fred\" or username eq \"alice\"",
+		},
+		{
+			"username eq \"june\" and username eq fred and username eq alice",
+			"username eq \"june\" and username eq \"fred\" and username eq \"alice\"",
+		},
+		{
 			"subject.common_name eq \"google.com\" and subject.country_code eq \"US\" or subject.country_code eq \"IR\"",
 			"subject.common_name eq \"google.com\" and subject.country_code eq \"US\" or subject.country_code eq \"IR\"",
 		}, {
@@ -51,6 +59,7 @@ func TestParseFilter(t *testing.T) {
 		{"meta.lastModified le \"2011-05-13T04:42:34Z\"", "meta.lastModified le \"2011-05-13T04:42:34Z\""},
 		//"title pr and userType eq \"Employee\"",
 		//"title pr or userType eq \"Intern\"",
+
 		{
 			"userType eq \"Employee\" and (emails co \"example.com\" or emails.value co \"example.org\")",
 			"userType eq \"Employee\" and (emails co \"example.com\" or emails.value co \"example.org\")",

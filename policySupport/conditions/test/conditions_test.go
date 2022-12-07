@@ -1,8 +1,9 @@
-package conditions
+package test
 
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"policy-conditions/policySupport/conditions"
 	"testing"
 )
 
@@ -33,8 +34,8 @@ func TestParseFilter(t *testing.T) {
 		"name pr or userName pr or title pr",
 	} {
 		t.Run(example, func(t *testing.T) {
-			cond := ConditionInfo{Rule: example}
-			ast, err := ParseConditionRuleAst(cond)
+			cond := conditions.ConditionInfo{Rule: example}
+			ast, err := conditions.ParseConditionRuleAst(cond)
 			fmt.Println(ast)
 			if err != nil {
 				t.Error(err)
@@ -44,7 +45,7 @@ func TestParseFilter(t *testing.T) {
 }
 
 func TestNewNameMapper(t *testing.T) {
-	mapper := NewNameMapper(map[string]string{
+	mapper := conditions.NewNameMapper(map[string]string{
 		"a":           "b",
 		"c":           "d",
 		"username":    "userid",
@@ -60,17 +61,12 @@ func TestNewNameMapper(t *testing.T) {
 	// Test ReversMapping
 	path := mapper.GetHexaFilterAttributePath("mail.type")
 
-	assert.Equal(t, "emails", path.AttributeName, "Main attribute is emails")
-	assert.Equal(t, "type", *path.SubAttribute, "Sub attribute is type")
+	assert.Equal(t, "emails.type", path, "should be emails.type")
 
 	path = mapper.GetHexaFilterAttributePath("unknown.type")
-	assert.Equal(t, "unknown", path.AttributeName, "Main attribute is unknown")
-	assert.Equal(t, "type", *path.SubAttribute, "Sub attribute is type")
+	assert.Equal(t, "unknown.type", path, "should be unknown.type")
 
 	path = mapper.GetHexaFilterAttributePath("d")
-	assert.Equal(t, "c", path.AttributeName, "Main attribute is c")
-	if path.SubAttribute != nil {
-		t.Logf("Subattribute was not nil")
-		t.Fail()
-	}
+	assert.Equal(t, "c", path, "attribute should be c")
+
 }
