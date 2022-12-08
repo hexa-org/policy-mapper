@@ -1,6 +1,9 @@
 package filter
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+)
 
 const (
 	// PR is an abbreviation for 'present'.
@@ -28,8 +31,6 @@ const (
 	AND LogicalOperator = "and"
 	// OR is the logical operation or (||).
 	OR LogicalOperator = "or"
-
-	OPEN LogicalOperator = "("
 )
 
 type CompareOperator string
@@ -74,7 +75,7 @@ func (e PrecedenceExpression) String() string {
 type AttributeExpression struct {
 	AttributePath string
 	Operator      CompareOperator
-	CompareValue  interface{}
+	CompareValue  string
 }
 
 func (AttributeExpression) exprNode() {}
@@ -83,13 +84,13 @@ func (e AttributeExpression) String() string {
 	if e.Operator == "pr" {
 		return fmt.Sprintf("%s pr", e.AttributePath)
 	}
-	switch e.CompareValue.(type) {
-	case string:
-		return fmt.Sprintf("%s %s \"%s\"", e.AttributePath, e.Operator, e.CompareValue.(string))
-	default:
+	isNumber, _ := regexp.MatchString("^[-+]?[0-9]+[.]?[0-9]*([eE][-+]?[0-9]+)?$", e.CompareValue)
+	if isNumber {
+		// Numbers are not quoted
 		return fmt.Sprintf("%s %s %v", e.AttributePath, e.Operator, e.CompareValue)
 	}
 
+	return fmt.Sprintf("%s %s \"%s\"", e.AttributePath, e.Operator, e.CompareValue)
 }
 
 type ValuePathExpression struct {

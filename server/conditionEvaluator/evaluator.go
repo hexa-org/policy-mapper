@@ -77,29 +77,33 @@ func evalCompareNil(compValue interface{}, op filter.CompareOperator) bool {
 	return false
 }
 
-func evalCompareVals(attrValue interface{}, compValue interface{}, op filter.CompareOperator) (bool, error) {
+/*
+evalCompareVals performs the binary logic compare operation specified by the operator. note that the compare value
+from the parser is always in string form from the original expression.
+*/
+func evalCompareVals(attrValue interface{}, compValue string, op filter.CompareOperator) (bool, error) {
 	if attrValue == nil {
 		return evalCompareNil(compValue, op), nil
 	}
 
 	switch v := attrValue.(type) {
 	case string:
-		return evalCompareStrings(op, attrValue.(string), compValue.(string)), nil
+		return evalCompareStrings(op, attrValue.(string), compValue), nil
 
 	case int:
-		iValue, err := strconv.Atoi(compValue.(string))
+		iValue, err := strconv.Atoi(compValue)
 		if err != nil {
 			return false, err
 		}
 		return evalCompareInt(op, v, iValue), nil
 	case float32:
-		fValue, err := strconv.ParseFloat(compValue.(string), 32)
+		fValue, err := strconv.ParseFloat(compValue, 32)
 		if err != nil {
 			return false, err
 		}
 		return evalCompareFloat(op, float64(v), fValue), nil
 	case float64:
-		fValue, err := strconv.ParseFloat(compValue.(string), 64)
+		fValue, err := strconv.ParseFloat(compValue, 64)
 		if err != nil {
 			return false, err
 		}

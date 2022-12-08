@@ -3,47 +3,72 @@ package test
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/tidwall/gjson"
 	"policy-conditions/server/conditionEvaluator"
 	"testing"
 )
 
-var input = "{\"req\":{\"ip\":\"127.0.0.1:58810\",\"protocol\":\"HTTP/1.1\",\"method\":\"GET\",\"path\":\"/testpath\",\"param\":{\"a\":[\"b\"],\"c\":[\"d\"]},\"header\":{\"Accept-Encoding\":[\"gzip\"],\"Authorization\":[\"Basic dGVzdFVzZXI6Z29vZCZiYWQ=\"],\"User-Agent\":[\"Go-http-client/1.1\"]},\"time\":\"2022-12-02T11:17:27.91208-08:00\"},\"subject\":{\"type\":\"basic\",\"sub\":\"testUser\"}}"
+var input = `
+{
+	"req":{
+		"ip":"127.0.0.1:58810",
+		"protocol":"HTTP/1.1",
+		"method":"GET",
+		"path":"/testpath",
+		"param":{
+			"a":["b"],
+			"c":["d"]
+		},
+		"header":{
+			"Accept-Encoding":["gzip"],
+			"Authorization":["Basic dGVzdFVzZXI6Z29vZCZiYWQ="],
+			"User-Agent":["Go-http-client/1.1"]
+		},
+		"time":"2022-12-02T11:17:27.91208-08:00"
+	},
+	"subject":{
+		"type":"basic",
+		"sub":"testUser"
+	},
+	"level" : 4,
+}`
+
+type testType struct {
+	Filter    string
+	Result    bool
+	ErrorTest string
+}
+
+var tests = []testType{
+	{"subject.sub pr", true, ""},
+	{"req.ip sw \"192.0.0.1\"", false, ""},
+	{"req.param.a eq \"b\"", true, ""},
+	{"req.param.c eq \"b\"", false, ""},
+	{"req.param.c gt \"b\"", true, ""},
+	{"subject.sub eq testUser and req.param.c gt \"b\"", true, ""},
+	{"a.b eq testNoAttribute and req.param.c gt \"b\"", false, ""},
+	{"level eq 4", true, ""},
+	{"level ne 4", false, ""},
+}
 
 func TestEvaluate(t *testing.T) {
+	fmt.Println("Input: ")
+	fmt.Println(input)
 
-	testVal := gjson.Get(input, "subject.sub")
-	fmt.Println("subject=" + testVal.String())
-	assert.Equal(t, "testUser", testVal.String())
+	for k, test := range tests {
+		t.Run(test.Filter, func(t *testing.T) {
+			fmt.Println(fmt.Sprintf("Test: [%v]", k))
 
-	testVal = gjson.Get(input, "a.b")
-	assert.Nil(t, testVal.Value())
+			fmt.Println(fmt.Sprintf("Filter:\t%s", test.Filter))
+			res, err := conditionEvaluator.Evaluate(test.Filter, input)
+			if err != nil {
+				if err.Error() != test.ErrorTest {
+					t.Errorf("Unexpected test error %v", err)
+				}
+				fmt.Printf("Received expected error: " + test.ErrorTest)
+			}
+			assert.Equal(t, test.Result, res, "Evaluation match confirmation")
 
-	res, err := conditionEvaluator.Evaluate("req.ip sw \"127.0.0.1\"", input)
-	assert.NoError(t, err, "Ensure evaluate has no error for SW")
-	assert.Truef(t, res, "IP sw 127 is true")
+		})
+	}
 
-	res, err = conditionEvaluator.Evaluate("req.ip sw \"192.0.0.1\"", input)
-	assert.NoError(t, err, "Ensure evaluate has no error for SW")
-	assert.Falsef(t, res, "IP sw 192 is false")
-
-	res, err = conditionEvaluator.Evaluate("req.param.a eq \"b\"", input)
-	assert.NoError(t, err, "Ensure evaluate has no error for EQ param")
-	assert.Truef(t, res, "a = b is true")
-
-	res, err = conditionEvaluator.Evaluate("req.param.c eq \"b\"", input)
-	assert.NoError(t, err, "Ensure evaluate has no error for EQ param")
-	assert.Falsef(t, res, "c = b is false")
-
-	res, err = conditionEvaluator.Evaluate("req.param.c gt \"b\"", input)
-	assert.NoError(t, err, "Ensure evaluate has no error for EQ param")
-	assert.Truef(t, res, "c gt b is true")
-
-	res, err = conditionEvaluator.Evaluate("subject.sub eq testUser and req.param.c gt \"b\"", input)
-	assert.NoError(t, err, "Ensure evaluate has no error for and query")
-	assert.Truef(t, res, "sub eq testUser and param.c gt b is true")
-
-	res, err = conditionEvaluator.Evaluate("a.b eq testNoAttribute and req.param.c gt \"b\"", input)
-	assert.NoError(t, err, "Ensure evaluate handles missing value")
-	assert.False(t, res, "a.b eq testNoAttribute should be false")
 }

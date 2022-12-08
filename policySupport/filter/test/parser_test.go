@@ -13,6 +13,9 @@ func TestParseFilter(t *testing.T) {
 		{"name pr and userName pr and title pr"},
 		{"name.familyName co \"O'Malley\""},
 		{"userName eq \"bjensen\""},
+		{"level gt 12"},
+		{"level gt 12.3"},
+		{"level eq 123.45e-5"},
 		{"userName Eq \"bjensen\"", "userName eq \"bjensen\""},
 		{"userName eq A or username eq \"B\" or username eq C", "userName eq \"A\" or username eq \"B\" or username eq \"C\""},
 
