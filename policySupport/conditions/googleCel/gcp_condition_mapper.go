@@ -171,14 +171,10 @@ func (mapper *GoogleConditionMapper) mapFilterAttrExpr(attrExpr filter.Attribute
 If the value type is string, it needs to be quoted.
 */
 func prepareValue(attrExpr filter.AttributeExpression) string {
-	if attrExpr.CompareValue == nil {
+	if attrExpr.CompareValue == "" {
 		return ""
 	}
-	switch attrExpr.CompareValue.(type) {
-	case string:
-		return "\"" + attrExpr.CompareValue.(string) + "\""
-	}
-	return fmt.Sprint(attrExpr.CompareValue)
+	return fmt.Sprintf("\"%s\"", attrExpr.CompareValue)
 }
 
 func (mapper *GoogleConditionMapper) GetAst(expression string) (string, error) {
