@@ -56,7 +56,7 @@
         }
       ],
       "condition": {
-        "rule": "req.ip sw 127",
+        "rule": "req.ip sw 127.0.0.1",
         "action": "allow"
       },
       "object": {
