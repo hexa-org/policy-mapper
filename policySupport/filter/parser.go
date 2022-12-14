@@ -70,7 +70,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 							return nil, err
 						}
 						switch subFilter.(type) {
-						case AttributeExpression:
+						case *AttributeExpression:
 							var filter Expression
 							if isNot {
 								filter = NotExpression{
@@ -117,8 +117,8 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 					if quotedSqBracket {
 						break
 					}
-					if valPathCnt > 1 {
-						return nil, errors.New("invalid filter: A second '[' was detected while loocking for a ']' in an attribute value filter")
+					if valPathCnt >= 1 {
+						return nil, errors.New("invalid filter: A second '[' was detected while looking for a ']' in a value path filter")
 					}
 					valPathCnt++
 					break
@@ -140,11 +140,15 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 						}
 						clauses = append(clauses, clause)
 
+						// This code checks for text after ] ... in future attr[type eq value].subattr may be permissible
 						if charPos+1 < len(expression) && expRunes[charPos+1] != ' ' {
-							charPos++
-							for charPos < len(expression) && expRunes[charPos] != ' ' {
+							return nil, errors.New("invalid filter: expecting space after ']' in value path expression")
+							/*
 								charPos++
-							}
+								for charPos < len(expression) && expRunes[charPos] != ' ' {
+									charPos++
+								}
+							*/
 						}
 						// reset for the next phrase
 						vPathStartIndex = -1
@@ -159,7 +163,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 				}
 			}
 			if charPos == len(expression) && valPathCnt > 0 {
-				return nil, errors.New("invalid filter: missing close ']' bracket")
+				return nil, errors.New("invalid filter: Missing close ']' bracket")
 			}
 			break
 
@@ -198,6 +202,9 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 					} else {
 						if isValue {
 							value = phrase
+							if strings.HasSuffix(value, ")") && bracketCount == 0 {
+								return nil, errors.New("invalid filter: Missing open '(' bracket")
+							}
 							if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
 								value = value[1 : len(value)-1]
 							}
@@ -206,17 +213,19 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 							if parentAttr != "" {
 								filterAttr = parentAttr + "." + attr
 							}
-							attrFilter := AttributeExpression{
-								AttributePath: filterAttr,
-								Operator:      CompareOperator(strings.ToLower(cond)),
-								CompareValue:  value,
+
+							attrFilter, err := createExpression(filterAttr, cond, value)
+							if err != nil {
+								return nil, err
 							}
+
 							attr = ""
 							isAttr = false
 							cond = ""
 							isExpr = false
 							isValue = false
 							clauses = append(clauses, attrFilter)
+							break
 						}
 					}
 				}
@@ -227,7 +236,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 				break
 			}
 			if bracketCount == 0 {
-				return nil, errors.New("invalid filter: missing open '(' bracket")
+				return nil, errors.New("invalid filter: Missing open '(' bracket")
 			}
 			break
 		case ']':
@@ -235,7 +244,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 				break
 			}
 			if valPathCnt == 0 {
-				return nil, errors.New("invalid filter: missing open '[' bracket")
+				return nil, errors.New("invalid filter: Missing open '[' bracket")
 			}
 		case 'n', 'N':
 			if !isValue {
@@ -300,26 +309,30 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 	}
 
 	if bracketCount > 0 {
-		return nil, errors.New("invalid filter: missing close ')' bracket")
+		return nil, errors.New("invalid filter: Missing close ')' bracket")
 	}
 	if valPathCnt > 0 {
-		return nil, errors.New("invalid filter: missing ']' bracket")
+		return nil, errors.New("invalid filter: Missing ']' bracket")
 	}
 	if wordIndex > -1 && charPos == len(expression) {
 		filterAttr := attr
 		if parentAttr != "" {
 			filterAttr = parentAttr + "." + attr
 		}
+		if filterAttr == "" {
+			return nil, errors.New("invalid filter: Incomplete expression")
+		}
 		if isAttr && cond != "" {
 			value = expression[wordIndex:]
+			if strings.HasSuffix(value, ")") && bracketCount == 0 {
+				return nil, errors.New("invalid filter: Missing open '(' bracket")
+			}
 			if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
 				value = value[1 : len(value)-1]
 			}
-
-			attrexp := AttributeExpression{
-				AttributePath: filterAttr,
-				Operator:      CompareOperator(strings.ToLower(cond)),
-				CompareValue:  value,
+			attrexp, err := createExpression(filterAttr, cond, value)
+			if err != nil {
+				return nil, err
 			}
 			clauses = append(clauses, attrexp)
 		} else {
@@ -353,5 +366,22 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 		return clauses[0], nil
 	}
 
-	return nil, errors.New("unknown filter exception. Missing and/or clause(?)")
+	return nil, errors.New("invalid filter. Missing and/or clause")
+}
+
+func createExpression(attribute string, cond string, value string) (*AttributeExpression, error) {
+	lCond := strings.ToLower(cond)
+	var attrFilter AttributeExpression
+	switch CompareOperator(lCond) {
+	case EQ, NE, SW, EW, GT, LT, GE, LE, CO:
+		attrFilter = AttributeExpression{
+			AttributePath: attribute,
+			Operator:      CompareOperator(strings.ToLower(cond)),
+			CompareValue:  value,
+		}
+
+	default:
+		return nil, errors.New("invalid filter: Unsupported comparison operator: " + cond)
+	}
+	return &attrFilter, nil
 }
