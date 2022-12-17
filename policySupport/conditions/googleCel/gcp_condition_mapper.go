@@ -10,8 +10,8 @@ import (
 	"github.com/google/cel-go/cel"
 	"policy-conditions/policySupport/filter"
 
-	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
-	conditions "policy-conditions/policySupport/conditions"
+	"google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"policy-conditions/policySupport/conditions"
 )
 
 var (
@@ -40,42 +40,44 @@ func (mapper *GoogleConditionMapper) MapConditionToProvider(condition conditions
 	if err != nil {
 		return "", err
 	}
-
-	return mapper.MapFilter(ast, false)
+	element := *ast
+	return mapper.MapFilter(&element, false)
 
 }
 
-func (mapper *GoogleConditionMapper) MapFilter(ast interface{}, isChild bool) (string, error) {
+func (mapper *GoogleConditionMapper) MapFilter(ast *filter.Expression, isChild bool) (string, error) {
 
-	switch ast.(type) {
+	// dereference
+	deref := *ast
+
+	switch element := deref.(type) {
 	case filter.NotExpression:
-		return mapper.mapFilterNot(ast.(filter.NotExpression), isChild)
+		return mapper.mapFilterNot(&element, isChild)
 	case filter.PrecedenceExpression:
-		return mapper.mapFilterPrecedence(ast.(filter.PrecedenceExpression), true)
+		return mapper.mapFilterPrecedence(&element, true)
 
 	case filter.LogicalExpression:
-		return mapper.mapFilterLogical(ast.(filter.LogicalExpression), isChild)
+		return mapper.mapFilterLogical(&element, isChild)
 
 	case filter.AttributeExpression:
-		return mapper.mapFilterAttrExpr(ast.(filter.AttributeExpression))
-
+		return mapper.mapFilterAttrExpr(&element)
 	}
 
-	return "", fmt.Errorf("Unimplemented IDQL expression term type(%T): %v", ast, ast)
+	return "", fmt.Errorf("unimplemented IDQL to CEL expression term type(%T): %v", ast, ast)
 }
 
-func (mapper *GoogleConditionMapper) mapFilterNot(notFilter filter.NotExpression, isChild bool) (string, error) {
+func (mapper *GoogleConditionMapper) mapFilterNot(notFilter *filter.NotExpression, isChild bool) (string, error) {
 	subExpression := notFilter.Expression
 	var celFilter string
 	var err error
-	switch subExpression.(type) {
+	switch subFilter := subExpression.(type) {
 	case filter.LogicalExpression:
 		// For the purpose of a not filter, the logical expression is not a child
-		celFilter, err = mapper.mapFilterLogical(subExpression.(filter.LogicalExpression), false)
+		celFilter, err = mapper.mapFilterLogical(&subFilter, false)
 		celFilter = "(" + celFilter + ")"
 		break
 	default:
-		celFilter, err = mapper.MapFilter(subExpression, false)
+		celFilter, err = mapper.MapFilter(&subFilter, false)
 	}
 	if err != nil {
 		return "", err
@@ -83,18 +85,18 @@ func (mapper *GoogleConditionMapper) mapFilterNot(notFilter filter.NotExpression
 	return fmt.Sprintf("!%v", celFilter), nil
 }
 
-func (mapper *GoogleConditionMapper) mapFilterPrecedence(pfilter filter.PrecedenceExpression, isChild bool) (string, error) {
+func (mapper *GoogleConditionMapper) mapFilterPrecedence(pfilter *filter.PrecedenceExpression, isChild bool) (string, error) {
 	subExpression := pfilter.Expression
 	var celFilter string
 	var err error
-	switch subExpression.(type) {
+	switch subFilter := subExpression.(type) {
 	case filter.LogicalExpression:
 		// For the purpose of a not filter, the logical expression is not a child
-		celFilter, err = mapper.mapFilterLogical(subExpression.(filter.LogicalExpression), false)
+		celFilter, err = mapper.mapFilterLogical(&subFilter, false)
 		celFilter = "(" + celFilter + ")"
 		break
 	default:
-		celFilter, err = mapper.MapFilter(subExpression, false)
+		celFilter, err = mapper.MapFilter(&subFilter, false)
 	}
 	if err != nil {
 		return "", err
@@ -102,7 +104,7 @@ func (mapper *GoogleConditionMapper) mapFilterPrecedence(pfilter filter.Preceden
 	return fmt.Sprintf("%v", celFilter), nil
 }
 
-func (mapper *GoogleConditionMapper) mapFilterLogical(logicFilter filter.LogicalExpression, isChild bool) (string, error) {
+func (mapper *GoogleConditionMapper) mapFilterLogical(logicFilter *filter.LogicalExpression, isChild bool) (string, error) {
 	isDouble := false
 	var celLeft, celRight string
 	var err error
@@ -113,11 +115,11 @@ func (mapper *GoogleConditionMapper) mapFilterLogical(logicFilter filter.Logical
 		}
 	}
 
-	celLeft, err = mapper.MapFilter(logicFilter.Left, !isDouble)
+	celLeft, err = mapper.MapFilter(&logicFilter.Left, !isDouble)
 	if err != nil {
 		return "", err
 	}
-	celRight, err = mapper.MapFilter(logicFilter.Right, !isDouble)
+	celRight, err = mapper.MapFilter(&logicFilter.Right, !isDouble)
 	if err != nil {
 		return "", err
 	}
@@ -136,7 +138,7 @@ func (mapper *GoogleConditionMapper) mapFilterLogical(logicFilter filter.Logical
 	return "", errors.New("Invalid logic operator detected: " + logicFilter.String())
 }
 
-func (mapper *GoogleConditionMapper) mapFilterAttrExpr(attrExpr filter.AttributeExpression) (string, error) {
+func (mapper *GoogleConditionMapper) mapFilterAttrExpr(attrExpr *filter.AttributeExpression) (string, error) {
 	compareValue := prepareValue(attrExpr)
 
 	mapPath := mapper.NameMapper.GetProviderAttributeName(attrExpr.AttributePath)
@@ -170,7 +172,7 @@ func (mapper *GoogleConditionMapper) mapFilterAttrExpr(attrExpr filter.Attribute
 /*
 If the value type is string, it needs to be quoted.
 */
-func prepareValue(attrExpr filter.AttributeExpression) string {
+func prepareValue(attrExpr *filter.AttributeExpression) string {
 	if attrExpr.CompareValue == "" {
 		return ""
 	}
@@ -200,7 +202,7 @@ func (mapper *GoogleConditionMapper) MapProviderToCondition(expression string) (
 		}, err
 	}
 
-	condString, err := conditions.SerializeExpression(idqlAst)
+	condString, err := conditions.SerializeExpression(&idqlAst)
 	if err != nil {
 		return conditions.ConditionInfo{
 			Rule: "",
@@ -220,7 +222,31 @@ func (mapper *GoogleConditionMapper) mapCelExpr(expression *expr.Expr, isChild b
 		return mapper.mapCallExpr(cexpr, isChild)
 	}
 
+	kind := expression.GetExprKind()
+	switch v := kind.(type) {
+	case *expr.Expr_SelectExpr:
+		return mapper.mapSelectExpr(v)
+	}
+
 	return nil, fmt.Errorf("expression of type %T (Google CEL) not implemented/supported in IDQL: %s", cexpr, cexpr.String())
+}
+
+func (mapper *GoogleConditionMapper) mapSelectExpr(selection *expr.Expr_SelectExpr) (filter.Expression, error) {
+	field := selection.SelectExpr.GetField()
+	if !selection.SelectExpr.GetTestOnly() {
+		return nil, errors.New("unimplemented Google CEL Select Expression: " + selection.SelectExpr.String())
+	}
+	ident := selection.SelectExpr.GetOperand().GetIdentExpr()
+	if ident == nil {
+		return nil, errors.New("unimplemented Google CEL Select Expression: " + selection.SelectExpr.String())
+	}
+	name := ident.GetName()
+	attr := name + "." + field
+	path := mapper.NameMapper.GetHexaFilterAttributePath(attr)
+	return filter.AttributeExpression{
+		AttributePath: path,
+		Operator:      filter.PR,
+	}, nil
 }
 
 func (mapper *GoogleConditionMapper) mapCallExpr(expression *expr.Expr_Call, isChild bool) (filter.Expression, error) {
@@ -270,27 +296,27 @@ func (mapper *GoogleConditionMapper) mapCelAttrFunction(expression *expr.Expr_Ca
 	switch expression.GetFunction() {
 	case "startsWith":
 		rh := expression.GetArgs()[0].GetConstExpr().GetStringValue()
-		return &filter.AttributeExpression{
+		return filter.AttributeExpression{
 			AttributePath: path,
 			Operator:      filter.SW,
 			CompareValue:  rh,
 		}, nil
 	case "endsWith":
 		rh := expression.GetArgs()[0].GetConstExpr().GetStringValue()
-		return &filter.AttributeExpression{
+		return filter.AttributeExpression{
 			AttributePath: path,
 			Operator:      filter.EW,
 			CompareValue:  rh,
 		}, nil
 	case "contains":
 		rh := expression.GetArgs()[0].GetConstExpr().GetStringValue()
-		return &filter.AttributeExpression{
+		return filter.AttributeExpression{
 			AttributePath: path,
 			Operator:      filter.CO,
 			CompareValue:  rh,
 		}, nil
 	case "has":
-		return &filter.AttributeExpression{
+		return filter.AttributeExpression{
 			AttributePath: path,
 			Operator:      filter.PR,
 		}, nil
@@ -327,13 +353,13 @@ func (mapper *GoogleConditionMapper) mapCelAttrCompare(expressions []*expr.Expr,
 	// map the path name
 	path = mapper.NameMapper.GetHexaFilterAttributePath(path)
 	rh := expressions[1].GetConstExpr().GetStringValue()
-	attrFilter := &filter.AttributeExpression{
+	attrFilter := filter.AttributeExpression{
 		AttributePath: path,
 		Operator:      operator,
 		CompareValue:  rh,
 	}
 	if isNot {
-		return &filter.NotExpression{
+		return filter.NotExpression{
 			Expression: attrFilter,
 		}
 	}
@@ -344,7 +370,7 @@ func (mapper *GoogleConditionMapper) mapCelNot(expressions []*expr.Expr, isChild
 
 	expression, _ := mapper.mapCelExpr(expressions[0], false) // ischild is ignored because of not
 
-	notFilter := &filter.NotExpression{
+	notFilter := filter.NotExpression{
 		Expression: expression,
 	}
 	return notFilter
@@ -371,7 +397,7 @@ func (mapper *GoogleConditionMapper) mapCelLogical(expressions []*expr.Expr, isA
 	//Collapse all the way down to 1 filter
 	for len(filters) > 1 {
 		i := len(filters)
-		subFilter := &filter.LogicalExpression{
+		subFilter := filter.LogicalExpression{
 			Left:     filters[i-2],
 			Right:    filters[i-1],
 			Operator: filter.LogicalOperator(op),

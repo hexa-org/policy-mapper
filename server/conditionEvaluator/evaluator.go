@@ -19,7 +19,7 @@ func Evaluate(expression string, input string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return evalWalk(ast, input)
+	return evalWalk(*ast, input)
 }
 
 func getAttributeValue(input string, path string) interface{} {

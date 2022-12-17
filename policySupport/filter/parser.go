@@ -6,17 +6,17 @@ import (
 	"strings"
 )
 
-func ParseFilter(expression string) (Expression, error) {
+func ParseFilter(expression string) (*Expression, error) {
 	return parseFilterSub(expression, "")
 }
 
-func parseFilterSub(expression string, parentAttr string) (Expression, error) {
+func parseFilterSub(expression string, parentAttr string) (*Expression, error) {
 	bracketCount := 0
 	bracketIndex := -1
 	valPathCnt := 0
 	vPathStartIndex := -1
 	wordIndex := -1
-	var clauses []Expression
+	var clauses []*Expression
 	cond := ""
 
 	isLogic := false
@@ -69,23 +69,27 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 						if err != nil {
 							return nil, err
 						}
-						switch subFilter.(type) {
-						case *AttributeExpression:
-							var filter Expression
+						var filter Expression
+						sFilter := *subFilter
+						switch sFilter.(type) {
+						case AttributeExpression:
+
 							if isNot {
 								filter = NotExpression{
-									Expression: subFilter,
+									Expression: sFilter,
 								}
 							} else {
-								filter = PrecedenceExpression{Expression: subFilter}
+								filter = PrecedenceExpression{Expression: sFilter}
 							}
-							clauses = append(clauses, filter)
+							clauses = append(clauses, &filter)
 
 						default:
 							if isNot {
-								clauses = append(clauses, NotExpression{Expression: subFilter})
+								filter = NotExpression{Expression: sFilter}
+								clauses = append(clauses, &filter)
 							} else {
-								clauses = append(clauses, PrecedenceExpression{Expression: subFilter})
+								filter = PrecedenceExpression{Expression: sFilter}
+								clauses = append(clauses, &filter)
 							}
 						}
 						bracketIndex = -1
@@ -118,7 +122,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 						break
 					}
 					if valPathCnt >= 1 {
-						return nil, errors.New("invalid filter: A second '[' was detected while looking for a ']' in a value path filter")
+						return nil, errors.New("invalid IDQL filter: A second '[' was detected while looking for a ']' in a value path filter")
 					}
 					valPathCnt++
 					break
@@ -134,15 +138,16 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 						if err != nil {
 							return nil, err
 						}
-						clause := ValuePathExpression{
+						var filter Expression
+						filter = ValuePathExpression{
 							Attribute:   name,
-							VPathFilter: subExpression,
+							VPathFilter: *subExpression,
 						}
-						clauses = append(clauses, clause)
+						clauses = append(clauses, &filter)
 
 						// This code checks for text after ] ... in future attr[type eq value].subattr may be permissible
 						if charPos+1 < len(expression) && expRunes[charPos+1] != ' ' {
-							return nil, errors.New("invalid filter: expecting space after ']' in value path expression")
+							return nil, errors.New("invalid IDQL filter: expecting space after ']' in value path expression")
 							/*
 								charPos++
 								for charPos < len(expression) && expRunes[charPos] != ' ' {
@@ -163,7 +168,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 				}
 			}
 			if charPos == len(expression) && valPathCnt > 0 {
-				return nil, errors.New("invalid filter: Missing close ']' bracket")
+				return nil, errors.New("invalid IDQL filter: Missing close ']' bracket")
 			}
 			break
 
@@ -188,7 +193,8 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 						cond = phrase
 						wordIndex = -1
 						if strings.EqualFold(cond, "pr") {
-							attrFilter := AttributeExpression{
+							var attrFilter Expression
+							attrFilter = AttributeExpression{
 								AttributePath: attr,
 								Operator:      CompareOperator("pr"),
 							}
@@ -197,13 +203,13 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 							cond = ""
 							isExpr = false
 							isValue = false
-							clauses = append(clauses, attrFilter)
+							clauses = append(clauses, &attrFilter)
 						}
 					} else {
 						if isValue {
 							value = phrase
 							if strings.HasSuffix(value, ")") && bracketCount == 0 {
-								return nil, errors.New("invalid filter: Missing open '(' bracket")
+								return nil, errors.New("invalid IDQL filter: Missing open '(' bracket")
 							}
 							if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
 								value = value[1 : len(value)-1]
@@ -214,6 +220,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 								filterAttr = parentAttr + "." + attr
 							}
 
+							var attrFilter Expression
 							attrFilter, err := createExpression(filterAttr, cond, value)
 							if err != nil {
 								return nil, err
@@ -224,7 +231,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 							cond = ""
 							isExpr = false
 							isValue = false
-							clauses = append(clauses, attrFilter)
+							clauses = append(clauses, &attrFilter)
 							break
 						}
 					}
@@ -236,7 +243,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 				break
 			}
 			if bracketCount == 0 {
-				return nil, errors.New("invalid filter: Missing open '(' bracket")
+				return nil, errors.New("invalid IDQL filter: Missing open '(' bracket")
 			}
 			break
 		case ']':
@@ -244,7 +251,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 				break
 			}
 			if valPathCnt == 0 {
-				return nil, errors.New("invalid filter: Missing open '[' bracket")
+				return nil, errors.New("invalid IDQL filter: Missing open '[' bracket")
 			}
 		case 'n', 'N':
 			if !isValue {
@@ -299,20 +306,23 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 			} else {
 				oper = "or"
 			}
-			clauses = []Expression{LogicalExpression{
+			var filter Expression
+			filter = LogicalExpression{
 				Operator: oper,
-				Left:     clauses[0],
-				Right:    clauses[1],
-			}}
+				Left:     *clauses[0],
+				Right:    *clauses[1],
+			}
+			clauses = []*Expression{}
+			clauses = append(clauses, &filter)
 			isLogic = false
 		}
 	}
 
 	if bracketCount > 0 {
-		return nil, errors.New("invalid filter: Missing close ')' bracket")
+		return nil, errors.New("invalid IDQL filter: Missing close ')' bracket")
 	}
 	if valPathCnt > 0 {
-		return nil, errors.New("invalid filter: Missing ']' bracket")
+		return nil, errors.New("invalid IDQL filter: Missing ']' bracket")
 	}
 	if wordIndex > -1 && charPos == len(expression) {
 		filterAttr := attr
@@ -320,31 +330,33 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 			filterAttr = parentAttr + "." + attr
 		}
 		if filterAttr == "" {
-			return nil, errors.New("invalid filter: Incomplete expression")
+			return nil, errors.New("invalid IDQL filter: Incomplete expression")
 		}
 		if isAttr && cond != "" {
 			value = expression[wordIndex:]
 			if strings.HasSuffix(value, ")") && bracketCount == 0 {
-				return nil, errors.New("invalid filter: Missing open '(' bracket")
+				return nil, errors.New("invalid IDQL filter: Missing open '(' bracket")
 			}
 			if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
 				value = value[1 : len(value)-1]
 			}
-			attrexp, err := createExpression(filterAttr, cond, value)
+			var filter Expression
+			filter, err := createExpression(filterAttr, cond, value)
 			if err != nil {
 				return nil, err
 			}
-			clauses = append(clauses, attrexp)
+			clauses = append(clauses, &filter)
 		} else {
 			// a presence match at the end of the filter string
 			if isAttr {
 				cond = expression[wordIndex:]
 			}
-			attrexp := AttributeExpression{
+			var filter Expression
+			filter = AttributeExpression{
 				AttributePath: filterAttr,
 				Operator:      CompareOperator("pr"),
 			}
-			clauses = append(clauses, attrexp)
+			clauses = append(clauses, &filter)
 
 		}
 	}
@@ -356,20 +368,25 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 		} else {
 			oper = "or"
 		}
-		return LogicalExpression{
+		var filter Expression
+		filter = LogicalExpression{
 			Operator: oper,
-			Left:     clauses[0],
-			Right:    clauses[1],
-		}, nil
+			Left:     *clauses[0],
+			Right:    *clauses[1],
+		}
+		clauses = []*Expression{}
+		clauses = append(clauses, &filter)
+
+		return &filter, nil
 	}
 	if len(clauses) == 1 {
 		return clauses[0], nil
 	}
 
-	return nil, errors.New("invalid filter. Missing and/or clause")
+	return nil, errors.New("invalid IDQL filter: Missing and/or clause")
 }
 
-func createExpression(attribute string, cond string, value string) (*AttributeExpression, error) {
+func createExpression(attribute string, cond string, value string) (AttributeExpression, error) {
 	lCond := strings.ToLower(cond)
 	var attrFilter AttributeExpression
 	switch CompareOperator(lCond) {
@@ -381,7 +398,7 @@ func createExpression(attribute string, cond string, value string) (*AttributeEx
 		}
 
 	default:
-		return nil, errors.New("invalid filter: Unsupported comparison operator: " + cond)
+		return AttributeExpression{}, errors.New("invalid IDQL filter: Unsupported comparison operator: " + cond)
 	}
-	return &attrFilter, nil
+	return attrFilter, nil
 }

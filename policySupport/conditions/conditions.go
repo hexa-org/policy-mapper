@@ -71,37 +71,38 @@ func (n *AttributeMap) GetHexaFilterAttributePath(provName string) string {
 }
 
 // ParseConditionRuleAst is used by mapping providers to get the IDQL condition rule AST tree
-func ParseConditionRuleAst(condition ConditionInfo) (filter.Expression, error) {
+func ParseConditionRuleAst(condition ConditionInfo) (*filter.Expression, error) {
 	return filter.ParseFilter(condition.Rule)
 }
 
-func ParseExpressionAst(expression string) (filter.Expression, error) {
+func ParseExpressionAst(expression string) (*filter.Expression, error) {
 	return filter.ParseFilter(expression)
 }
 
 // SerializeExpression walks the AST and emits the condition in string form. It preserves precedence over the normal filter.String() method
-func SerializeExpression(ast filter.Expression) (string, error) {
+func SerializeExpression(ast *filter.Expression) (string, error) {
 
-	return walk(ast, false)
+	return walk(*ast, false)
 }
 
 func checkRepeatLogic(e filter.Expression, op filter.LogicalOperator) (string, error) {
 	// if the child is a repeat of the parent eliminate brackets (e.g. a or b or c)
-	switch v := e.(type) {
-	case *filter.LogicalExpression:
+
+	switch v := interface{}(e).(type) {
+	case filter.LogicalExpression:
 		if v.Operator == op {
-			return walk(v, false)
+			return walk(e, false)
 		} else {
-			return walk(v, true)
+			return walk(e, true)
 		}
 	default:
-		return walk(v, true)
+		return walk(e, true)
 	}
 }
 
 func walk(e filter.Expression, isChild bool) (string, error) {
 	switch v := e.(type) {
-	case *filter.LogicalExpression:
+	case filter.LogicalExpression:
 		lhVal, err := checkRepeatLogic(v.Left, v.Operator)
 		if err != nil {
 			return "", err
@@ -115,7 +116,7 @@ func walk(e filter.Expression, isChild bool) (string, error) {
 		} else {
 			return fmt.Sprintf("%v %v %v", lhVal, v.Operator, rhVal), nil
 		}
-	case *filter.NotExpression:
+	case filter.NotExpression:
 		subExpression := v.Expression
 		// Note, because of not() brackets, can treat as top level
 		subExpressionString, err := walk(subExpression, false)
@@ -124,14 +125,12 @@ func walk(e filter.Expression, isChild bool) (string, error) {
 		}
 		return fmt.Sprintf("not(%v)", subExpressionString), nil
 
-	case *filter.ValuePathExpression:
+	case filter.ValuePathExpression:
 		return walk(v.VPathFilter, true)
-	case *filter.AttributeExpression:
-		return fmt.Sprintf("%s %s %q", v.AttributePath, v.Operator, v.CompareValue), nil
-	default:
-		// etc...
+	case filter.AttributeExpression:
+		return v.String(), nil
 	}
 
-	errMsg := fmt.Sprintf("Unimplemented filter expression: %v", e)
+	errMsg := fmt.Sprintf("idql evaluator: Unimplemented filter expression: %v", e)
 	return "", errors.New(errMsg)
 }

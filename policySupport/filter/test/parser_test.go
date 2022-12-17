@@ -48,7 +48,8 @@ func TestParseFilter(t *testing.T) {
 			fmt.Println(fmt.Sprintf("Input:\t%s", example[0]))
 			ast, err := filter.ParseFilter(example[0])
 			assert.NoError(t, err, "Example not parsed: "+example[0])
-			out := ast.String()
+			element := *ast
+			out := element.String()
 			fmt.Println(fmt.Sprintf("Parsed:\t%s", out))
 			match := example[1]
 			if match == "" {
@@ -63,7 +64,7 @@ func TestNegParseTests(t *testing.T) {
 	ast, err := filter.ParseFilter("username == blah")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid filter: Unsupported comparison operator: ==")
+		assert.EqualError(t, err, "invalid IDQL filter: Unsupported comparison operator: ==")
 	}
 
 	assert.Nil(t, ast, "No filter should be parsed")
@@ -71,7 +72,7 @@ func TestNegParseTests(t *testing.T) {
 	ast, err = filter.ParseFilter("((username pr or quota eq 0) and black eq white")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid filter: Missing close ')' bracket")
+		assert.EqualError(t, err, "invalid IDQL filter: Missing close ')' bracket")
 	}
 
 	assert.Nil(t, ast, "No filter should be parsed")
@@ -79,28 +80,28 @@ func TestNegParseTests(t *testing.T) {
 	ast, err = filter.ParseFilter("username pr or quota eq \"none\") and black eq white")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid filter: Missing open '(' bracket")
+		assert.EqualError(t, err, "invalid IDQL filter: Missing open '(' bracket")
 	}
 	assert.Nil(t, ast, "No filter should be parsed")
 
 	ast, err = filter.ParseFilter("username eq \"none\")")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid filter: Missing open '(' bracket")
+		assert.EqualError(t, err, "invalid IDQL filter: Missing open '(' bracket")
 	}
 	assert.Nil(t, ast, "No filter should be parsed")
 
 	ast, err = filter.ParseFilter("username eq \"none\" and")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid filter: Incomplete expression")
+		assert.EqualError(t, err, "invalid IDQL filter: Incomplete expression")
 	}
 	assert.Nil(t, ast, "No filter should be parsed")
 
 	ast, err = filter.ParseFilter("username eq \"none\" or abc")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid filter: Incomplete expression")
+		assert.EqualError(t, err, "invalid IDQL filter: Incomplete expression")
 	}
 	assert.Nil(t, ast, "No filter should be parsed")
 
@@ -108,21 +109,21 @@ func TestNegParseTests(t *testing.T) {
 	ast, err = filter.ParseFilter("emails[type eq work] ew \"hexa.org\"")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid filter. Missing and/or clause")
+		assert.EqualError(t, err, "invalid IDQL filter: Missing and/or clause")
 	}
 	assert.Nil(t, ast, "No filter should be parsed")
 
 	ast, err = filter.ParseFilter("emails[type eq work and value ew \"hexa.org\"")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid filter: Missing close ']' bracket")
+		assert.EqualError(t, err, "invalid IDQL filter: Missing close ']' bracket")
 	}
 	assert.Nil(t, ast, "No filter should be parsed")
 
 	ast, err = filter.ParseFilter("emails[type[sub eq val] eq work and value ew \"hexa.org\"")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid filter: A second '[' was detected while looking for a ']' in a value path filter")
+		assert.EqualError(t, err, "invalid IDQL filter: A second '[' was detected while looking for a ']' in a value path filter")
 	}
 	assert.Nil(t, ast, "No filter should be parsed")
 
@@ -130,7 +131,7 @@ func TestNegParseTests(t *testing.T) {
 	ast, err = filter.ParseFilter("(username == \"malformed\")")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid filter: Unsupported comparison operator: ==")
+		assert.EqualError(t, err, "invalid IDQL filter: Unsupported comparison operator: ==")
 	}
 	assert.Nil(t, ast, "No filter should be parsed")
 
@@ -138,28 +139,28 @@ func TestNegParseTests(t *testing.T) {
 	ast, err = filter.ParseFilter("emails[type eq val].value eq work")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid filter: expecting space after ']' in value path expression")
+		assert.EqualError(t, err, "invalid IDQL filter: expecting space after ']' in value path expression")
 	}
 	assert.Nil(t, ast, "No filter should be parsed")
 
 	ast, err = filter.ParseFilter("emails.type] eq work")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid filter: Missing open '[' bracket")
+		assert.EqualError(t, err, "invalid IDQL filter: Missing open '[' bracket")
 	}
 	assert.Nil(t, ast, "No filter should be parsed")
 
 	ast, err = filter.ParseFilter("emails.type) eq work and a eq b")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid filter: Missing open '(' bracket")
+		assert.EqualError(t, err, "invalid IDQL filter: Missing open '(' bracket")
 	}
 	assert.Nil(t, ast, "No filter should be parsed")
 
 	ast, err = filter.ParseFilter("emails[type == work] and a eq b")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid filter: Unsupported comparison operator: ==")
+		assert.EqualError(t, err, "invalid IDQL filter: Unsupported comparison operator: ==")
 	}
 	assert.Nil(t, ast, "No filter should be parsed")
 }
