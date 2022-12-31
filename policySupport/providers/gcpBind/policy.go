@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"google.golang.org/api/iam/v1"
 	"os"
-	policysupport "policy-conditions/policySupport"
+	policySupport "policy-conditions/policySupport"
 	"policy-conditions/policySupport/conditions"
 	"policy-conditions/policySupport/conditions/googleCel"
 	"strings"
@@ -15,7 +15,10 @@ type GooglePolicyMapper struct {
 	conditionMapper googleCel.GoogleConditionMapper
 }
 
-type GcpBindAssignment struct {
+/*
+BindAssignment is an array of GCP Bindings combined with a resource identifier.
+*/
+type BindAssignment struct {
 	ResourceId string        `json:"resource_id"`
 	Bindings   []iam.Binding `json:"bindings"`
 }
@@ -24,10 +27,10 @@ func New(nameMap map[string]string) *GooglePolicyMapper {
 	return &GooglePolicyMapper{conditionMapper: googleCel.GoogleConditionMapper{NameMapper: conditions.NewNameMapper(nameMap)}}
 }
 
-func (m *GooglePolicyMapper) MapBindingAssignmentsToPolicy(bindAssignments []GcpBindAssignment) ([]policysupport.PolicyInfo, error) {
-	var policies []policysupport.PolicyInfo
+func (m *GooglePolicyMapper) MapBindingAssignmentsToPolicy(bindAssignments []*BindAssignment) ([]policySupport.PolicyInfo, error) {
+	var policies []policySupport.PolicyInfo
 	for _, v := range bindAssignments {
-		pols, err := m.MapBindingAssignmentToPolicy(v)
+		pols, err := m.MapBindingAssignmentToPolicy(*v)
 		if err != nil {
 			return nil, err
 		}
@@ -38,8 +41,8 @@ func (m *GooglePolicyMapper) MapBindingAssignmentsToPolicy(bindAssignments []Gcp
 	return policies, nil
 }
 
-func (m *GooglePolicyMapper) MapBindingAssignmentToPolicy(bindAssignment GcpBindAssignment) ([]policysupport.PolicyInfo, error) {
-	var policies []policysupport.PolicyInfo
+func (m *GooglePolicyMapper) MapBindingAssignmentToPolicy(bindAssignment BindAssignment) ([]policySupport.PolicyInfo, error) {
+	var policies []policySupport.PolicyInfo
 	objectId := bindAssignment.ResourceId
 	for _, v := range bindAssignment.Bindings {
 		policy, err := m.MapBindingToPolicy(objectId, v)
@@ -52,34 +55,34 @@ func (m *GooglePolicyMapper) MapBindingAssignmentToPolicy(bindAssignment GcpBind
 	return policies, nil
 }
 
-func (m *GooglePolicyMapper) MapBindingToPolicy(objectId string, binding iam.Binding) (policysupport.PolicyInfo, error) {
+func (m *GooglePolicyMapper) MapBindingToPolicy(objectId string, binding iam.Binding) (policySupport.PolicyInfo, error) {
 	bindingCondition := binding.Condition
 	if bindingCondition != nil {
 		condition, err := m.convertCelToCondition(binding.Condition)
 		if err != nil {
-			return policysupport.PolicyInfo{}, err
+			return policySupport.PolicyInfo{}, err
 		}
 
-		policy := policysupport.PolicyInfo{
-			Meta:      policysupport.MetaInfo{Version: "0.5"},
+		policy := policySupport.PolicyInfo{
+			Meta:      policySupport.MetaInfo{Version: "0.5"},
 			Actions:   convertRoleToAction(binding.Role),
-			Subject:   policysupport.SubjectInfo{Members: binding.Members},
-			Object:    policysupport.ObjectInfo{ResourceID: objectId},
+			Subject:   policySupport.SubjectInfo{Members: binding.Members},
+			Object:    policySupport.ObjectInfo{ResourceID: objectId},
 			Condition: condition,
 		}
 		return policy, nil
 	}
-	policy := policysupport.PolicyInfo{
-		Meta:    policysupport.MetaInfo{Version: "0.5"},
+	policy := policySupport.PolicyInfo{
+		Meta:    policySupport.MetaInfo{Version: "0.5"},
 		Actions: convertRoleToAction(binding.Role),
-		Subject: policysupport.SubjectInfo{Members: binding.Members},
-		Object:  policysupport.ObjectInfo{ResourceID: objectId},
+		Subject: policySupport.SubjectInfo{Members: binding.Members},
+		Object:  policySupport.ObjectInfo{ResourceID: objectId},
 	}
 	return policy, nil
 
 }
 
-func (m *GooglePolicyMapper) MapPolicyToBinding(policy policysupport.PolicyInfo) (*iam.Binding, error) {
+func (m *GooglePolicyMapper) MapPolicyToBinding(policy policySupport.PolicyInfo) (*iam.Binding, error) {
 	cond := policy.Condition
 	var condExpr *iam.Expr
 	var err error
@@ -99,13 +102,13 @@ func (m *GooglePolicyMapper) MapPolicyToBinding(policy policysupport.PolicyInfo)
 	}, nil
 }
 
-func (m *GooglePolicyMapper) MapPoliciesToBindings(policies []policysupport.PolicyInfo) []*GcpBindAssignment {
+func (m *GooglePolicyMapper) MapPoliciesToBindings(policies []policySupport.PolicyInfo) []*BindAssignment {
 	bindingMap := make(map[string][]iam.Binding)
 
 	for i, policy := range policies {
 		binding, err := m.MapPolicyToBinding(policy)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			fmt.Println(err.Error())
 			continue
 		}
 		key := policies[i].Object.ResourceID
@@ -115,10 +118,10 @@ func (m *GooglePolicyMapper) MapPoliciesToBindings(policies []policysupport.Poli
 		bindingMap[key] = existing
 
 	}
-	bindings := make([]*GcpBindAssignment, len(bindingMap))
+	bindings := make([]*BindAssignment, len(bindingMap))
 	i := 0
 	for k, v := range bindingMap {
-		bindings[i] = &GcpBindAssignment{
+		bindings[i] = &BindAssignment{
 			ResourceId: k,
 			Bindings:   v,
 		}
@@ -127,7 +130,7 @@ func (m *GooglePolicyMapper) MapPoliciesToBindings(policies []policysupport.Poli
 	return bindings
 }
 
-func convertActionToRole(policy policysupport.PolicyInfo) string {
+func convertActionToRole(policy policySupport.PolicyInfo) string {
 	for _, v := range policy.Actions {
 		action := v.ActionUri
 		if strings.HasPrefix(action, "gcp:") {
@@ -137,18 +140,18 @@ func convertActionToRole(policy policysupport.PolicyInfo) string {
 	return ""
 }
 
-func convertRoleToAction(role string) []policysupport.ActionInfo {
+func convertRoleToAction(role string) []policySupport.ActionInfo {
 	if role == "" {
 		return nil
 	}
-	return []policysupport.ActionInfo{{"gcp:" + role}}
+	return []policySupport.ActionInfo{{"gcp:" + role}}
 }
 
 func (m *GooglePolicyMapper) convertCelToCondition(expr *iam.Expr) (conditions.ConditionInfo, error) {
 	return m.conditionMapper.MapProviderToCondition(expr.Expression)
 }
 
-func (m *GooglePolicyMapper) convertPolicyCondition(policy policysupport.PolicyInfo) (*iam.Expr, error) {
+func (m *GooglePolicyMapper) convertPolicyCondition(policy policySupport.PolicyInfo) (*iam.Expr, error) {
 	if policy.Condition.Rule == "" {
 		return nil, nil // do nothing as policy has no condition
 	}
@@ -164,49 +167,98 @@ func (m *GooglePolicyMapper) convertPolicyCondition(policy policysupport.PolicyI
 	return &iamExpr, nil
 }
 
+type Assignments struct {
+	BindAssignments []*BindAssignment
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (d *Assignments) UnmarshalJSON(b []byte) error {
+	if len(b) == 0 {
+		return fmt.Errorf("no bytes to unmarshal")
+	}
+
+	switch b[0] {
+	case '{':
+		return d.unMarshallSingle(b)
+	case '[':
+		return d.unMarshallMulti(b)
+	}
+	return nil
+}
+
+func (d *Assignments) unMarshallSingle(b []byte) error {
+	type DetectSingle struct {
+		iam.Binding
+		BindAssignment
+	}
+	var single DetectSingle
+	err := json.Unmarshal(b, &single)
+	if err != nil {
+		return err
+	}
+	assignments := make([]*BindAssignment, 1)
+	if len(single.Bindings) != 0 {
+		assignments[0] = &single.BindAssignment
+	} else {
+		iamBindings := make([]iam.Binding, 1)
+		iamBindings[0] = single.Binding
+		assignments[0] = &BindAssignment{
+			Bindings:   iamBindings,
+			ResourceId: "",
+		}
+	}
+	d.BindAssignments = assignments
+	return nil
+}
+
+func (d *Assignments) unMarshallMulti(b []byte) error {
+	var iamBinds []iam.Binding
+	var assigns []BindAssignment
+
+	err := json.Unmarshal(b, &assigns)
+	if err != nil {
+		return err
+	}
+	if len(assigns) > 0 {
+		pAssigns := make([]*BindAssignment, len(assigns))
+		for k := range assigns {
+			pAssigns[k] = &assigns[k]
+		}
+		d.BindAssignments = pAssigns
+		return nil
+	}
+
+	err = json.Unmarshal(b, &iamBinds)
+	if err != nil {
+		return err
+	}
+
+	assignments := make([]*BindAssignment, 1)
+	assignments[0] = &BindAssignment{
+		Bindings:   iamBinds,
+		ResourceId: "",
+	}
+	return nil
+}
+
 /*
 ParseBindings will read either an iam.Binding or GcpBindAssignment structure and returns a []*GcpBindAssignment type.
 Note that if a single binding is provided, the GcpBindAssignment.ResourceId value will be nil
 */
-func ParseBindings(bindingBytes []byte) ([]GcpBindAssignment, error) {
-	var bindAssign []GcpBindAssignment
-	err := json.Unmarshal(bindingBytes, &bindAssign)
+func ParseBindings(bindingBytes []byte) ([]*BindAssignment, error) {
+	var data Assignments
+	err := json.Unmarshal(bindingBytes, &data)
 	if err != nil {
-		errMsg := err.Error()
-		if strings.Contains(errMsg, "[]gcpBind.GcpBindAssignment") {
-			// Try GcpBindAssignment
-			var single GcpBindAssignment
-			errGcp := json.Unmarshal(bindingBytes, &single)
-			if errGcp != nil {
-				return nil, errGcp
-			}
-			if single.ResourceId == "" {
-				// Try iam.Binding
-				var binding iam.Binding
-				err3 := json.Unmarshal(bindingBytes, &binding)
-				if err3 != nil {
-					return nil, err3
-				} else {
-					bindings := make([]iam.Binding, 1)
-					bindings[0] = binding
-					bindAssign = append(bindAssign, GcpBindAssignment{Bindings: bindings})
-				}
-
-			} else {
-				bindAssign = append(bindAssign, single)
-			}
-
-		}
+		return nil, err
 	}
 
-	return bindAssign, nil
-
+	return data.BindAssignments, nil
 }
 
 /*
 ParseFile will load a file from the specified path and will auto-detect format and convert to GcpBindAssignment. See ParseBindings
 */
-func ParseFile(path string) ([]GcpBindAssignment, error) {
+func ParseFile(path string) ([]*BindAssignment, error) {
 	policyBytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err

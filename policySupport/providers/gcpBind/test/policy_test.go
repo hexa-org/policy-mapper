@@ -29,6 +29,12 @@ func TestProduceAndParseGcp(t *testing.T) {
 
 	bindAssignments := gcpMapper.MapPoliciesToBindings(policies)
 
+	fmt.Println("iam.Binding:")
+	PrintObj(bindAssignments[0].Bindings[0])
+	fmt.Println("BindAssignment:")
+	PrintObj(bindAssignments[0])
+	fmt.Println("[]BindAssignment")
+	PrintObj(bindAssignments)
 	rand.Seed(time.Now().UnixNano())
 	dir := t.TempDir()
 
@@ -83,7 +89,48 @@ func TestProduceAndParseGcp(t *testing.T) {
 }
 
 func TestReadGcp(t *testing.T) {
-	// Read a single policy
+	_, file, _, _ := runtime.Caller(0)
+	assignmentsFile := filepath.Join(file, "../resources/test_assignments.json")
+	assignmentFile := filepath.Join(file, "../resources/test_assignment.json")
+	bindingFile := filepath.Join(file, "../resources/test_binding.json")
+
+	assignment, err := gcpBind.ParseFile(assignmentFile)
+	assert.NoError(t, err, "Parsing Assignment error")
+	assert.Equal(t, 1, len(assignment), "1 assignment should be returned")
+
+	assignment, err = gcpBind.ParseFile(assignmentsFile)
+	assert.NoError(t, err, "Parsing Multi Assignments error")
+	assert.Equal(t, 3, len(assignment), "3 assignment should be returned")
+
+	assignment, err = gcpBind.ParseFile(bindingFile)
+	assert.NoError(t, err, "Parsing Binding error")
+	assert.Equal(t, 1, len(assignment), "1 assignment should be returned")
+	assert.Equal(t, "", assignment[0].ResourceId, "should have no resource id value")
+}
+
+func PrintObj(data interface{}) {
+	var polBytes []byte
+	switch pol := data.(type) {
+	case iam.Binding:
+		polBytes, err := json.MarshalIndent(pol, "", "  ")
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		//	fmt.Println(string(polBytes))
+		fmt.Println(string(polBytes))
+		return
+
+	case []*gcpBind.BindAssignment, *gcpBind.BindAssignment:
+		polBytes, err := json.MarshalIndent(pol, "", "  ")
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		fmt.Println(string(polBytes))
+		return
+	}
+
+	fmt.Println(string(polBytes))
+	return
 
 }
 
@@ -98,7 +145,7 @@ func WriteObj(path string, data interface{}) error {
 		//	fmt.Println(string(polBytes))
 		return os.WriteFile(path, polBytes, 0644)
 
-	case []*gcpBind.GcpBindAssignment, *gcpBind.GcpBindAssignment:
+	case []*gcpBind.BindAssignment, *gcpBind.BindAssignment:
 		polBytes, err := json.MarshalIndent(pol, "", "  ")
 		if err != nil {
 			fmt.Println(err.Error())
