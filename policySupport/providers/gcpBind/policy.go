@@ -68,7 +68,7 @@ func (m *GooglePolicyMapper) MapBindingToPolicy(objectId string, binding iam.Bin
 			Actions:   convertRoleToAction(binding.Role),
 			Subject:   policySupport.SubjectInfo{Members: binding.Members},
 			Object:    policySupport.ObjectInfo{ResourceID: objectId},
-			Condition: condition,
+			Condition: &condition,
 		}
 		return policy, nil
 	}
@@ -86,7 +86,7 @@ func (m *GooglePolicyMapper) MapPolicyToBinding(policy policySupport.PolicyInfo)
 	cond := policy.Condition
 	var condExpr *iam.Expr
 	var err error
-	if cond.Rule != "" {
+	if cond != nil {
 		condExpr, err = m.convertPolicyCondition(policy)
 	} else {
 		condExpr = nil
@@ -152,11 +152,12 @@ func (m *GooglePolicyMapper) convertCelToCondition(expr *iam.Expr) (conditions.C
 }
 
 func (m *GooglePolicyMapper) convertPolicyCondition(policy policySupport.PolicyInfo) (*iam.Expr, error) {
-	if policy.Condition.Rule == "" {
+
+	if policy.Condition == nil {
 		return nil, nil // do nothing as policy has no condition
 	}
 
-	celString, err := m.conditionMapper.MapConditionToProvider(policy.Condition)
+	celString, err := m.conditionMapper.MapConditionToProvider(*policy.Condition)
 	if err != nil {
 		return nil, err
 	}

@@ -24,10 +24,10 @@ the input is mapped from the target platform to IDQL form.
 
 hexaMapper -t=<awsCedar|gcpBind> [-parse] [-o=<output>] <input>
 
--h -help 				Display this text
--t -target=<value>		Target platform:  awsCedar, gcpBind
--p -parse 				Parse platform to IDQL 
--o -output	<file>		Outputs the results to the specified path, Default is stdout.
+-h -help           Display this text
+-t -target=<value> Target platform:  awsCedar, gcpBind
+-p -parse          Parse platform to IDQL 
+-o -output=<file>  Outputs the results to the specified path, Default is stdout.
 `
 
 func main() {
@@ -52,7 +52,7 @@ func main() {
 		if input == "" {
 			fmt.Println("Error: No input source specified.")
 		}
-		fmt.Print(helpText)
+		fmt.Printf(helpText)
 		return
 	}
 	if revFlag {

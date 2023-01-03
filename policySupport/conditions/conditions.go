@@ -9,8 +9,8 @@ import (
 )
 
 type ConditionInfo struct {
-	Rule   string `json:"rule" validate:"required"` // in RFC7644 filter form
-	Action string `json:"action"`                   // allow/deny/audit default is allow
+	Rule   string `json:"Rule,omitempty" validate:"required"` // in RFC7644 filter form
+	Action string `json:"Action,omitempty"`                   // allow/deny/audit default is allow
 }
 
 type AttributeMap struct {

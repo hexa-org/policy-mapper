@@ -5,11 +5,11 @@ import "policy-conditions/policySupport/conditions"
 // todo - longer name used here to simplify a refactoring
 
 type PolicyInfo struct {
-	Meta      MetaInfo                 `validate:"required"`
-	Actions   []ActionInfo             `validate:"required"`
-	Subject   SubjectInfo              `validate:"required"`
-	Object    ObjectInfo               `validate:"required"`
-	Condition conditions.ConditionInfo // Condition is optional
+	Meta      MetaInfo                  `validate:"required"`
+	Actions   []ActionInfo              `validate:"required"`
+	Subject   SubjectInfo               `validate:"required"`
+	Object    ObjectInfo                `validate:"required"`
+	Condition *conditions.ConditionInfo `json:",omitempty"` // Condition is optional
 }
 
 type MetaInfo struct {

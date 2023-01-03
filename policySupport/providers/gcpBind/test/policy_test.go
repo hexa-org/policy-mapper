@@ -84,6 +84,9 @@ func TestProduceAndParseGcp(t *testing.T) {
 	assert.NotEqual(t, resId1, resId2, "Check resource ids are different")
 
 	copyPolcies, err := gcpMapper.MapBindingAssignmentsToPolicy(bindAssigns)
+
+	output, err := json.MarshalIndent(copyPolcies, "", "  ")
+	fmt.Println(string(output))
 	assert.NoError(t, err, "Check error after mapping bindings back to policies")
 	assert.Equal(t, 4, len(copyPolcies), "4 policies returned")
 }
