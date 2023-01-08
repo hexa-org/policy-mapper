@@ -8,6 +8,12 @@ import (
 	"strings"
 )
 
+const (
+	AAllow string = "allow"
+	ADeny  string = "deny"
+	AAudit string = "audit"
+)
+
 type ConditionInfo struct {
 	Rule   string `json:"Rule,omitempty" validate:"required"` // in RFC7644 filter form
 	Action string `json:"Action,omitempty"`                   // allow/deny/audit default is allow

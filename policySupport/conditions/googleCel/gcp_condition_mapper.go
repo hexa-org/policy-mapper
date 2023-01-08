@@ -9,6 +9,7 @@ import (
 	celv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/access_loggers/filters/cel/v3"
 	"github.com/google/cel-go/cel"
 	"policy-conditions/policySupport/filter"
+	"strconv"
 
 	"google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"policy-conditions/policySupport/conditions"
@@ -173,10 +174,24 @@ func (mapper *GoogleConditionMapper) mapFilterAttrExpr(attrExpr *filter.Attribut
 If the value type is string, it needs to be quoted.
 */
 func prepareValue(attrExpr *filter.AttributeExpression) string {
-	if attrExpr.CompareValue == "" {
+	compValue := attrExpr.CompareValue
+	if compValue == "" {
 		return ""
 	}
+
+	// Check for integer
+
+	if _, err := strconv.ParseInt(compValue, 10, 64); err == nil {
+		return compValue
+	}
+
+	if compValue == "true" || compValue == "false" {
+		return compValue
+	}
+
+	// assume it is a string and return with quotes
 	return fmt.Sprintf("\"%s\"", attrExpr.CompareValue)
+
 }
 
 func (mapper *GoogleConditionMapper) GetAst(expression string) (string, error) {

@@ -2,7 +2,14 @@ package policysupport
 
 import "policy-conditions/policySupport/conditions"
 
-// todo - longer name used here to simplify a refactoring
+const (
+	SAnyUser   string = "any"
+	SAnyAuth   string = "anyAuthenticated"
+	SBasicAuth string = "basic"
+	SJwtAuth   string = "jwt"
+	SSamlAuth  string = "saml"
+	SCidr      string = "net"
+)
 
 type PolicyInfo struct {
 	Meta      MetaInfo                  `validate:"required"`
