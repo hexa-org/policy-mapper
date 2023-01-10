@@ -15,4 +15,4 @@ principal in Group::"family" };
 
 permit(principal, action == Action::"remoteAccess", resource) when {
 principal.numberOfLaptops < 5 &&
-principal.jobLevel > 6 };
+principal.jobLevel > 6 && principal.active == true };

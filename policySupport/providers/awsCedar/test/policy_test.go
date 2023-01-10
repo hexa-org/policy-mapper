@@ -72,7 +72,7 @@ func TestParserSingle(t *testing.T) {
 
 func TestParserMulti(t *testing.T) {
 
-	file := getTestFile("../resources/cedarTest.txt")
+	file := getTestFile("../resources/cedarMulti.txt")
 	cedarBytes, err := os.ReadFile(file)
 	if err != nil {
 		assert.Fail(t, "Error opening cedar test file: "+err.Error())
@@ -95,10 +95,13 @@ func TestParserMulti(t *testing.T) {
 	assert.Equal(t, 4, len(cedarAst.Policies), "Should be 4 policies parsed")
 	assert.Equal(t, 2, len(cedarAst.Policies[0].Head.Actions.Actions), "Should be two actions")
 
+	condString := cedarAst.Policies[3].Conditions[0].String()
+	assert.Contains(t, condString, " true ", "Check boolean not quoted")
+	assert.Contains(t, condString, " < ", "Check less than present")
 }
 
 func TestParserToHexa(t *testing.T) {
-	file := getTestFile("../resources/cedarTest.txt")
+	file := getTestFile("../resources/cedarMulti.txt")
 
 	idql, err := cedarMapper.ParseFile(file)
 	if err != nil {
@@ -106,6 +109,8 @@ func TestParserToHexa(t *testing.T) {
 
 	}
 
-	assert.NotNilf(t, idql, "policies should not be nil")
+	condString := idql.Policies[3].Condition.Rule
+	assert.Contains(t, condString, " true", "Check boolean not quoted")
+	assert.Contains(t, condString, " lt ", "Check less than present")
 
 }

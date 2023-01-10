@@ -1,7 +1,6 @@
 package awsCedar
 
 import (
-	"fmt"
 	"github.com/alecthomas/participle/v2/lexer"
 	"strings"
 )
@@ -139,7 +138,7 @@ func (c *ConditionType) Parse(lex *lexer.PeekingLexer) error {
 
 	}
 	expr := buf.String()
-	fmt.Println(expr)
+	//fmt.Println(expr)
 	*c = ConditionType(expr)
 	return nil
 }
