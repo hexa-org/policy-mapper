@@ -3,6 +3,7 @@ package filter
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 const (
@@ -14,6 +15,8 @@ const (
 	NE CompareOperator = "ne"
 	// CO is an abbreviation for 'contains'.
 	CO CompareOperator = "co"
+	// IN is an abbreviation for 'in'.
+	IN CompareOperator = "in"
 	// SW is an abbreviation for 'starts with'.
 	SW CompareOperator = "sw"
 	// EW an abbreviation for 'ends with'.
@@ -84,12 +87,20 @@ func (e AttributeExpression) String() string {
 	if e.Operator == "pr" {
 		return fmt.Sprintf("%s pr", e.AttributePath)
 	}
+
 	isNumber, _ := regexp.MatchString("^[-+]?[0-9]+[.]?[0-9]*([eE][-+]?[0-9]+)?$", e.CompareValue)
 	if isNumber {
 		// Numbers are not quoted
 		return fmt.Sprintf("%s %s %v", e.AttributePath, e.Operator, e.CompareValue)
 	}
 
+	// Check boolean
+	lVal := strings.ToLower(e.CompareValue)
+	if lVal == "true" || lVal == "false" {
+		return fmt.Sprintf("%s %s %v", e.AttributePath, e.Operator, lVal)
+	}
+
+	// treat as string
 	return fmt.Sprintf("%s %s \"%s\"", e.AttributePath, e.Operator, e.CompareValue)
 }
 

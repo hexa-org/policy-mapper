@@ -10,6 +10,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"policy-conditions/policySupport/filter"
 	"strconv"
+	"strings"
 
 	"google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"policy-conditions/policySupport/conditions"
@@ -165,6 +166,8 @@ func (mapper *GoogleConditionMapper) mapFilterAttrExpr(attrExpr *filter.Attribut
 		return "has(" + mapPath + ")", nil
 	case filter.CO:
 		return mapPath + ".contains(" + compareValue + ")", nil
+	case filter.IN:
+		return mapPath + " in " + compareValue, nil
 
 	}
 	return "", fmt.Errorf("unimplemented or unexpected operand (%s): %s", attrExpr.Operator, attrExpr.String())
@@ -207,14 +210,14 @@ func (mapper *GoogleConditionMapper) MapProviderToCondition(expression string) (
 
 	celAst, issues := env.Parse(expression)
 	if issues != nil {
-		return conditions.ConditionInfo{}, errors.New(issues.String())
+		return conditions.ConditionInfo{}, errors.New("CEL Mapping Error: " + issues.String())
 	}
 
 	idqlAst, err := mapper.mapCelExpr(celAst.Expr(), false)
 	if err != nil {
 		return conditions.ConditionInfo{
 			Rule: "",
-		}, err
+		}, errors.New("IDQL condition mapper error: " + err.Error())
 	}
 
 	condString, err := conditions.SerializeExpression(&idqlAst)
@@ -285,6 +288,8 @@ func (mapper *GoogleConditionMapper) mapCallExpr(expression *expr.Expr_Call, isC
 		return mapper.mapCelAttrCompare(expression.Args, filter.LE), nil
 	case "_>=_":
 		return mapper.mapCelAttrCompare(expression.Args, filter.GE), nil
+	case "@in":
+		return mapper.mapCelAttrCompare(expression.Args, filter.IN), nil
 	case "startsWith", "endsWith", "contains", "has":
 		return mapper.mapCelAttrFunction(expression)
 	}
@@ -367,7 +372,21 @@ func (mapper *GoogleConditionMapper) mapCelAttrCompare(expressions []*expr.Expr,
 
 	// map the path name
 	path = mapper.NameMapper.GetHexaFilterAttributePath(path)
-	rh := expressions[1].GetConstExpr().GetStringValue()
+	constExpr := expressions[1].GetConstExpr().String()
+
+	elems := strings.SplitN(constExpr, ":", 2)
+	rh := ""
+
+	if len(elems) == 2 {
+		switch elems[0] {
+		case "string_value":
+			rh = expressions[1].GetConstExpr().GetStringValue()
+		default:
+			rh = elems[1]
+		}
+	} else {
+		rh = expressions[1].GetConstExpr().GetStringValue()
+	}
 	attrFilter := filter.AttributeExpression{
 		AttributePath: path,
 		Operator:      operator,

@@ -17,7 +17,11 @@ var mapper = GoogleConditionMapper{
 
 func TestParseFilter(t *testing.T) {
 	examples := [][2]string{
-
+		{
+			"principal.numberOfLaptops lt 5 and principal.joblevel gt 6",
+			"principal.numberOfLaptops lt 5 and principal.joblevel gt 6",
+		},
+		{"account.active eq true", "account.active eq true"},
 		// Note: PR only works for compound attributes like account.userid in Google
 		{"username pr", "username pr"},
 
