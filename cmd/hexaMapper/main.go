@@ -7,11 +7,10 @@ import (
 	"io"
 	"os"
 	policysupport "policy-conditions/policySupport"
+	"policy-conditions/policySupport/providers/awsCedar"
 	"policy-conditions/policySupport/providers/gcpBind"
 	"strings"
 )
-
-var gcpMapper = gcpBind.New(map[string]string{})
 
 var helpFlag bool
 var revFlag bool
@@ -81,11 +80,23 @@ func idqlToPlatform(input string) {
 
 	switch strings.ToLower(target) {
 	case "gcpbind":
+		gcpMapper := gcpBind.New(map[string]string{})
 		bindings := gcpMapper.MapPoliciesToBindings(policies)
 		MarshalJsonNoEscape(bindings, getOutput())
-		return
+
+	case "awscedar":
+		cMapper := awsCedar.New(map[string]string{})
+
+		cedar, err := cMapper.MapPoliciesToCedar(policies)
+		if err != nil {
+			reportError(err)
+		}
+		out := getOutput()
+		for _, v := range cedar.Policies {
+			policy := v.String()
+			out.Write([]byte(policy))
+		}
 	}
-	fmt.Fprint(os.Stderr, "error: no supported target platform specified")
 }
 
 func platformToIdql(input string) {
@@ -93,18 +104,25 @@ func platformToIdql(input string) {
 
 	switch strings.ToLower(target) {
 	case "gcpbind":
+		gcpMapper := gcpBind.New(map[string]string{})
 		assignments, err := gcpBind.ParseFile(input)
 		if err != nil {
 			reportError(err)
 		}
 		policies, err := gcpMapper.MapBindingAssignmentsToPolicy(assignments)
-
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			return
+			reportError(err)
 		}
 		MarshalJsonNoEscape(policies, getOutput())
-		return
+
+	case "awscedar":
+		cMapper := awsCedar.New(map[string]string{})
+
+		policies, err := cMapper.ParseFile(input)
+		if err != nil {
+			reportError(err)
+		}
+		MarshalJsonNoEscape(policies, getOutput())
 	}
 }
 

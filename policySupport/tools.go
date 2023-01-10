@@ -5,12 +5,6 @@ import (
 	"os"
 )
 
-// Provides tools such as parsing and other functionality in support of IDQL Policy
-
-type Policies struct {
-	Policies []PolicyInfo `json:"policies"`
-}
-
 // ParsePolicyFile parses a file containing IDQL policy data in JSON form. The top level attribute is "policies" which
 // is an array of IDQL Policies ([]PolicyInfo)
 func ParsePolicyFile(path string) ([]PolicyInfo, error) {

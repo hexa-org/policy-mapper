@@ -1,6 +1,28 @@
 {
   "policies": [
     {
+      "Meta": {
+        "Version": "0.5"
+      },
+      "Actions": [
+        {
+          "ActionUri": "cedar:Action::\"view\""
+        }
+      ],
+      "Subject": {
+        "Members": [
+          "User:\"stacey\""
+        ]
+      },
+      "Object": {
+        "resource_id": ""
+      },
+      "Condition": {
+        "Rule": "resource in \"Account:stacey\"",
+        "Action": "permit"
+      }
+    },
+    {
       "meta": {"version": "0.5"},
       "actions": [{"actionUri": "cedar:Action::ReadFile"},{"actionuri": "cedar:Action::ListFiles"}],
       "subject": {
@@ -45,6 +67,25 @@
       "object": {
         "resource_id": "Folder::900af98fc3ab47cbaa982d94da7c90e3"
       }
+    },
+    {
+      "Meta": {
+        "Version": "0.5"
+      },
+      "Actions": [
+        {
+          "ActionUri": "cedar:Action::\"view\""
+        }
+      ],
+      "Subject": {
+        "Members": [
+          "User:\"alice\""
+        ]
+      },
+      "Object": {
+        "resource_id": "cedar:Photo::\"VacationPhoto94.jpg\""
+      }
     }
+
   ]
 }

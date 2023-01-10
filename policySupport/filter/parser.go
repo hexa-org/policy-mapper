@@ -390,7 +390,7 @@ func createExpression(attribute string, cond string, value string) (AttributeExp
 	lCond := strings.ToLower(cond)
 	var attrFilter AttributeExpression
 	switch CompareOperator(lCond) {
-	case EQ, NE, SW, EW, GT, LT, GE, LE, CO:
+	case EQ, NE, SW, EW, GT, LT, GE, LE, CO, IN:
 		attrFilter = AttributeExpression{
 			AttributePath: attribute,
 			Operator:      CompareOperator(strings.ToLower(cond)),

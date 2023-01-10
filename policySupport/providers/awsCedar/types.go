@@ -77,7 +77,7 @@ func (p *PolicyHead) String() string {
 	}
 
 	if p.Resource == nil {
-		doc = doc + SPACER + "resource,\n"
+		doc = doc + SPACER + "resource\n"
 	} else {
 		rType := getType(p.Resource.Entity)
 		if isSingular(rType) {

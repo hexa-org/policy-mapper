@@ -11,6 +11,10 @@ const (
 	SCidr      string = "net"
 )
 
+type Policies struct {
+	Policies []PolicyInfo `json:"policies"`
+}
+
 type PolicyInfo struct {
 	Meta      MetaInfo                  `validate:"required"`
 	Actions   []ActionInfo              `validate:"required"`

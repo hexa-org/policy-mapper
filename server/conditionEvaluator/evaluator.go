@@ -66,7 +66,7 @@ func evalCompareNil(compValue interface{}, op filter.CompareOperator) bool {
 	switch op {
 	case filter.EQ:
 		return compValue == nil || compValue == ""
-	case filter.GT, filter.LT, filter.GE, filter.LE, filter.SW, filter.EW, filter.CO:
+	case filter.GT, filter.LT, filter.GE, filter.LE, filter.SW, filter.EW, filter.CO, filter.IN:
 		return false
 	case filter.NE:
 		return compValue != nil && compValue != ""
