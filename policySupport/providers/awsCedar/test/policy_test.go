@@ -114,3 +114,14 @@ func TestParserToHexa(t *testing.T) {
 	assert.Contains(t, condString, " lt ", "Check less than present")
 
 }
+
+func TestGcpMapped(t *testing.T) {
+	file := getTestFile("../resources/test2.json")
+	policies, err := policysupport.ParsePolicyFile(file)
+	assert.NoError(t, err)
+
+	cedarPols, err := cedarMapper.MapPoliciesToCedar(policies)
+	assert.NoError(t, err)
+	assert.Equal(t, 7, len(cedarPols.Policies))
+
+}

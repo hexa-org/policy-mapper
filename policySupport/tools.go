@@ -21,7 +21,13 @@ func ParsePolicies(policyBytes []byte) ([]PolicyInfo, error) {
 	var policies Policies
 	err := json.Unmarshal(policyBytes, &policies)
 	if err != nil {
-		return nil, err
+		// Try array of polcies
+		var pols []PolicyInfo
+		err = json.Unmarshal(policyBytes, &pols)
+		if err != nil {
+			return nil, err
+		}
+		return pols, nil
 	}
 	return policies.Policies, nil
 }

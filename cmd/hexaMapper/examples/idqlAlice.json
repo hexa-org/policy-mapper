@@ -1,0 +1,44 @@
+{
+  "policies": [
+    {
+      "Meta": {
+        "Version": "0.5"
+      },
+      "Actions": [
+        {
+          "ActionUri": "cedar:Action::\"view\""
+        }
+      ],
+      "Subject": {
+        "Members": [
+          "User:\"alice\""
+        ]
+      },
+      "Object": {
+        "resource_id": "cedar:Photo::\"VacationPhoto94.jpg\""
+      }
+    },
+    {
+      "Meta": {
+        "Version": "0.5"
+      },
+      "Actions": [
+        {
+          "ActionUri": "cedar:Action::\"view\""
+        }
+      ],
+      "Subject": {
+        "Members": [
+          "User:\"stacey\""
+        ]
+      },
+      "Object": {
+        "resource_id": ""
+      },
+      "Condition": {
+        "Rule": "resource in \"Account:stacey\"",
+        "Action": "permit"
+      }
+    }
+  ]
+}

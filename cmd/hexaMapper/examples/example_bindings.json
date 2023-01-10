@@ -1,0 +1,46 @@
+[
+  {
+    "resource_id": "aResourceId1",
+    "bindings": [
+      {
+        "condition": {
+          "expression": "req.ip.startsWith(\"127\") \u0026\u0026 req.method == \"POST\""
+        },
+        "members": [
+          "allusers",
+          "allauthenticated"
+        ]
+      },
+      {
+        "members": [
+          "humanresources@hexaindustries.io"
+        ]
+      }
+    ]
+  },
+  {
+    "resource_id": "aResourceId2",
+    "bindings": [
+      {
+        "members": [
+          "allauthenticated",
+          "sales@hexaindustries.io",
+          "marketing@hexaindustries.io"
+        ]
+      }
+    ]
+  },
+  {
+    "resource_id": "aResourceId3",
+    "bindings": [
+      {
+        "condition": {
+          "expression": "req.ip.startsWith(\"127\") \u0026\u0026 req.method == \"POST\""
+        },
+        "members": [
+          "accounting@hexaindustries.io"
+        ]
+      }
+    ]
+  }
+]
