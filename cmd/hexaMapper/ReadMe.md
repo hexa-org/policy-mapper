@@ -3,7 +3,11 @@
 After cloning the project, complete the following to build the command
 
 ```shell
-cd /cmd/hexaMapper
+git clone https://github.com/hexa-org/policy-conditions.git
+cd policy-conditions
+go mod download
+go mod tidy
+cd cmd/hexaMapper
 go build
 ```
 
