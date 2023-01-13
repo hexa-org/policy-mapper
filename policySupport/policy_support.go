@@ -17,8 +17,8 @@ type Policies struct {
 
 type PolicyInfo struct {
 	Meta      MetaInfo                  `validate:"required"`
-	Actions   []ActionInfo              `validate:"required"`
 	Subject   SubjectInfo               `validate:"required"`
+	Actions   []ActionInfo              `validate:"required"`
 	Object    ObjectInfo                `validate:"required"`
 	Condition *conditions.ConditionInfo `json:",omitempty"` // Condition is optional
 }
