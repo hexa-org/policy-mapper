@@ -1,7 +1,6 @@
 package conditions
 
 import (
-	"errors"
 	"fmt"
 	"policy-conditions/policySupport/filter"
 
@@ -86,57 +85,58 @@ func ParseExpressionAst(expression string) (*filter.Expression, error) {
 }
 
 // SerializeExpression walks the AST and emits the condition in string form. It preserves precedence over the normal filter.String() method
-func SerializeExpression(ast *filter.Expression) (string, error) {
+func SerializeExpression(ast *filter.Expression) string {
 
 	return walk(*ast, false)
 }
 
-func checkRepeatLogic(e filter.Expression, op filter.LogicalOperator) (string, error) {
+func checkNestedLogic(e filter.Expression, op filter.LogicalOperator) string {
 	// if the child is a repeat of the parent eliminate brackets (e.g. a or b or c)
 
-	switch v := interface{}(e).(type) {
+	switch v := e.(type) {
+	case filter.PrecedenceExpression:
+		e = v.Expression
+	}
+
+	switch v := e.(type) {
 	case filter.LogicalExpression:
 		if v.Operator == op {
 			return walk(e, false)
 		} else {
 			return walk(e, true)
 		}
+
 	default:
 		return walk(e, true)
 	}
 }
 
-func walk(e filter.Expression, isChild bool) (string, error) {
+func walk(e filter.Expression, isChild bool) string {
 	switch v := e.(type) {
 	case filter.LogicalExpression:
-		lhVal, err := checkRepeatLogic(v.Left, v.Operator)
-		if err != nil {
-			return "", err
-		}
-		rhVal, err := checkRepeatLogic(v.Right, v.Operator)
-		if err != nil {
-			return "", err
-		}
+		lhVal := checkNestedLogic(v.Left, v.Operator)
+
+		rhVal := checkNestedLogic(v.Right, v.Operator)
+
 		if isChild && v.Operator == filter.OR {
-			return fmt.Sprintf("(%v or %v)", lhVal, rhVal), nil
+			return fmt.Sprintf("(%v or %v)", lhVal, rhVal)
 		} else {
-			return fmt.Sprintf("%v %v %v", lhVal, v.Operator, rhVal), nil
+			return fmt.Sprintf("%v %v %v", lhVal, v.Operator, rhVal)
 		}
 	case filter.NotExpression:
 		subExpression := v.Expression
 		// Note, because of not() brackets, can treat as top level
-		subExpressionString, err := walk(subExpression, false)
-		if err != nil {
-			return "", err
-		}
-		return fmt.Sprintf("not(%v)", subExpressionString), nil
+		subExpressionString := walk(subExpression, false)
 
+		return fmt.Sprintf("not(%v)", subExpressionString)
+	case filter.PrecedenceExpression:
+		subExpressionString := walk(v.Expression, false)
+
+		return fmt.Sprintf("(%v)", subExpressionString)
 	case filter.ValuePathExpression:
 		return walk(v.VPathFilter, true)
-	case filter.AttributeExpression:
-		return v.String(), nil
+	//case filter.AttributeExpression:
+	default:
+		return v.String()
 	}
-
-	errMsg := fmt.Sprintf("idql evaluator: Unimplemented filter expression: %v", e)
-	return "", errors.New(errMsg)
 }

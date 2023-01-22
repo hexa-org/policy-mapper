@@ -1,13 +1,14 @@
-package googleCel
+package test
 
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"policy-conditions/policySupport/conditions"
+	"policy-conditions/policySupport/conditions/googleCel"
 	"testing"
 )
 
-var mapper = GoogleConditionMapper{
+var mapper = googleCel.GoogleConditionMapper{
 	NameMapper: conditions.NewNameMapper(map[string]string{
 		"a":        "b",
 		"c":        "d",
@@ -21,6 +22,9 @@ func TestParseFilter(t *testing.T) {
 			"principal.numberOfLaptops lt 5 and principal.joblevel gt 6",
 			"principal.numberOfLaptops lt 5 and principal.joblevel gt 6",
 		},
+		{"request.auth pr", "request.auth pr"},
+		{"emails ew strata.io", "emails ew \"strata.io\""},
+		{"username in crmUsers", "username in \"crmUsers\""},
 		{"account.active eq true", "account.active eq true"},
 		// Note: PR only works for compound attributes like account.userid in Google
 		{"username pr", "username pr"},
@@ -107,4 +111,74 @@ func TestParseFilter(t *testing.T) {
 
 		})
 	}
+
+}
+
+func TestNegToProvider(t *testing.T) {
+	condition := conditions.ConditionInfo{
+		Rule: "bleh is bad",
+	}
+	celString, err := mapper.MapConditionToProvider(condition)
+	assert.Errorf(t, err, "invalid IDQL filter: Unsupported comparison operator: is")
+	assert.Equal(t, "", celString, "Should be empty string")
+
+	valuePath := conditions.ConditionInfo{Rule: "emails[type eq \"work\" and value ew \"strata.io\""}
+	celString, err = mapper.MapConditionToProvider(valuePath)
+	assert.Errorf(t, err, "invalid IDQL filter: Missing close ']' bracket")
+	assert.Equal(t, "", celString, "Should be empty string")
+
+	valuePath = conditions.ConditionInfo{Rule: "emails[type eq \"work\" and value ew \"strata.io\"]"}
+	celString, err = mapper.MapConditionToProvider(valuePath)
+	assert.Errorf(t, err, "IDQL ValuePath expression mapping to Google CEL currently not supported")
+	assert.Equal(t, "", celString, "Empty, value path not supported")
+
+	valuePath = conditions.ConditionInfo{Rule: "level GT 5 and emails[type eq \"work\" and value ew \"strata.io\"]"}
+	celString, err = mapper.MapConditionToProvider(valuePath)
+	assert.Errorf(t, err, "IDQL ValuePath expression mapping to Google CEL currently not supported")
+	assert.Equal(t, "", celString, "Empty, value path not supported")
+
+	valuePath = conditions.ConditionInfo{Rule: "emails[type eq \"work\" and value ew \"strata.io\"] and level gt 5"}
+	celString, err = mapper.MapConditionToProvider(valuePath)
+	assert.Errorf(t, err, "IDQL ValuePath expression mapping to Google CEL currently not supported")
+	assert.Equal(t, "", celString, "Empty, value path not supported")
+
+	badCompare := conditions.ConditionInfo{Rule: "level GT 3 and abc GR 2"}
+	celString, err = mapper.MapConditionToProvider(badCompare)
+	assert.Errorf(t, err, "invalid IDQL filter: Unsupported comparison operator: GR")
+	assert.Equal(t, "", celString, "Should be empty string")
+
+}
+
+func TestNegToIdql(t *testing.T) {
+	celString := "document.summary.size() < 100"
+	cond, err := mapper.MapProviderToCondition(celString)
+	assert.Errorf(t, err, "IDQL condition mapper error: unimplemented CEL function: size")
+
+	assert.Equal(t, "", cond.Rule, "Condition should be empty")
+
+	// THis should invoke the error within a logic filter
+	celString = "(level > 3 || not(document.summary.size() < 100)) && level < 10"
+	cond, err = mapper.MapProviderToCondition(celString)
+	assert.Errorf(t, err, "IDQL condition mapper error: unimplemented CEL function: size")
+
+	assert.Equal(t, "", cond.Rule, "Condition should be empty")
+
+	celString = "(level > 3 or not(document.summary.size() < 100)) && level < 10"
+	cond, err = mapper.MapProviderToCondition(celString)
+	assert.Errorf(t, err, "CEL Mapping Error: ERROR: <input>:1:12: Syntax error: mismatched input 'or' expecting ')'\n | (level ")
+
+	assert.Equal(t, "", cond.Rule, "Condition should be empty")
+
+	// This tests for ? operator
+	celString = "level > 3 ? document.path.startsWith(\"/abc\") : level < 10"
+	cond, err = mapper.MapProviderToCondition(celString)
+	assert.Errorf(t, err, "IDQL condition mapper error: unimplemented CEL expression operand: _?_:_")
+
+	assert.Equal(t, "", cond.Rule, "Condition should be empty")
+
+	celString = "emails.exists(emails,type == \"work\" && value.endsWith(\"strata.io\"))"
+	cond, err = mapper.MapProviderToCondition(celString)
+	assert.Contains(t, err.Error(), "unimplemented CEL expression:")
+	assert.Equal(t, "", cond.Rule, "Empty rule returned")
+
 }

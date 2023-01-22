@@ -116,12 +116,27 @@ func TestParserToHexa(t *testing.T) {
 }
 
 func TestGcpMapped(t *testing.T) {
-	file := getTestFile("../resources/test2.json")
+	file := getTestFile("../resources/testGcpIdql.json")
 	policies, err := policysupport.ParsePolicyFile(file)
 	assert.NoError(t, err)
 
 	cedarPols, err := cedarMapper.MapPoliciesToCedar(policies)
 	assert.NoError(t, err)
 	assert.Equal(t, 7, len(cedarPols.Policies))
+
+}
+
+func TestMultiCond(t *testing.T) {
+	file := getTestFile("../resources/cedarMultiCond.txt")
+	idql, err := cedarMapper.ParseFile(file)
+	if err != nil {
+		assert.NoError(t, err, "error parsing and mapping of cedar bytes")
+
+	}
+
+	condString := idql.Policies[0].Condition.Rule
+
+	assert.Equal(t, "(not(resource.tag eq \"private\")) && (resource.type eq \"file\")", condString)
+	fmt.Println(condString)
 
 }

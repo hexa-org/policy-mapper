@@ -80,7 +80,26 @@ func main() {
 	*/
 }
 ```
+### CEL Mapping Scope of Support
+The current scope of support for mapping Google CEL expression is limited to common IAM policy cases.
+The following Google CEL functions and operators are currently not support.
+* ? Conditional Operators
+* size list or map size functions
+* type attribute type function and type(null)
+* all time functions:
+  * getDate, 
+  * getDayOfMonth, 
+  * getDayOfWeek, 
+  * getDayOfYear, 
+  * getFullYear, 
+  * getHours, 
+  * getMilliseconds, 
+  * etMinutes, 
+  * getMonths, 
+  * getSeconds, 
+  * duration
+* regex functions such as matches
 
-## OPA Integration
+## OPA Condition Integration
 
 See [OPA Plugin Readme](../../server/ReadME.md).

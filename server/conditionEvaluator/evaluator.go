@@ -134,10 +134,12 @@ func evalAttributeExpression(e filter.AttributeExpression, input string) (bool, 
 			}
 		}
 		return match, nil
+	default:
+		msg := fmt.Sprintf("AttributePath type %t not implemented for compare: %v", av, compValue)
+		fmt.Println(msg)
+		return false, errors.New(msg)
 	}
-	msg := fmt.Sprintf("AttributePath type %t not implemented for compare: %v", compValue, compValue)
-	fmt.Println(msg)
-	return false, errors.New(msg)
+
 }
 
 func evalCompareStrings(op filter.CompareOperator, attrVal string, compVal string) bool {

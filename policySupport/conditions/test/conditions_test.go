@@ -9,7 +9,8 @@ import (
 
 func TestParseFilter(t *testing.T) {
 	for _, example := range []string{
-		"userName eq \"bjensen\"",
+		"(level gt 5 or test eq \"abc\" or level lt 10) and (username sw \"emp\" or username eq \"guest\")",
+		"(userName eq \"bjensen\")",
 		"userName Eq \"bjensen\"",
 		"name.familyName co \"O'Malley\"",
 		"userName sw \"J\"",
@@ -32,11 +33,15 @@ func TestParseFilter(t *testing.T) {
 		"name pr and not (first eq \"test\") and another ne \"test\"",
 		"NAME PR AND NOT (FIRST EQ \"test\") AND ANOTHER NE \"test\"",
 		"name pr or userName pr or title pr",
+		"emails[type eq \"work\" and value ew \"strata.io\"]",
 	} {
 		t.Run(example, func(t *testing.T) {
 			cond := conditions.ConditionInfo{Rule: example}
 			ast, err := conditions.ParseConditionRuleAst(cond)
-			fmt.Println(ast)
+			assert.NoError(t, err, "Parse error against -->"+cond.Rule+"<--")
+			astString := conditions.SerializeExpression(ast)
+			assert.NoError(t, err, "Serialization error against -->"+cond.Rule+"<--")
+			fmt.Println(astString)
 			if err != nil {
 				t.Error(err)
 			}
@@ -69,4 +74,20 @@ func TestNewNameMapper(t *testing.T) {
 	path = mapper.GetHexaFilterAttributePath("d")
 	assert.Equal(t, "c", path, "attribute should be c")
 
+}
+
+func TestWalker(t *testing.T) {
+	cond := conditions.ConditionInfo{Rule: "level gt 6 and not(expired eq true)"}
+	ast, err := conditions.ParseExpressionAst(cond.Rule)
+	assert.NotNilf(t, ast, "ast is not nil")
+	assert.NoError(t, err, "no error parsing expression")
+
+	back := conditions.SerializeExpression(ast)
+	assert.NotNilf(t, ast, "ast is not nil")
+	assert.Equal(t, "level gt 6 and not(expired eq true)", back)
+
+	ast, err = conditions.ParseExpressionAst("(level gt 6 or rank lt 5) and not username pr")
+	assert.NotNilf(t, ast, "ast is not nil")
+	back2 := conditions.SerializeExpression(ast)
+	fmt.Println(back2)
 }
