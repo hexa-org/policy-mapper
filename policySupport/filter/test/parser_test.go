@@ -2,8 +2,8 @@ package test
 
 import (
 	"fmt"
+	"github.com/hexa-org/policy-mapper/policySupport/filter"
 	"github.com/stretchr/testify/assert"
-	"policy-mapper/policySupport/filter"
 	"testing"
 )
 

@@ -2,7 +2,7 @@ package conditions
 
 import (
 	"fmt"
-	"policy-mapper/policySupport/filter"
+	"github.com/hexa-org/policy-mapper/policySupport/filter"
 
 	"strings"
 )

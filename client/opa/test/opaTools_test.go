@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
+	opaTools "github.com/hexa-org/policy-mapper/client/opa"
 	"github.com/hexa-org/policy-orchestrator/pkg/healthsupport"
-	opaTools "policy-mapper/client/opa"
 
 	"github.com/hexa-org/policy-orchestrator/pkg/websupport"
 	"github.com/stretchr/testify/assert"

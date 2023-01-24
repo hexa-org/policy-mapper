@@ -3,11 +3,11 @@ package gcpBind
 import (
 	"encoding/json"
 	"fmt"
+	policySupport "github.com/hexa-org/policy-mapper/policySupport"
+	"github.com/hexa-org/policy-mapper/policySupport/conditions"
+	"github.com/hexa-org/policy-mapper/policySupport/conditions/googleCel"
 	"google.golang.org/api/iam/v1"
 	"os"
-	policySupport "policy-mapper/policySupport"
-	"policy-mapper/policySupport/conditions"
-	"policy-mapper/policySupport/conditions/googleCel"
 	"strings"
 )
 

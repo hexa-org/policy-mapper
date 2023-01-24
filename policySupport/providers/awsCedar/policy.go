@@ -2,11 +2,11 @@ package awsCedar
 
 import (
 	"github.com/alecthomas/participle/v2"
+	policySupport "github.com/hexa-org/policy-mapper/policySupport"
+	policyCond "github.com/hexa-org/policy-mapper/policySupport/conditions"
 	"os"
-	policySupport "policy-mapper/policySupport"
-	policyCond "policy-mapper/policySupport/conditions"
 
-	"policy-mapper/policySupport/conditions/googleCel"
+	"github.com/hexa-org/policy-mapper/policySupport/conditions/googleCel"
 	"strings"
 )
 

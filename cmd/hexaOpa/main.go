@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/hexa-org/policy-mapper/server/conditionEvaluator"
+	"github.com/hexa-org/policy-mapper/server/hexaFilter"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/cmd"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/types"
 	"os"
-	"policy-mapper/server/conditionEvaluator"
-	"policy-mapper/server/hexaFilter"
 )
 
 func main() {

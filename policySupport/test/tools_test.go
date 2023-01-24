@@ -2,10 +2,10 @@ package test
 
 import (
 	"fmt"
+	policysupport "github.com/hexa-org/policy-mapper/policySupport"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"path/filepath"
-	policysupport "policy-mapper/policySupport"
 	"runtime"
 	"testing"
 	"time"

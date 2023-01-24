@@ -8,12 +8,12 @@ import (
 	"fmt"
 	celv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/access_loggers/filters/cel/v3"
 	"github.com/google/cel-go/cel"
-	"policy-mapper/policySupport/filter"
+	"github.com/hexa-org/policy-mapper/policySupport/filter"
+	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"strconv"
 	"strings"
 
-	"google.golang.org/genproto/googleapis/api/expr/v1alpha1"
-	"policy-mapper/policySupport/conditions"
+	"github.com/hexa-org/policy-mapper/policySupport/conditions"
 )
 
 var (

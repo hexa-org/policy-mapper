@@ -2,11 +2,11 @@ package test
 
 import (
 	"fmt"
+	policysupport "github.com/hexa-org/policy-mapper/policySupport"
+	"github.com/hexa-org/policy-mapper/policySupport/providers/awsCedar"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
-	policysupport "policy-mapper/policySupport"
-	"policy-mapper/policySupport/providers/awsCedar"
 	"runtime"
 	"testing"
 )

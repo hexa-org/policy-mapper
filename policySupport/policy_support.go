@@ -1,6 +1,6 @@
 package policysupport
 
-import "policy-mapper/policySupport/conditions"
+import "github.com/hexa-org/policy-mapper/policySupport/conditions"
 
 const (
 	SAnyUser   string = "any"

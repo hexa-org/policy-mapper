@@ -77,7 +77,7 @@ package main
 
 import (
 	"fmt"
-	policysupport "policy-mapper/policySupport"
+	policysupport "github.com/hexa-org/policy-mapper/policySupport"
 )
 
 func main() {

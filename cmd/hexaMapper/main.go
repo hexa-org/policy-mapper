@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	policysupport "github.com/hexa-org/policy-mapper/policySupport"
+	"github.com/hexa-org/policy-mapper/policySupport/providers/awsCedar"
+	"github.com/hexa-org/policy-mapper/policySupport/providers/gcpBind"
 	"io"
 	"os"
-	policysupport "policy-mapper/policySupport"
-	"policy-mapper/policySupport/providers/awsCedar"
-	"policy-mapper/policySupport/providers/gcpBind"
 	"strings"
 )
 

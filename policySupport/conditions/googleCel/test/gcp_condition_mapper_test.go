@@ -2,9 +2,9 @@ package test
 
 import (
 	"fmt"
+	"github.com/hexa-org/policy-mapper/policySupport/conditions"
+	"github.com/hexa-org/policy-mapper/policySupport/conditions/googleCel"
 	"github.com/stretchr/testify/assert"
-	"policy-mapper/policySupport/conditions"
-	"policy-mapper/policySupport/conditions/googleCel"
 	"testing"
 )
 

@@ -3,9 +3,9 @@ package conditionEvaluator
 import (
 	"errors"
 	"fmt"
+	"github.com/hexa-org/policy-mapper/policySupport/conditions"
+	"github.com/hexa-org/policy-mapper/policySupport/filter"
 	"github.com/tidwall/gjson"
-	"policy-mapper/policySupport/conditions"
-	"policy-mapper/policySupport/filter"
 	"strconv"
 	"strings"
 )

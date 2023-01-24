@@ -2,8 +2,8 @@ package test
 
 import (
 	"fmt"
+	"github.com/hexa-org/policy-mapper/server/conditionEvaluator"
 	"github.com/stretchr/testify/assert"
-	"policy-mapper/server/conditionEvaluator"
 	"testing"
 )
 

@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/hexa-org/policy-mapper/server/conditionEvaluator"
+	"github.com/hexa-org/policy-mapper/server/hexaFilter"
 	"github.com/hexa-org/policy-orchestrator/pkg/websupport"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
@@ -16,8 +18,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"policy-mapper/server/conditionEvaluator"
-	"policy-mapper/server/hexaFilter"
 
 	"strings"
 	"testing"
