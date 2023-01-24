@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/open-policy-agent/opa/plugins"
 	"golang.org/x/net/context"
-	"policy-conditions/server/conditionEvaluator"
+	"policy-mapper/server/conditionEvaluator"
 	"sync"
 )
 

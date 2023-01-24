@@ -5,8 +5,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
-	policysupport "policy-conditions/policySupport"
-	"policy-conditions/policySupport/providers/awsCedar"
+	policysupport "policy-mapper/policySupport"
+	"policy-mapper/policySupport/providers/awsCedar"
 	"runtime"
 	"testing"
 )

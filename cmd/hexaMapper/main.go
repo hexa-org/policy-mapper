@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	policysupport "policy-conditions/policySupport"
-	"policy-conditions/policySupport/providers/awsCedar"
-	"policy-conditions/policySupport/providers/gcpBind"
+	policysupport "policy-mapper/policySupport"
+	"policy-mapper/policySupport/providers/awsCedar"
+	"policy-mapper/policySupport/providers/gcpBind"
 	"strings"
 )
 

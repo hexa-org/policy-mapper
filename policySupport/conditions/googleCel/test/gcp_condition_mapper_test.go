@@ -3,8 +3,8 @@ package test
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"policy-conditions/policySupport/conditions"
-	"policy-conditions/policySupport/conditions/googleCel"
+	"policy-mapper/policySupport/conditions"
+	"policy-mapper/policySupport/conditions/googleCel"
 	"testing"
 )
 

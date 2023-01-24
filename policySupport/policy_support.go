@@ -1,6 +1,6 @@
 package policysupport
 
-import "policy-conditions/policySupport/conditions"
+import "policy-mapper/policySupport/conditions"
 
 const (
 	SAnyUser   string = "any"

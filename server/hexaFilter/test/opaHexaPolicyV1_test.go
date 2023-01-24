@@ -16,8 +16,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"policy-conditions/server/conditionEvaluator"
-	"policy-conditions/server/hexaFilter"
+	"policy-mapper/server/conditionEvaluator"
+	"policy-mapper/server/hexaFilter"
 
 	"strings"
 	"testing"

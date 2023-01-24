@@ -7,8 +7,8 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/types"
 	"os"
-	"policy-conditions/server/conditionEvaluator"
-	"policy-conditions/server/hexaFilter"
+	"policy-mapper/server/conditionEvaluator"
+	"policy-mapper/server/hexaFilter"
 )
 
 func main() {

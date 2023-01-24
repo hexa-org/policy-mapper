@@ -3,10 +3,10 @@ package awsCedar
 import (
 	"github.com/alecthomas/participle/v2"
 	"os"
-	policySupport "policy-conditions/policySupport"
-	policyCond "policy-conditions/policySupport/conditions"
+	policySupport "policy-mapper/policySupport"
+	policyCond "policy-mapper/policySupport/conditions"
 
-	"policy-conditions/policySupport/conditions/googleCel"
+	"policy-mapper/policySupport/conditions/googleCel"
 	"strings"
 )
 

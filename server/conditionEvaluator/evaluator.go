@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/tidwall/gjson"
-	"policy-conditions/policySupport/conditions"
-	"policy-conditions/policySupport/filter"
+	"policy-mapper/policySupport/conditions"
+	"policy-mapper/policySupport/filter"
 	"strconv"
 	"strings"
 )

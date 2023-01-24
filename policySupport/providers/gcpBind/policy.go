@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"google.golang.org/api/iam/v1"
 	"os"
-	policySupport "policy-conditions/policySupport"
-	"policy-conditions/policySupport/conditions"
-	"policy-conditions/policySupport/conditions/googleCel"
+	policySupport "policy-mapper/policySupport"
+	"policy-mapper/policySupport/conditions"
+	"policy-mapper/policySupport/conditions/googleCel"
 	"strings"
 )
 

@@ -2,7 +2,7 @@ package conditions
 
 import (
 	"fmt"
-	"policy-conditions/policySupport/filter"
+	"policy-mapper/policySupport/filter"
 
 	"strings"
 )

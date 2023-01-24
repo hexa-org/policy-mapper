@@ -5,7 +5,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"github.com/hexa-org/policy-orchestrator/pkg/healthsupport"
-	opaTools "policy-conditions/client/opa"
+	opaTools "policy-mapper/client/opa"
 
 	"github.com/hexa-org/policy-orchestrator/pkg/websupport"
 	"log"

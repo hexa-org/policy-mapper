@@ -5,7 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"path/filepath"
-	policysupport "policy-conditions/policySupport"
+	policysupport "policy-mapper/policySupport"
 	"runtime"
 	"testing"
 	"time"

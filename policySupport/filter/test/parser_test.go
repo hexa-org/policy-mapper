@@ -3,7 +3,7 @@ package test
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"policy-conditions/policySupport/filter"
+	"policy-mapper/policySupport/filter"
 	"testing"
 )
 
