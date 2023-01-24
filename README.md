@@ -29,8 +29,8 @@ Install the following dependencies.
 - [Go 1.19](https://go.dev)
 - Clone the project and run the following in the terminal window:
 ```shell
-git clone https://github.com/hexa-org/policy-conditions.git
-cd policy-conditions
+git clone https://github.com/hexa-org/policy-mapper.git
+cd policy-mapper
 go mod download
 go mod tidy
 ```
@@ -77,7 +77,7 @@ package main
 
 import (
 	"fmt"
-	policysupport "policy-conditions/policySupport"
+	policysupport "policy-mapper/policySupport"
 )
 
 func main() {

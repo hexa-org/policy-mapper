@@ -30,7 +30,7 @@ rego by processing the claim req.header.authorization using built-in Rego functi
 To use this mapper. instantiate a mapper for a particular provider and use the MapConditionToProvider and
 MapProviderToCondition to translate in either direction.
 
-Policy-conditions currently supports two target platforms providing bi-directional support: Google Conditional Expression Language
+Policy-Mapper currently supports two target platforms providing bi-directional support: Google Conditional Expression Language
 and Open Policy Authorization Rego Hexa integration.
 
 
