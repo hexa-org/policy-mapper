@@ -1,4 +1,4 @@
-module policy-mapper
+module github.com/hexa-org/policy-mapper
 
 go 1.19
 
