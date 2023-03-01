@@ -1,0 +1,4 @@
+*.idea
+.codeql
+.env*
+.DS_Store
