@@ -13,10 +13,10 @@ Currently, mapping support is provided for:
 * OPA Extensions to Support IDQL and an OPA Extension Plugin to support ABAC policy (conditions) processing
 
 The project is broken into the following parts:
-* [Policy Conditions](policySupport/conditions/ReadME.md)
+* [Policy Conditions](CONDITIONS.md)
 * [IDQL Policy and Policy Mapping](policySupport)
 * [OPA Server Extensions ](server/ReadME.md)
-* [HexaMapper command line utility](cmd/hexaMapper/ReadMe.md)
+* [HexaMapper command line utility](DEMO.md)
 
 ## Getting Started
 
@@ -35,7 +35,7 @@ go mod download
 go mod tidy
 ```
 
-See [here](cmd/hexaMapper/ReadMe.md) more instructions on how to run the hexaMapper command line utility.
+See [here](DEMO.md) more instructions on how to run the hexaMapper command line utility.
 
 ## Using Hexa-Mapper in Go Projects
 

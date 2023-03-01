@@ -3,6 +3,7 @@ module github.com/hexa-org/policy-mapper
 go 1.19
 
 require (
+	github.com/alecthomas/assert/v2 v2.0.3
 	github.com/alecthomas/participle/v2 v2.0.0-beta.5
 	github.com/envoyproxy/go-control-plane v0.11.0
 	github.com/google/cel-go v0.13.0
@@ -14,6 +15,7 @@ require (
 require (
 	cloud.google.com/go/compute v1.18.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	github.com/alecthomas/repr v0.1.0 // indirect
 	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10 // indirect
 	github.com/cncf/xds/go v0.0.0-20230112175826-46e39c7b9b43 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -22,6 +24,7 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.7.0 // indirect
+	github.com/hexops/gotextdiff v1.0.3 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stoewer/go-strcase v1.2.1 // indirect
