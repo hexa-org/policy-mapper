@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hexa-org/policy-mapper/internal/conditions"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,7 +58,7 @@ func TestNewNameMapper(t *testing.T) {
 		"emails.type": "mail.type",
 	})
 
-	//Test Provider mapping
+	// Test Provider mapping
 	assert.Equal(t, "b", mapper.GetProviderAttributeName("a"), "a produces b")
 	assert.Equal(t, "userid", mapper.GetProviderAttributeName("userName"), "userName prodeuces userid")
 	assert.Equal(t, "undefined", mapper.GetProviderAttributeName("undefined"), "undefined maps as undefined")

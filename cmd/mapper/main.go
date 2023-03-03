@@ -9,9 +9,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/hexa-org/policy-mapper/internal/amazon"
-	"github.com/hexa-org/policy-mapper/internal/google"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicysupport"
+	"github.com/hexa-org/policy-mapper/pkg/mappers/awscedar"
+	"github.com/hexa-org/policy-mapper/pkg/mappers/gcpbind"
 )
 
 var helpFlag bool
@@ -23,10 +23,10 @@ var helpText = `
 Hexa tools command line mapping utility. By default, the input is mapped to the target platform. If -p or -parse is specified
 the input is mapped from the target platform to IDQL form.
 
-mapper -t=<awsCedar|google> [-parse] [-o=<output>] <input>
+mapper -t=<awsCedar|gcpbind> [-parse] [-o=<output>] <input>
 
 -h -help           Display this text
--t -target=<value> Target platform:  awsCedar, google
+-t -target=<value> Target platform:  awsCedar, gcpbind
 -p -parse          Parse platform to IDQL 
 -o -output=<file>  Outputs the results to the specified path, Default is stdout.
 `
@@ -39,8 +39,8 @@ func main() {
 	flag.BoolVar(&revFlag, "parse", false, "Map platform policy to IDQL")
 	flag.StringVar(&output, "o", "", "Output path, default console")
 	flag.StringVar(&output, "output", "", "Output path, default console")
-	flag.StringVar(&target, "t", "", "Platform awsCedar|google")
-	flag.StringVar(&target, "target", "", "Platform awsCedar|google")
+	flag.StringVar(&target, "t", "", "Platform awsCedar|gcpbind")
+	flag.StringVar(&target, "target", "", "Platform awsCedar|gcpbind")
 
 	flag.Parse()
 
@@ -82,12 +82,12 @@ func idqlToPlatform(input string) {
 
 	switch strings.ToLower(target) {
 	case "gcpbind":
-		gcpMapper := google.New(map[string]string{})
+		gcpMapper := gcpbind.New(map[string]string{})
 		bindings := gcpMapper.MapPoliciesToBindings(policies)
 		MarshalJsonNoEscape(bindings, getOutput())
 
 	case "awscedar":
-		cMapper := amazon.New(map[string]string{})
+		cMapper := awscedar.New(map[string]string{})
 
 		cedar, err := cMapper.MapPoliciesToCedar(policies)
 		if err != nil {
@@ -106,8 +106,8 @@ func platformToIdql(input string) {
 
 	switch strings.ToLower(target) {
 	case "gcpbind":
-		gcpMapper := google.New(map[string]string{})
-		assignments, err := google.ParseFile(input)
+		gcpMapper := gcpbind.New(map[string]string{})
+		assignments, err := gcpbind.ParseFile(input)
 		if err != nil {
 			reportError(err)
 		}
@@ -118,7 +118,7 @@ func platformToIdql(input string) {
 		MarshalJsonNoEscape(policies, getOutput())
 
 	case "awscedar":
-		cMapper := amazon.New(map[string]string{})
+		cMapper := awscedar.New(map[string]string{})
 
 		policies, err := cMapper.ParseFile(input)
 		if err != nil {

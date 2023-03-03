@@ -1,4 +1,4 @@
-package google
+package gcpbind
 
 import (
 	"encoding/json"
@@ -6,14 +6,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/hexa-org/policy-mapper/internal/conditions"
-	"github.com/hexa-org/policy-mapper/internal/conditionsgoogle"
+	"github.com/hexa-org/policy-mapper/internal/gcpcel"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
 	"google.golang.org/api/iam/v1"
 )
 
 type GooglePolicyMapper struct {
-	conditionMapper conditionsgoogle.GoogleConditionMapper
+	conditionMapper gcpcel.GoogleConditionMapper
 }
 
 /*
@@ -25,7 +25,11 @@ type BindAssignment struct {
 }
 
 func New(nameMap map[string]string) *GooglePolicyMapper {
-	return &GooglePolicyMapper{conditionMapper: conditionsgoogle.GoogleConditionMapper{NameMapper: conditions.NewNameMapper(nameMap)}}
+	return &GooglePolicyMapper{conditionMapper: gcpcel.GoogleConditionMapper{NameMapper: conditions.NewNameMapper(nameMap)}}
+}
+
+func (m *GooglePolicyMapper) Name() string {
+	return "bind"
 }
 
 func (m *GooglePolicyMapper) MapBindingAssignmentsToPolicy(bindAssignments []*BindAssignment) ([]hexapolicy.PolicyInfo, error) {

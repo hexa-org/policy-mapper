@@ -1,15 +1,15 @@
-package conditionsgoogle_test
+package gcpcel_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/hexa-org/policy-mapper/internal/conditions"
-	"github.com/hexa-org/policy-mapper/internal/conditionsgoogle"
+	"github.com/hexa-org/policy-mapper/internal/gcpcel"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
 	"github.com/stretchr/testify/assert"
 )
 
-var mapper = conditionsgoogle.GoogleConditionMapper{
+var mapper = gcpcel.GoogleConditionMapper{
 	NameMapper: conditions.NewNameMapper(map[string]string{
 		"a":        "b",
 		"c":        "d",
@@ -41,20 +41,20 @@ func TestParseFilter(t *testing.T) {
 			"username eq \"june\" and username eq \"fred\" and username eq \"alice\"",
 		},
 		{
-			"subject.common_name eq \"google.com\" and subject.country_code eq \"US\" or subject.country_code eq \"IR\"",
-			"subject.common_name eq \"google.com\" and subject.country_code eq \"US\" or subject.country_code eq \"IR\"",
+			"subject.common_name eq \"gcpbind.com\" and subject.country_code eq \"US\" or subject.country_code eq \"IR\"",
+			"subject.common_name eq \"gcpbind.com\" and subject.country_code eq \"US\" or subject.country_code eq \"IR\"",
 		}, {
-			"subject.common_name eq \"google.com\" and (subject.country_code eq \"US\" or subject.country_code eq \"IR\")",
-			"subject.common_name eq \"google.com\" and (subject.country_code eq \"US\" or subject.country_code eq \"IR\")",
+			"subject.common_name eq \"gcpbind.com\" and (subject.country_code eq \"US\" or subject.country_code eq \"IR\")",
+			"subject.common_name eq \"gcpbind.com\" and (subject.country_code eq \"US\" or subject.country_code eq \"IR\")",
 		},
 
 		// Following tests that parenthesis and logic preserved
 		{
-			"subject.common_name eq \"google.com\" and (subject.country_code eq \"US\" or subject.country_code eq \"IR\")",
-			"subject.common_name eq \"google.com\" and (subject.country_code eq \"US\" or subject.country_code eq \"IR\")",
+			"subject.common_name eq \"gcpbind.com\" and (subject.country_code eq \"US\" or subject.country_code eq \"IR\")",
+			"subject.common_name eq \"gcpbind.com\" and (subject.country_code eq \"US\" or subject.country_code eq \"IR\")",
 		}, {
-			"subject.common_name eq \"google.com\" and (subject.country_code eq \"US\" or not (subject.country_code eq \"IR\"))",
-			"subject.common_name eq \"google.com\" and (subject.country_code eq \"US\" or not(subject.country_code eq \"IR\"))",
+			"subject.common_name eq \"gcpbind.com\" and (subject.country_code eq \"US\" or not (subject.country_code eq \"IR\"))",
+			"subject.common_name eq \"gcpbind.com\" and (subject.country_code eq \"US\" or not(subject.country_code eq \"IR\"))",
 		}, {
 			"userName eq \"bjensen\"", "username eq \"bjensen\"",
 		}, {
@@ -84,8 +84,8 @@ func TestParseFilter(t *testing.T) {
 			"userType ne \"Employee\" and not (emails co \"example.com\" or emails.value co \"example.org\")",
 			"userType ne \"Employee\" and not(emails co \"example.com\" or emails.value co \"example.org\")",
 		},
-		//"userType eq \"Employee\" and emails[type eq \"work\" and value co \"@example.com\"]",  // ValueFilter not implemented
-		//"emails[type eq \"work\" and value co \"@example.com\"] or ims[type eq \"xmpp\" and value co \"@foo.com\"]",
+		// "userType eq \"Employee\" and emails[type eq \"work\" and value co \"@example.com\"]",  // ValueFilter not implemented
+		// "emails[type eq \"work\" and value co \"@example.com\"] or ims[type eq \"xmpp\" and value co \"@foo.com\"]",
 
 	}
 	for _, example := range examples {
@@ -107,8 +107,8 @@ func TestParseFilter(t *testing.T) {
 
 			assert.Equal(t, example[1], returnExample, "Check expected result matches: &s", example[1])
 			// Because of case-insensitive tests (Eq vs eq vs EQ) round trip may not match in mixed cases.
-			//assert.Equal(t, strings.ToLower(example), strings.ToLower(returnExample), "Round-trip map test failure")
-			//assert.Equal(t, example, conditionBack.Rule, "Round-trip map test failure")
+			// assert.Equal(t, strings.ToLower(example), strings.ToLower(returnExample), "Round-trip map test failure")
+			// assert.Equal(t, example, conditionBack.Rule, "Round-trip map test failure")
 
 		})
 	}

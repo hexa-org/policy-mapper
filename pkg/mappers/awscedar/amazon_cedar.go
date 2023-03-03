@@ -1,28 +1,34 @@
-package amazon
+package awscedar
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"strings"
 
 	"github.com/alecthomas/participle/v2"
-	policyCond "github.com/hexa-org/policy-mapper/internal/conditions"
-	"github.com/hexa-org/policy-mapper/internal/conditionsgoogle"
+	"github.com/hexa-org/policy-mapper/internal/gcpcel"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
+	policyCond "github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
 )
 
 type CedarPolicyMapper struct {
-	conditionMapper conditionsgoogle.GoogleConditionMapper
-	parser          *participle.Parser[CedarPolicies]
+	ConditionMapper gcpcel.GoogleConditionMapper
+	Parser          *participle.Parser[CedarPolicies]
 }
 
 func New(nameMap map[string]string) *CedarPolicyMapper {
-	return &CedarPolicyMapper{conditionMapper: conditionsgoogle.GoogleConditionMapper{NameMapper: policyCond.NewNameMapper(nameMap)},
-		parser: participle.MustBuild[CedarPolicies](participle.CaseInsensitive("permit", "forbid", "unless", "when"))}
+	return &CedarPolicyMapper{ConditionMapper: gcpcel.GoogleConditionMapper{NameMapper: policyCond.NewNameMapper(nameMap)},
+		Parser: participle.MustBuild[CedarPolicies](participle.CaseInsensitive("permit", "forbid", "unless", "when"))}
 }
 
 func (c *CedarPolicyMapper) ParseCedarBytes(cedarBytes []byte) (*CedarPolicies, error) {
-	cedarAst, err := c.parser.ParseBytes("", cedarBytes)
+	cedarAst, err := c.Parser.ParseBytes("", cedarBytes)
 	return cedarAst, err
+}
+
+func (c *CedarPolicyMapper) Name() string {
+	return "cedar"
 }
 
 /*
@@ -158,7 +164,7 @@ func (c *CedarPolicyMapper) mapSimplePolicyToCedar(member string, policy hexapol
 		if policy.Condition.Action == "deny" {
 			operator = UNLESS
 		}
-		cel, err := c.conditionMapper.MapConditionToProvider(*policy.Condition)
+		cel, err := c.ConditionMapper.MapConditionToProvider(*policy.Condition)
 		if err != nil {
 			return nil, err
 		}
@@ -221,6 +227,50 @@ func (c *CedarPolicyMapper) mapSimplePolicyToCedar(member string, policy hexapol
 	}, nil
 }
 
+func (c *CedarPolicyMapper) MapHexaPolicies(policies []hexapolicy.PolicyInfo) (map[string]interface{}, error) {
+	pols, err := c.MapPoliciesToCedar(policies)
+	return map[string]interface{}{"cedar": pols}, err
+}
+
+func (c *CedarPolicyMapper) MapToHexaPolicy(cedarpolicies map[string]interface{}) ([]hexapolicy.PolicyInfo, error) {
+	pols := hexapolicy.Policies{
+		Policies: []hexapolicy.PolicyInfo{},
+	}
+	var err error
+	for _, v := range cedarpolicies {
+		switch obj := v.(type) {
+		case CedarPolicies:
+			policies, err := c.MapCedarPoliciesToIdql(&obj)
+			if err == nil && policies != nil {
+				pols.AddPolicies(*policies)
+			}
+
+		case CedarPolicy:
+			policyInfo, err := c.MapCedarPolicyToIdql(&obj)
+			if err == nil && policyInfo != nil {
+				pols.AddPolicy(*policyInfo)
+			}
+
+		case []byte:
+			policies, err := c.ParseAndMapCedarToHexa(obj)
+			if err == nil && policies != nil {
+				pols.AddPolicies(*policies)
+			}
+
+		case string:
+			policies, err := c.ParseFile(obj)
+			if err == nil && policies != nil {
+				pols.AddPolicies(*policies)
+			}
+
+		default:
+			err = errors.New(fmt.Sprintf("Unsupported Cedar input type: %t", obj))
+			break
+		}
+	}
+	return pols.Policies, err
+}
+
 func (c *CedarPolicyMapper) MapPoliciesToCedar(policies []hexapolicy.PolicyInfo) (*CedarPolicies, error) {
 	cpolicies := make([]*CedarPolicy, 0)
 	for _, v := range policies {
@@ -265,10 +315,10 @@ func (c *CedarPolicyMapper) MapCedarPolicyToIdql(policy *CedarPolicy) (*hexapoli
 			cel = strings.ReplaceAll(cel, "User::\"", "\"User:")
 			cel = strings.ReplaceAll(cel, "Account::\"", "\"Account:")
 			cel = strings.ReplaceAll(cel, "Domain::\"", "\"Domain:")
-			//cel = strings.ReplaceAll(cel, " in ", " co ") // this is just temporary
+			// cel = strings.ReplaceAll(cel, " in ", " co ") // this is just temporary
 		}
 
-		idqlCond, err := c.conditionMapper.MapProviderToCondition(cel)
+		idqlCond, err := c.ConditionMapper.MapProviderToCondition(cel)
 		if err != nil {
 			return nil, err
 		}

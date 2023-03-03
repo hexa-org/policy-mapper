@@ -1,4 +1,4 @@
-package amazon_test
+package awscedar_test
 
 import (
 	"fmt"
@@ -7,12 +7,12 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/hexa-org/policy-mapper/internal/amazon"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicysupport"
+	"github.com/hexa-org/policy-mapper/pkg/mappers/awscedar"
 	"github.com/stretchr/testify/assert"
 )
 
-var cedarMapper = amazon.New(map[string]string{})
+var cedarMapper = awscedar.New(map[string]string{})
 
 func getTestFile(name string) string {
 	_, file, _, _ := runtime.Caller(0)

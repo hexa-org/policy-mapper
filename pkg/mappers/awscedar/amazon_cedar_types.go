@@ -1,4 +1,4 @@
-package amazon
+package awscedar
 
 import (
 	"strings"
@@ -43,9 +43,9 @@ func (c *CedarPolicy) String() string {
 }
 
 type PolicyHead struct {
-	Principal *PrincipalExpression `parser:"'principal' @@? ','"` //ser:"'principal' @@? ','"`
+	Principal *PrincipalExpression `parser:"'principal' @@? ','"` // ser:"'principal' @@? ','"`
 	Actions   *ActionExpression    `parser:"'action' @@? ','"`
-	Resource  *ResourceExpression  `parser:"'resource' @@?"` //`parser:"'resource' @@? "`
+	Resource  *ResourceExpression  `parser:"'resource' @@?"` // `parser:"'resource' @@? "`
 }
 
 func getType(entity string) string {
@@ -139,15 +139,15 @@ func (c *ConditionType) Parse(lex *lexer.PeekingLexer) error {
 
 	}
 	expr := buf.String()
-	//fmt.Println(expr)
+	// fmt.Println(expr)
 	*c = ConditionType(expr)
 	return nil
 }
 
 type ConditionalClause struct {
 	Type string `parser:"@('when'|'unless')"`
-	//Condition string `parser:"'{'@(Ident|String|' '|':'|'.'|'='|'&')+'}'"`
-	//Condition string `parser:"'{' @(~'}' ' '*)+ '}'"`
+	// Condition string `parser:"'{'@(Ident|String|' '|':'|'.'|'='|'&')+'}'"`
+	// Condition string `parser:"'{' @(~'}' ' '*)+ '}'"`
 	Condition *ConditionType `parser:"@@"`
 }
 
@@ -160,8 +160,8 @@ func (c *ConditionalClause) String() string {
 }
 
 type PrincipalExpression struct {
-	Operator string `parser:"@('=''='|'in'|'IN')"` //`@("=" "="|"in"|"IN")`
-	//Operator string `parser:"@('=='|'in'|'IN')"`
+	Operator string `parser:"@('=''='|'in'|'IN')"` // `@("=" "="|"in"|"IN")`
+	// Operator string `parser:"@('=='|'in'|'IN')"`
 	Entity string `parser:"@(Ident|':'|String)+"`
 }
 
@@ -174,7 +174,7 @@ func (e *PrincipalExpression) String() string {
 
 type ResourceExpression struct {
 	Operator string `parser:"@('=''='|'in'|'IN')"`
-	//Operator string `parser:"@('=='|'in'|'IN')"`
+	// Operator string `parser:"@('=='|'in'|'IN')"`
 	Entity string `parser:"@(Ident|':'|String)+"`
 }
 

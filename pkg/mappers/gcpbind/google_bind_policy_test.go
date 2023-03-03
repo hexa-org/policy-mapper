@@ -1,4 +1,4 @@
-package google_test
+package gcpbind_test
 
 import (
 	"encoding/json"
@@ -11,13 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hexa-org/policy-mapper/internal/google"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicysupport"
+	"github.com/hexa-org/policy-mapper/pkg/mappers/gcpbind"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/api/iam/v1"
 )
 
-var gcpMapper = google.New(map[string]string{})
+var gcpMapper = gcpbind.New(map[string]string{})
 
 func getIdqlFile() string {
 	_, file, _, _ := runtime.Caller(0)
@@ -48,17 +48,17 @@ func TestProduceAndParseGcp(t *testing.T) {
 	bindingsAssignFile := filepath.Join(dir, fmt.Sprintf("bindAssigns-%d.json", runId))
 	bindingFile := filepath.Join(dir, fmt.Sprintf("binding-%d.json", runId))
 
-	//Write a single binding
+	// Write a single binding
 	assert.NoError(t, WriteObj(bindingFile, bindAssignments[0].Bindings[0]), "Single bind write")
 
-	//Write out a single bind assignment
+	// Write out a single bind assignment
 	assert.NoError(t, WriteObj(bindingAssignFile, bindAssignments[0]), "Single bind assignment write")
 
-	//Write out all assignments
+	// Write out all assignments
 	assert.NoError(t, WriteObj(bindingsAssignFile, bindAssignments), "Single bind assignment write")
 
 	// Parse a simple binding
-	bindRead, err := google.ParseFile(bindingFile)
+	bindRead, err := gcpbind.ParseFile(bindingFile)
 	assert.NoError(t, err, "Read a single binding")
 
 	assert.Equal(t, 1, len(bindRead), "Check 1 GcpBindAssignment returned")
@@ -66,7 +66,7 @@ func TestProduceAndParseGcp(t *testing.T) {
 	assert.Equal(t, "", resId)
 
 	// Parse a single assignment
-	bindAssign, err := google.ParseFile(bindingAssignFile)
+	bindAssign, err := gcpbind.ParseFile(bindingAssignFile)
 	assert.NoError(t, err, "Read a single binding assignment")
 
 	assert.Equal(t, 1, len(bindAssign), "Check 1 GcpBindAssignment returned")
@@ -74,7 +74,7 @@ func TestProduceAndParseGcp(t *testing.T) {
 	assert.NotEqual(t, "", resId)
 
 	// Parse a multiple assignment
-	bindAssigns, err := google.ParseFile(bindingsAssignFile)
+	bindAssigns, err := gcpbind.ParseFile(bindingsAssignFile)
 	assert.NoError(t, err, "Read multiple binding assignments")
 
 	assert.Equal(t, 3, len(bindAssigns), "Check 4 GcpBindAssignment returned")
@@ -99,15 +99,15 @@ func TestReadGcp(t *testing.T) {
 	assignmentFile := filepath.Join(file, "../test/test_assignment.json")
 	bindingFile := filepath.Join(file, "../test/test_binding.json")
 
-	assignment, err := google.ParseFile(assignmentFile)
+	assignment, err := gcpbind.ParseFile(assignmentFile)
 	assert.NoError(t, err, "Parsing Assignment error")
 	assert.Equal(t, 1, len(assignment), "1 assignment should be returned")
 
-	assignment, err = google.ParseFile(assignmentsFile)
+	assignment, err = gcpbind.ParseFile(assignmentsFile)
 	assert.NoError(t, err, "Parsing Multi Assignments error")
 	assert.Equal(t, 3, len(assignment), "3 assignment should be returned")
 
-	assignment, err = google.ParseFile(bindingFile)
+	assignment, err = gcpbind.ParseFile(bindingFile)
 	assert.NoError(t, err, "Parsing Binding error")
 	assert.Equal(t, 1, len(assignment), "1 assignment should be returned")
 	assert.Equal(t, "", assignment[0].ResourceId, "should have no resource id value")
@@ -125,7 +125,7 @@ func PrintObj(data interface{}) {
 		fmt.Println(string(polBytes))
 		return
 
-	case []*google.BindAssignment, *google.BindAssignment:
+	case []*gcpbind.BindAssignment, *gcpbind.BindAssignment:
 		polBytes, err := json.MarshalIndent(pol, "", "  ")
 		if err != nil {
 			fmt.Println(err.Error())
@@ -150,7 +150,7 @@ func WriteObj(path string, data interface{}) error {
 		//	fmt.Println(string(polBytes))
 		return os.WriteFile(path, polBytes, 0644)
 
-	case []*google.BindAssignment, *google.BindAssignment:
+	case []*gcpbind.BindAssignment, *gcpbind.BindAssignment:
 		polBytes, err := json.MarshalIndent(pol, "", "  ")
 		if err != nil {
 			fmt.Println(err.Error())

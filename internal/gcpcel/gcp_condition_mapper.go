@@ -1,4 +1,4 @@
-package conditionsgoogle
+package gcpcel
 
 /*
  Condition mapper for Google IAM - See: https://cloud.google.com/iam/docs/conditions-overview
@@ -11,8 +11,8 @@ import (
 
 	celv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/access_loggers/filters/cel/v3"
 	"github.com/google/cel-go/cel"
-	"github.com/hexa-org/policy-mapper/internal/conditions"
 	"github.com/hexa-org/policy-mapper/internal/filter"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
@@ -72,7 +72,7 @@ func (mapper *GoogleConditionMapper) mapFilterInternal(ast *filter.Expression, i
 		attrExpression := deref.(filter.AttributeExpression)
 		return mapper.mapFilterAttrExpr(&attrExpression)
 	}
-	//return mapper.mapFilterValuePath(deref.(filter.ValuePathExpression))
+	// return mapper.mapFilterValuePath(deref.(filter.ValuePathExpression))
 }
 
 /*
@@ -234,7 +234,7 @@ func (mapper *GoogleConditionMapper) mapCelExpr(expression *expr.Expr, isChild b
 	switch v := kind.(type) {
 	case *expr.Expr_SelectExpr:
 		return mapper.mapSelectExpr(v)
-	//case *expr.Expr_ComprehensionExpr:
+	// case *expr.Expr_ComprehensionExpr:
 	//	return nil, errors.New("unimplemented CEL 'comprehension expression' not implemented. ")
 	default:
 		msg := fmt.Sprintf("unimplemented CEL expression: %s", expression.String())
@@ -269,7 +269,7 @@ func (mapper *GoogleConditionMapper) mapCallExpr(expression *expr.Expr_Call, isC
 	case "_||_":
 		return mapper.mapCelLogical(expression.Args, false, isChild)
 	case "_!_", "!_":
-		return mapper.mapCelNot(expression.Args, isChild), nil //was false
+		return mapper.mapCelNot(expression.Args, isChild), nil // was false
 	case "_==_":
 		return mapper.mapCelAttrCompare(expression.Args, filter.EQ)
 	case "_!=_":
@@ -297,7 +297,7 @@ func (mapper *GoogleConditionMapper) mapCelAttrFunction(expression *expr.Expr_Ca
 	target := expression.GetTarget()
 	selection := target.GetSelectExpr()
 	operand := selection.GetOperand()
-	//subattr := selection.Field
+	// subattr := selection.Field
 	name := operand.GetIdentExpr().GetName()
 	var path string
 	if name == "" {
@@ -337,7 +337,7 @@ func (mapper *GoogleConditionMapper) mapCelAttrFunction(expression *expr.Expr_Ca
 }
 
 func (mapper *GoogleConditionMapper) mapCelAttrCompare(expressions []*expr.Expr, operator filter.CompareOperator) (filter.Expression, error) {
-	//target :=
+	// target :=
 
 	path := ""
 	isNot := false
@@ -418,7 +418,7 @@ func (mapper *GoogleConditionMapper) mapCelLogical(expressions []*expr.Expr, isA
 
 	}
 
-	//Collapse all the way down to 1 filter
+	// Collapse all the way down to 1 filter
 	for len(filters) > 1 {
 		i := len(filters)
 		subFilter := filter.LogicalExpression{

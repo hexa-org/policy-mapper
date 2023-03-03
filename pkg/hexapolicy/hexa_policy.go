@@ -1,7 +1,7 @@
 package hexapolicy
 
 import (
-	"github.com/hexa-org/policy-mapper/internal/conditions"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
 )
 
 const (
@@ -15,6 +15,16 @@ const (
 
 type Policies struct {
 	Policies []PolicyInfo `json:"policies"`
+}
+
+func (p *Policies) AddPolicy(info PolicyInfo) {
+	p.Policies = append(p.Policies, info)
+}
+
+func (p *Policies) AddPolicies(policies Policies) {
+	for _, v := range policies.Policies {
+		p.AddPolicy(v)
+	}
 }
 
 type PolicyInfo struct {
