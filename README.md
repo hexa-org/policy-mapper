@@ -2,7 +2,14 @@
 
 This beta project provides the ability to map and support IDQL access policy to and from platforms that support a policy language format.
 
-The goal of this package is to provide a simple way to take policies of different forms, parse them, map them and produce
+## Development Note
+**_Note: This branch is currently under development and documentation needs to be updated._**
+The current branch uses replace commands in each module to direct the go compiler to load locally
+Use build.sh to build the project as go build ./... only builds the root go.mod
+
+## Introduction
+
+The goal of this project is to provide a simple way to take policies of different forms, parse them, map them and produce
 the translated from. This package uses [IDQL Policy](https://github.com/hexa-org/policy/blob/main/specs/IDQL-core-specification.md) as the neutral representation format.
 
 
@@ -30,9 +37,7 @@ Install the following dependencies.
 - Clone the project and run the following in the terminal window:
 ```shell
 git clone https://github.com/hexa-org/policy-mapper.git
-cd policy-mapTool
-go mod download
-go mod tidy
+sh ./build.sh
 ```
 
 See [here](DEMO.md) more instructions on how to run the hexaMapper command line utility.

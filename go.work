@@ -3,7 +3,7 @@ go 1.19
 use (
 	.
 	hexaIdql
+	mapper/conditionLangs/gcpcel
 	mapper/formats/awsCedar
 	mapper/formats/gcpBind
-	mapper/conditionLangs/gcpcel
 )
