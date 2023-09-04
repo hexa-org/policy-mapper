@@ -1,0 +1,9 @@
+go 1.19
+
+use (
+	.
+	hexaIdql
+	mapper/formats/awsCedar
+	mapper/formats/gcpBind
+	mapper/conditionLangs/gcpcel
+)
