@@ -30,7 +30,7 @@ Install the following dependencies.
 - Clone the project and run the following in the terminal window:
 ```shell
 git clone https://github.com/hexa-org/policy-mapper.git
-cd policy-mapper
+cd policy-mapTool
 go mod download
 go mod tidy
 ```
@@ -77,7 +77,7 @@ package main
 
 import (
 	"fmt"
-	policysupport "github.com/hexa-org/policy-mapper/policySupport"
+	policysupport "github.com/hexa-org/policy-mapTool/policySupport"
 )
 
 func main() {

@@ -4,10 +4,10 @@ After cloning the project, complete the following to build the command
 
 ```shell
 git clone https://github.com/hexa-org/policy-mapper.git
-cd policy-mapper
+cd policy-mapTool
 go mod download
 go mod tidy
-cd cmd/mapper
+cd cmd/mapTool
 go build
 ```
 
@@ -17,7 +17,7 @@ This will build the executable hexaMapper.
 ## Map to AWS Cedar
 
 ```shell
-./mapper -t=awscedar examples/idqlAlice.json
+./mapTool -t=awscedar examples/idqlAlice.json
 ```
 
 This returns the result:
@@ -37,7 +37,7 @@ when { resource in "Account:stacey" };
 
 ## Map To Google Bind
 ```shell
-./mapper -t=gcpBind examples/idqlAlice.json
+./mapTool -t=gcpBind examples/idqlAlice.json
 ```
 
 ```json
@@ -79,7 +79,7 @@ resource.tag == "private" };
 ```
 
 ```shell
-./mapper -t=awsCedar -p examples/cedarSingle.txt
+./mapTool -t=awsCedar -p examples/cedarSingle.txt
 ```
 
 ```json
