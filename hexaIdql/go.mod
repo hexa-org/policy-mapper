@@ -1,6 +1,6 @@
 module github.com/hexa-org/policy-mapper/hexaIdql
 
-go 1.21
+go 1.19
 
 require (
 	github.com/alecthomas/assert/v2 v2.3.0
