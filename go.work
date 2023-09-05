@@ -1,4 +1,4 @@
-go 1.21
+go 1.19
 
 // NOTE: This file MUST be removed from Github prior to releasing!  Facilitates local development environment only
 

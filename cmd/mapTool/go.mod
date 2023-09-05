@@ -1,6 +1,6 @@
 module github.com/hexa-org/policy-mapper/cmd/mapTool-v0.6.0
 
-go 1.21
+go 1.19
 
 require (
 	github.com/hexa-org/policy-mapper/hexaIdql v0.6.0
