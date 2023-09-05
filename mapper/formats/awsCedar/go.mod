@@ -1,15 +1,13 @@
-module github.com/hexa-org/policy-mapper/mapper/formats/awsCedar
+module github.com/hexa-org/policy-mapper/mapper/formats/awsCedar-v0.6.0
 
-go 1.19
-
-replace github.com/hexa-org/policy-mapper/hexaIdql => ../../../hexaIdql
-
-replace github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel => ../../conditionLangs/gcpcel
+go 1.21
 
 require (
+	github.com/hexa-org/policy-mapper/hexaIdql v0.6.0
+	github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.6.0
+
 	github.com/alecthomas/participle/v2 v2.0.0
-	github.com/hexa-org/policy-mapper/hexaIdql v0.0.0-00010101000000-000000000000
-	github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.0.0-00010101000000-000000000000
+
 	github.com/stretchr/testify v1.8.4
 )
 
