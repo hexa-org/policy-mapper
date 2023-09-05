@@ -1,13 +1,11 @@
-module github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel
+module github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel-v0.6.0
 
-go 1.19
-
-replace github.com/hexa-org/policy-mapper/hexaIdql => ../../../hexaIdql
+go 1.21
 
 require (
 	github.com/envoyproxy/go-control-plane v0.11.1
 	github.com/google/cel-go v0.18.0
-	github.com/hexa-org/policy-mapper/hexaIdql v0.0.0-00010101000000-000000000000
+	github.com/hexa-org/policy-mapper/hexaIdql v0.6.0
 	github.com/stretchr/testify v1.8.4
 	google.golang.org/genproto/googleapis/api v0.0.0-20230822172742-b8732ec3820d
 )
