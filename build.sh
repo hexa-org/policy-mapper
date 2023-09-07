@@ -1,8 +1,7 @@
 echo "Building 5 sub-modules in workspace..."
 
 doTest () {
-  if [ "$test" == "Y" ]
-  then
+  if [ "$test" = 'Y' ];then
     echo "   running tests..."
     go test ./...
   fi
