@@ -9,12 +9,7 @@ jobs:
         with:
           go-version: '^1.19'
           check-latest: true
-          cache-dependency-path: |
-            cmd/mapTool/go.sum
-           	hexaIdql/go.sum
-           	mapper/conditionLangs/gcpcel/go.sum
-           	mapper/formats/awsCedar/go.sum
-           	mapper/formats/gcpBind /go.sum
+          cache-dependency-path: "**/*.sum"
       - name: test
         run: |
           sh ./build.sh -t
