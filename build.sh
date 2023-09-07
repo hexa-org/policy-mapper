@@ -1,6 +1,6 @@
 echo "Building 5 sub-modules in workspace..."
 
-function doTest () {
+function doTest {
   if [ "$test" == "Y" ]
   then
     echo "   running tests..."
