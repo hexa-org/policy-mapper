@@ -1,4 +1,4 @@
-module github.com/hexa-org/policy-mapper/mapper/formats/gcpBind-v0.6.0
+module github.com/hexa-org/policy-mapper/mapper/formats/gcpBind
 
 go 1.19
 
