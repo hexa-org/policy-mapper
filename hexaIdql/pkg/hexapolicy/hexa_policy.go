@@ -27,6 +27,10 @@ func (p *Policies) AddPolicies(policies Policies) {
 	}
 }
 
+type PolicyInfoSaurabh struct {
+	Name string
+}
+
 type PolicyInfo struct {
 	Meta      MetaInfo                  `validate:"required"`
 	Subject   SubjectInfo               `validate:"required"`

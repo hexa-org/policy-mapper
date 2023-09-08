@@ -40,6 +40,14 @@ git clone https://github.com/hexa-org/policy-mapper.git
 sh ./build.sh
 ```
 
+### Tidy up and run tests
+```shell
+cd policy-mapper
+go list -f '{{.Dir}}' -m | xargs -L1 go mod tidy -C
+go work sync
+go list -f '{{.Dir}}/...' -m | xargs go test
+```
+
 See [here](DEMO.md) more instructions on how to run the hexaMapper command line utility.
 
 ## Using Hexa-Mapper in Go Projects
