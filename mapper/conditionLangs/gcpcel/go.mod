@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/envoyproxy/go-control-plane v0.11.1
 	github.com/google/cel-go v0.18.0
-	github.com/hexa-org/policy-mapper/hexaIdql v0.0.0-20230908031135-56181d2b5c41
+	github.com/hexa-org/policy-mapper/hexaIdql v0.6.0-alpha.3
 	github.com/stretchr/testify v1.8.4
 	google.golang.org/genproto/googleapis/api v0.0.0-20230822172742-b8732ec3820d
 )
