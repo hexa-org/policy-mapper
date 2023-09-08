@@ -3,10 +3,15 @@ module github.com/hexa-org/policy-mapper/mapper/formats/gcpBind
 go 1.19
 
 require (
-	github.com/hexa-org/policy-mapper/hexaIdql v0.6.0
-	github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.6.0
+	//github.com/hexa-org/policy-mapper/hexaIdql v0.6.0
+	//github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.6.0
 	github.com/stretchr/testify v1.8.4
 	google.golang.org/api v0.126.0
+)
+
+require (
+	github.com/hexa-org/policy-mapper/hexaIdql v0.0.0-20230908031135-56181d2b5c41
+	github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.0.0-20230908031416-eee2e95f967f
 )
 
 require (
