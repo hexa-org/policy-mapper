@@ -42,8 +42,9 @@ require (
 )
 
 require (
-	github.com/hexa-org/policy-mapper/hexaIdql v0.0.0-20230908031135-56181d2b5c41 // indirect
-	github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.0.0-20230908031416-eee2e95f967f // indirect
-	github.com/hexa-org/policy-mapper/mapper/formats/awsCedar v0.0.0-20230908031918-2c4fe36a8f61 // indirect
-	github.com/hexa-org/policy-mapper/mapper/formats/gcpBind v0.0.0-20230908031918-2c4fe36a8f61 // indirect
+	github.com/hexa-org/policy-mapper/hexaIdql v0.0.0-20230908031135-56181d2b5c41
+	github.com/hexa-org/policy-mapper/mapper/formats/awsCedar v0.0.0-20230908031918-2c4fe36a8f61
+	github.com/hexa-org/policy-mapper/mapper/formats/gcpBind v0.0.0-20230908031918-2c4fe36a8f61
 )
+
+require github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.0.0-20230908031416-eee2e95f967f // indirect
