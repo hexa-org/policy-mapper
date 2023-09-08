@@ -76,6 +76,14 @@ github.com/googleapis/enterprise-certificate-proxy v0.2.3/go.mod h1:AwSRAtLfXpU5
 github.com/googleapis/gax-go/v2 v2.11.0 h1:9V9PWXEsWnPpQhu/PeQIkS4eGzMlTLGgt80cUUI8Ki4=
 github.com/googleapis/gax-go/v2 v2.11.0/go.mod h1:DxmR61SGKkGLa2xigwuZIQpkCI2S5iydzRfb3peWZJI=
 github.com/grpc-ecosystem/grpc-gateway v1.16.0/go.mod h1:BDjrQk3hbvj6Nolgz8mAMFbcEtjT1g+wF4CSlocrBnw=
+github.com/hexa-org/policy-mapper/hexaIdql v0.0.0-20230908031135-56181d2b5c41 h1:aK9inuPOniXyAB/3ZubURvmMVscaB8cJOZ52brcW82U=
+github.com/hexa-org/policy-mapper/hexaIdql v0.0.0-20230908031135-56181d2b5c41/go.mod h1:mqzC3LjDSVimn8u7s98JWJjrYUm4fCR7ZlMsqI/7ABM=
+github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.0.0-20230908031416-eee2e95f967f h1:IK+OA83da3mR15cDvtVK7yXEIUlnc7YuaF1UJcMu/DA=
+github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.0.0-20230908031416-eee2e95f967f/go.mod h1:J96P1ZW7CrNvl6etkaGh0ZLLamk12CaKe22I+r31l5E=
+github.com/hexa-org/policy-mapper/mapper/formats/awsCedar v0.0.0-20230908031918-2c4fe36a8f61 h1:Nel6oKvEf/7tCxLaK19ffSQ/jytYfyma2YoBlGIj1Bc=
+github.com/hexa-org/policy-mapper/mapper/formats/awsCedar v0.0.0-20230908031918-2c4fe36a8f61/go.mod h1:0bsRqFpsoOgb0WSfpFoewK1iUtXU4HRCNWoahz+SkJM=
+github.com/hexa-org/policy-mapper/mapper/formats/gcpBind v0.0.0-20230908031918-2c4fe36a8f61 h1:euDJVnAsFtuvJaOgtonbD6ZiPpi5TJvVCmJaIzvHGKc=
+github.com/hexa-org/policy-mapper/mapper/formats/gcpBind v0.0.0-20230908031918-2c4fe36a8f61/go.mod h1:ln836c2XrQT7iSWSSJQFRIlINVeYgojif6GF1VKsnw0=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
