@@ -1,13 +1,11 @@
-module github.com/hexa-org/policy-mapper/cmd/mapTool-v0.6.0
+module github.com/hexa-org/policy-mapper/cmd/mapTool
 
 go 1.19
 
-require (
-	github.com/hexa-org/policy-mapper/hexaIdql v0.6.0
-	github.com/hexa-org/policy-mapper/mapper/formats/awsCedar v0.6.0
-	github.com/hexa-org/policy-mapper/mapper/formats/gcpBind v0.6.0
-	github.com/stretchr/testify v1.8.4
-)
+//github.com/hexa-org/policy-mapper/hexaIdql v0.6.0
+//github.com/hexa-org/policy-mapper/mapper/formats/awsCedar v0.6.0
+//github.com/hexa-org/policy-mapper/mapper/formats/gcpBind v0.6.0
+require github.com/stretchr/testify v1.8.4
 
 require (
 	cloud.google.com/go/compute v1.23.0 // indirect
@@ -24,7 +22,7 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.11.0 // indirect
-	github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.6.0 // indirect
+	//github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.6.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stoewer/go-strcase v1.2.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
@@ -41,4 +39,11 @@ require (
 	google.golang.org/grpc v1.57.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+
+require (
+	github.com/hexa-org/policy-mapper/hexaIdql v0.0.0-20230908031135-56181d2b5c41 // indirect
+	github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.0.0-20230908031416-eee2e95f967f // indirect
+	github.com/hexa-org/policy-mapper/mapper/formats/awsCedar v0.0.0-20230908031918-2c4fe36a8f61 // indirect
+	github.com/hexa-org/policy-mapper/mapper/formats/gcpBind v0.0.0-20230908031918-2c4fe36a8f61 // indirect
 )
