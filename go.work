@@ -10,10 +10,10 @@ use (
 	./mapper/formats/gcpBind
 )
 
-replace github.com/hexa-org/policy-mapper/hexaIdql v0.6.0 => ./hexaIdql
+//replace github.com/hexa-org/policy-mapper/hexaIdql v0.6.0 => ./hexaIdql
 
-replace github.com/hexa-org/policy-mapper/mapper/formats/gcpBind v0.6.0 => ./mapper/formats/gcpBind
+//replace github.com/hexa-org/policy-mapper/mapper/formats/gcpBind v0.6.0 => ./mapper/formats/gcpBind
 
-replace github.com/hexa-org/policy-mapper/mapper/formats/awsCedar v0.6.0 => ./mapper/formats/awsCedar
+//replace github.com/hexa-org/policy-mapper/mapper/formats/awsCedar v0.6.0 => ./mapper/formats/awsCedar
 
-replace github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.6.0 => ./mapper/conditionLangs/gcpcel
+//replace github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.6.0 => ./mapper/conditionLangs/gcpcel
