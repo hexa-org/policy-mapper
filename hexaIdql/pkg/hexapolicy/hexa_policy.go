@@ -31,6 +31,10 @@ type PolicyInfoSaurabh struct {
 	Name string
 }
 
+type PolicyInfoSaurabhV2 struct {
+	Name string
+}
+
 type PolicyInfo struct {
 	Meta      MetaInfo                  `validate:"required"`
 	Subject   SubjectInfo               `validate:"required"`

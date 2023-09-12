@@ -1,70 +1,75 @@
 package main
 
 import (
-    "os"
-    "path/filepath"
-    "testing"
+	"fmt"
+	"github.com/hexa-org/policy-mapper/hexaIdql/pkg/hexapolicy"
+	"os"
+	"path/filepath"
+	"testing"
 
-    "github.com/hexa-org/policy-mapper/hexaIdql/pkg/hexapolicysupport"
-    "github.com/stretchr/testify/assert"
+	"github.com/hexa-org/policy-mapper/hexaIdql/pkg/hexapolicysupport"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIdqlAndCedar(t *testing.T) {
-    // Map a simple file over to Cedar and then parse it back to Idql to test mapping in both directions
-    testIdqlFilename := "examples/idqlAlice.json"
+	x := hexapolicy.PolicyInfoSaurabhV2{Name: "Saurabh"}
+	fmt.Println(x)
 
-    target = "awsCedar"
+	// Map a simple file over to Cedar and then parse it back to Idql to test mapping in both directions
+	testIdqlFilename := "examples/idqlAlice.json"
 
-    dir, _ := os.MkdirTemp(os.TempDir(), "hexaMapper-*")
+	target = "awsCedar"
 
-    output = filepath.Join(dir, "aliceOut.txt")
+	dir, _ := os.MkdirTemp(os.TempDir(), "hexaMapper-*")
 
-    idqlToPlatform(testIdqlFilename)
+	output = filepath.Join(dir, "aliceOut.txt")
 
-    cedarFile := output
+	idqlToPlatform(testIdqlFilename)
 
-    output = filepath.Join(dir, "idqlAliceBack.json")
+	cedarFile := output
 
-    platformToIdql(cedarFile)
+	output = filepath.Join(dir, "idqlAliceBack.json")
 
-    idqlResBytes, err := os.ReadFile(output)
-    assert.NoError(t, err, "Error reading idql output file")
-    origBytes, _ := os.ReadFile(testIdqlFilename)
+	platformToIdql(cedarFile)
 
-    assert.Equal(t, len(idqlResBytes), len(origBytes), "Original and result are the same")
+	idqlResBytes, err := os.ReadFile(output)
+	assert.NoError(t, err, "Error reading idql output file")
+	origBytes, _ := os.ReadFile(testIdqlFilename)
 
-    os.Remove(cedarFile)
-    os.Remove(output)
-    os.Remove(dir)
+	assert.Equal(t, len(idqlResBytes), len(origBytes), "Original and result are the same")
+
+	os.Remove(cedarFile)
+	os.Remove(output)
+	os.Remove(dir)
 }
 
 func TestIdqlAndGcp(t *testing.T) {
-    // Map a simple file over to GCP and then parse it back to Idql to test mapping in both directions
-    // This also exercises the condition mapper
-    testIdqlFilename := "examples/example_idql.json"
+	// Map a simple file over to GCP and then parse it back to Idql to test mapping in both directions
+	// This also exercises the condition mapper
+	testIdqlFilename := "examples/example_idql.json"
 
-    target = "gcpBind"
+	target = "gcpBind"
 
-    dir, _ := os.MkdirTemp(os.TempDir(), "hexaMapper-*")
+	dir, _ := os.MkdirTemp(os.TempDir(), "hexaMapper-*")
 
-    output = filepath.Join(dir, "gcpOut.json")
+	output = filepath.Join(dir, "gcpOut.json")
 
-    idqlToPlatform(testIdqlFilename)
+	idqlToPlatform(testIdqlFilename)
 
-    gcpFile := output
+	gcpFile := output
 
-    output = filepath.Join(dir, "idqlGcpBack.json")
+	output = filepath.Join(dir, "idqlGcpBack.json")
 
-    platformToIdql(gcpFile)
+	platformToIdql(gcpFile)
 
-    policiesOrig, err := hexapolicysupport.ParsePolicyFile(testIdqlFilename)
-    assert.NoError(t, err, "Error parsing original policy file")
-    policiesRoundTrip, err := hexapolicysupport.ParsePolicyFile(output)
-    assert.NoError(t, err, "Error parsing round trip policy file")
+	policiesOrig, err := hexapolicysupport.ParsePolicyFile(testIdqlFilename)
+	assert.NoError(t, err, "Error parsing original policy file")
+	policiesRoundTrip, err := hexapolicysupport.ParsePolicyFile(output)
+	assert.NoError(t, err, "Error parsing round trip policy file")
 
-    assert.Equal(t, len(policiesOrig), len(policiesRoundTrip), "Original and result are the same")
+	assert.Equal(t, len(policiesOrig), len(policiesRoundTrip), "Original and result are the same")
 
-    os.Remove(gcpFile)
-    os.Remove(output)
-    os.Remove(dir)
+	os.Remove(gcpFile)
+	os.Remove(output)
+	os.Remove(dir)
 }
