@@ -33,7 +33,7 @@ mapTool -t=<awsCedar|gcpbind> [-parse] [-o=<output>] <input>
 `
 
 func main() {
-	x := hexapolicy.PolicyInfoSaurabh{Name: "Saurabh"}
+	x := hexapolicy.PolicyInfoSaurabhV2{Name: "Saurabh"}
 	fmt.Println(x)
 
 	isForward := true
