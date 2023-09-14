@@ -1,8 +1,0 @@
-name: 'CodeQL Config File'
-
-paths:
-  - cmd/mapTool
-  - hexaIdql/
-  - mapper/conditionLangs/gcpcel
-  - mapper/formats/awsCedar
-  - mapper/formats/gcpBind
