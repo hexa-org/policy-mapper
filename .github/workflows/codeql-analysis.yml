@@ -19,12 +19,7 @@ jobs:
         uses: github/codeql-action/init@v2
         with:
           languages: ${{ matrix.language }}
-          paths:
-            - cmd/mapTool
-            - hexaIdql/
-            - mapper/conditionLangs/gcpcel
-            - mapper/formats/awsCedar
-            - mapper/formats/gcpBind
+          config-file: ./.github/config/mod-config.yml
       - name: Autobuild
         uses: github/codeql-action/autobuild@v2
       - name: Perform CodeQL Analysis
