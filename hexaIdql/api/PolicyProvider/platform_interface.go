@@ -14,9 +14,15 @@ new Hexa Provider must implement this interface.
 */
 type Provider interface {
 	Name() string
-	DiscoverPolicyContexts(IntegrationInfo) ([]PolicyContext, error)
-	GetPolicyInfo(IntegrationInfo, PolicyContext) (*hexapolicy.Policies, error)
-	SetPolicyInfo(IntegrationInfo, PolicyContext, hexapolicy.Policies) (status int, foundErr error)
+
+	// DiscoverApplications returns the available platform workspaces/projects available based on IntegrationInfo
+	DiscoverApplications(IntegrationInfo) ([]ApplicationInfo, error)
+
+	// GetPolicyInfo retrieves all the available policies within an ApplicationInfo project
+	GetPolicyInfo(IntegrationInfo, ApplicationInfo) ([]hexapolicy.PolicyInfo, error)
+
+	// SetPolicyInfo updates the provided policies within the ApplicationInfo project
+	SetPolicyInfo(IntegrationInfo, ApplicationInfo, []hexapolicy.PolicyInfo) (status int, foundErr error)
 }
 
 /*
@@ -38,10 +44,10 @@ type ApplicationInfo struct {
 }
 
 /*
-PolicyContext is an extension of ApplicationInfo and it is used where platforms administer policy directly to
-a resource. For example, GCP can apply policy to an IAP Proxy Frontend, Backend, etc.
+PolicyContext is an extension of ApplicationInfo and defines a Policy Application Point. In some systems this
+may be the resource object identified within a policy or it may a common PAP.
 */
 type PolicyContext struct {
 	ApplicationInfo
-	Resource hexapolicy.ObjectInfo // Resource corresponds to an IDQL object resource where policy may be applied
+	PapResource []hexapolicy.ObjectInfo // Identifies the deployment point for policy. In some cases this is also the Hexa Policy Object
 }
