@@ -1,6 +1,8 @@
 package hexapolicy
 
 import (
+	"time"
+
 	"github.com/hexa-org/policy-mapper/hexaIdql/pkg/hexapolicy/conditions"
 )
 
@@ -44,7 +46,11 @@ type PolicyInfo struct {
 }
 
 type MetaInfo struct {
-	Version string `validate:"required"`
+	Version     string       `validate:"required"`
+	SourceMeta  *interface{} `json:",omitempty"` // Logistical information required to map in source provider, e.g. type, identifiers
+	Description string       `json:",omitempty"`
+	Created     *time.Time   `json:",omitempty"`
+	Modified    *time.Time   `json:",omitempty"`
 }
 
 type ActionInfo struct {
