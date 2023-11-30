@@ -11,8 +11,8 @@ require (
 )
 
 require (
-	github.com/hexa-org/policy-mapper/hexaIdql v0.6.0-alpha.3
-	github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.6.0-alpha.3
+	github.com/hexa-org/policy-mapper/hexaIdql v0.6.0-beta.1
+	github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.6.0-beta.1
 )
 
 require (
