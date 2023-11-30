@@ -1,6 +1,6 @@
 module github.com/hexa-org/policy-mapper/cmd/mapTool
 
-go 1.19
+go 1.20
 
 //github.com/hexa-org/policy-mapper/hexaIdql v0.6.0
 //github.com/hexa-org/policy-mapper/mapper/formats/awsCedar v0.6.0
