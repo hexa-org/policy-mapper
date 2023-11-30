@@ -1,0 +1,5 @@
+permit(
+    principal == ?principal,
+    action in [hexa_avp::Action::"ReadAccount"],
+    resource == ?resource
+);
