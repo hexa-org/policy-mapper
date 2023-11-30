@@ -1,6 +1,6 @@
 module github.com/hexa-org/policy-mapper/mapper/formats/gcpBind
 
-go 1.19
+go 1.20
 
 require (
 	github.com/hexa-org/policy-mapper/hexaIdql v0.6.0-beta.1
