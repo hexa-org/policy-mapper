@@ -8,6 +8,12 @@ go 1.19
 require github.com/stretchr/testify v1.8.4
 
 require (
+	github.com/hexa-org/policy-mapper/hexaIdql v0.6.0-beta.1
+	github.com/hexa-org/policy-mapper/mapper/formats/awsCedar v0.6.0-beta.1
+	github.com/hexa-org/policy-mapper/mapper/formats/gcpBind v0.6.0-beta.1
+)
+
+require (
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	github.com/alecthomas/participle/v2 v2.0.0 // indirect
@@ -41,10 +47,5 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-require (
-	github.com/hexa-org/policy-mapper/hexaIdql v0.6.0-alpha.3
-	github.com/hexa-org/policy-mapper/mapper/formats/awsCedar v0.6.0-alpha.3
-	github.com/hexa-org/policy-mapper/mapper/formats/gcpBind v0.6.0-alpha.3
-)
 
-require github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.6.0-alpha.3 // indirect
+
