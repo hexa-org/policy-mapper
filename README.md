@@ -33,7 +33,7 @@ For general introduction to Hexa, please see the [Policy-Orchestrator ReadMe](ht
 
 Install the following dependencies.
 
-- [Go 1.19](https://go.dev)
+- [go 1.20](https://go.dev)
 - Clone the project and run the following in the terminal window:
 ```shell
 git clone https://github.com/hexa-org/policy-mapper.git
