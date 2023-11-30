@@ -3,36 +3,26 @@ module github.com/hexa-org/policy-mapper/mapper/formats/gcpBind
 go 1.19
 
 require (
-	//github.com/hexa-org/policy-mapper/hexaIdql v0.6.0
-	//github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.6.0
+	github.com/hexa-org/policy-mapper/hexaIdql v0.6.0-beta.1
+	github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.6.0-beta.1
 	github.com/stretchr/testify v1.8.4
 	google.golang.org/api v0.126.0
 )
 
 require (
-	github.com/hexa-org/policy-mapper/hexaIdql v0.6.0-alpha.3
-	github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel v0.6.0-alpha.3
-)
-
-require (
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
-	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect
-	github.com/cncf/xds/go v0.0.0-20230607035331-e9ce68804cb4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/envoyproxy/go-control-plane v0.11.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/cel-go v0.18.0 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.11.0 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/stoewer/go-strcase v1.2.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
-	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
