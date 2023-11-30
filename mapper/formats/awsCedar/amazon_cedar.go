@@ -306,7 +306,7 @@ func (c *CedarPolicyMapper) MapCedarPolicyToIdql(policy *CedarPolicy) (*hexapoli
 		}
 	}
 
-	conditions := make([]string, 0)
+	conditionsClauses := make([]string, 0)
 	for _, v := range policy.Conditions {
 		cel := string(*v.Condition)
 		// cel mapTool won't tolerate ::
@@ -317,6 +317,10 @@ func (c *CedarPolicyMapper) MapCedarPolicyToIdql(policy *CedarPolicy) (*hexapoli
 			cel = strings.ReplaceAll(cel, "Domain::\"", "\"Domain:")
 			// cel = strings.ReplaceAll(cel, " in ", " co ") // this is just temporary
 		}
+		if strings.EqualFold(cel, "true") {
+			// just ignore it
+			continue
+		}
 
 		idqlCond, err := c.ConditionMapper.MapProviderToCondition(cel)
 		if err != nil {
@@ -324,24 +328,24 @@ func (c *CedarPolicyMapper) MapCedarPolicyToIdql(policy *CedarPolicy) (*hexapoli
 		}
 
 		if v.Type == WHEN {
-			conditions = append(conditions, idqlCond.Rule)
+			conditionsClauses = append(conditionsClauses, idqlCond.Rule)
 		} else {
-			conditions = append(conditions, "not("+idqlCond.Rule+")")
+			conditionsClauses = append(conditionsClauses, "not("+idqlCond.Rule+")")
 		}
 	}
 
 	var condInfo *policyCond.ConditionInfo
-	if len(conditions) == 0 {
+	if len(conditionsClauses) == 0 {
 		condInfo = nil
 	} else {
-		if len(conditions) == 1 {
+		if len(conditionsClauses) == 1 {
 			condInfo = &policyCond.ConditionInfo{
-				Rule:   conditions[0],
+				Rule:   conditionsClauses[0],
 				Action: PERMIT,
 			}
 		} else {
 			merge := ""
-			for i, v := range conditions {
+			for i, v := range conditionsClauses {
 				if i == 0 {
 					merge = "(" + v + ")"
 				} else {
