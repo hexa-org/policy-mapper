@@ -161,8 +161,9 @@ func (c *ConditionalClause) String() string {
 
 type PrincipalExpression struct {
 	Operator string `parser:"@('=''='|'in'|'IN')"` // `@("=" "="|"in"|"IN")`
-	// Operator string `parser:"@('=='|'in'|'IN')"`
-	Entity string `parser:"@(Ident|':'|String)+"`
+	// IsTemplate bool   `@"?principal"?`               // `@"?"?`
+	// IsTemplate bool   `parser:"@('?' 'principal')?"`
+	Entity string `parser:"@(Ident|':'|String|'?''principal')+"`
 }
 
 func (e *PrincipalExpression) String() string {
@@ -174,8 +175,8 @@ func (e *PrincipalExpression) String() string {
 
 type ResourceExpression struct {
 	Operator string `parser:"@('=''='|'in'|'IN')"`
-	// Operator string `parser:"@('=='|'in'|'IN')"`
-	Entity string `parser:"@(Ident|':'|String)+"`
+	// IsTemplate bool   `@"?resource"?`
+	Entity string `parser:"@(Ident|':'|String|'?''resource')+"`
 }
 
 func (e *ResourceExpression) String() string {

@@ -71,6 +71,31 @@ func TestParserSingle(t *testing.T) {
 
 }
 
+func TestParserTemplate(t *testing.T) {
+	file := getTestFile("../test/cedarTemplate.txt")
+	cedarBytes, err := os.ReadFile(file)
+	if err != nil {
+		assert.Fail(t, "Error opening cedar test file: "+err.Error())
+	}
+
+	cedarAst, err := cedarMapper.ParseCedarBytes(cedarBytes)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	assert.NoError(t, err)
+
+	fmt.Printf("Polcies returned: %v\n", len(cedarAst.Policies))
+
+	fmt.Printf("%v Cedar Policies Returned\n", len(cedarAst.Policies))
+	for k, v := range cedarAst.Policies {
+		fmt.Printf("Policy# %v\n", k)
+		polString := v.String()
+		fmt.Println(polString)
+	}
+
+	assert.Equal(t, 1, len(cedarAst.Policies[0].Head.Actions.Actions), "Should be one action")
+}
+
 func TestParserMulti(t *testing.T) {
 
 	file := getTestFile("../test/cedarMulti.txt")
