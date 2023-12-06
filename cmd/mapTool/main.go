@@ -1,18 +1,19 @@
 package main
 
 import (
-	"encoding/json"
-	"flag"
-	"fmt"
-	"github.com/hexa-org/policy-mapper/hexaIdql/pkg/hexapolicy"
+    "encoding/json"
+    "flag"
+    "fmt"
 
-	"io"
-	"os"
-	"strings"
+    "github.com/hexa-org/policy-mapper/pkg/hexapolicy"
+    "github.com/hexa-org/policy-mapper/pkg/hexapolicysupport"
 
-	"github.com/hexa-org/policy-mapper/hexaIdql/pkg/hexapolicysupport"
-	"github.com/hexa-org/policy-mapper/mapper/formats/awsCedar"
-	"github.com/hexa-org/policy-mapper/mapper/formats/gcpBind"
+    "io"
+    "os"
+    "strings"
+
+    "github.com/hexa-org/policy-mapper/mapper/formats/awsCedar"
+    "github.com/hexa-org/policy-mapper/mapper/formats/gcpBind"
 )
 
 var helpFlag bool
@@ -33,122 +34,122 @@ mapTool -t=<awsCedar|gcpbind> [-parse] [-o=<output>] <input>
 `
 
 func main() {
-	x := hexapolicy.PolicyInfoSaurabhV2{Name: "Saurabh"}
-	fmt.Println(x)
+    x := hexapolicy.PolicyInfoSaurabhV2{Name: "Saurabh"}
+    fmt.Println(x)
 
-	isForward := true
-	flag.BoolVar(&helpFlag, "help", false, "Help information")
-	flag.BoolVar(&helpFlag, "h", false, "Help information")
-	flag.BoolVar(&revFlag, "p", false, "Map platform policy to IDQL")
-	flag.BoolVar(&revFlag, "parse", false, "Map platform policy to IDQL")
-	flag.StringVar(&output, "o", "", "Output path, default console")
-	flag.StringVar(&output, "output", "", "Output path, default console")
-	flag.StringVar(&target, "t", "", "Platform awsCedar|gcpbind")
-	flag.StringVar(&target, "target", "", "Platform awsCedar|gcpbind")
+    isForward := true
+    flag.BoolVar(&helpFlag, "help", false, "Help information")
+    flag.BoolVar(&helpFlag, "h", false, "Help information")
+    flag.BoolVar(&revFlag, "p", false, "Map platform policy to IDQL")
+    flag.BoolVar(&revFlag, "parse", false, "Map platform policy to IDQL")
+    flag.StringVar(&output, "o", "", "Output path, default console")
+    flag.StringVar(&output, "output", "", "Output path, default console")
+    flag.StringVar(&target, "t", "", "Platform awsCedar|gcpbind")
+    flag.StringVar(&target, "target", "", "Platform awsCedar|gcpbind")
 
-	flag.Parse()
+    flag.Parse()
 
-	input = flag.Arg(0)
-	fmt.Println("Input=\t" + input)
-	if helpFlag || target == "" || input == "" {
-		if target == "" {
-			fmt.Println("Error: Please provide a mapping platform target with the -t parameter.")
-		}
-		if input == "" {
-			fmt.Println("Error: No input source specified.")
-		}
-		fmt.Printf(helpText)
-		return
-	}
-	if revFlag {
-		isForward = false
-	}
+    input = flag.Arg(0)
+    fmt.Println("Input=\t" + input)
+    if helpFlag || target == "" || input == "" {
+        if target == "" {
+            fmt.Println("Error: Please provide a mapping platform target with the -t parameter.")
+        }
+        if input == "" {
+            fmt.Println("Error: No input source specified.")
+        }
+        fmt.Printf(helpText)
+        return
+    }
+    if revFlag {
+        isForward = false
+    }
 
-	if isForward {
-		idqlToPlatform(input)
-	} else {
-		platformToIdql(input)
-	}
+    if isForward {
+        idqlToPlatform(input)
+    } else {
+        platformToIdql(input)
+    }
 }
 
 func reportError(err error) {
-	fmt.Fprintf(os.Stderr, "error: %v\n", err)
-	os.Exit(1)
+    fmt.Fprintf(os.Stderr, "error: %v\n", err)
+    os.Exit(1)
 }
 
 func idqlToPlatform(input string) {
-	fmt.Println("Idql to " + target + " requested")
+    fmt.Println("Idql to " + target + " requested")
 
-	policies, err := hexapolicysupport.ParsePolicyFile(input)
-	if err != nil {
-		reportError(err)
-	}
+    policies, err := hexapolicysupport.ParsePolicyFile(input)
+    if err != nil {
+        reportError(err)
+    }
 
-	switch strings.ToLower(target) {
-	case "gcpbind":
-		gcpMapper := gcpBind.New(map[string]string{})
-		bindings := gcpMapper.MapPoliciesToBindings(policies)
-		MarshalJsonNoEscape(bindings, getOutput())
+    switch strings.ToLower(target) {
+    case "gcpbind":
+        gcpMapper := gcpBind.New(map[string]string{})
+        bindings := gcpMapper.MapPoliciesToBindings(policies)
+        MarshalJsonNoEscape(bindings, getOutput())
 
-	case "awscedar":
-		cMapper := awsCedar.New(map[string]string{})
+    case "awscedar":
+        cMapper := awsCedar.New(map[string]string{})
 
-		cedar, err := cMapper.MapPoliciesToCedar(policies)
-		if err != nil {
-			reportError(err)
-		}
-		out := getOutput()
-		for _, v := range cedar.Policies {
-			policy := v.String()
-			out.Write([]byte(policy))
-		}
-	}
+        cedar, err := cMapper.MapPoliciesToCedar(policies)
+        if err != nil {
+            reportError(err)
+        }
+        out := getOutput()
+        for _, v := range cedar.Policies {
+            policy := v.String()
+            out.Write([]byte(policy))
+        }
+    }
 }
 
 func platformToIdql(input string) {
-	fmt.Println(target + " to IDQL requested")
+    fmt.Println(target + " to IDQL requested")
 
-	switch strings.ToLower(target) {
-	case "gcpbind":
-		gcpMapper := gcpBind.New(map[string]string{})
-		assignments, err := gcpBind.ParseFile(input)
-		if err != nil {
-			reportError(err)
-		}
-		policies, err := gcpMapper.MapBindingAssignmentsToPolicy(assignments)
-		if err != nil {
-			reportError(err)
-		}
-		MarshalJsonNoEscape(policies, getOutput())
+    switch strings.ToLower(target) {
+    case "gcpbind":
+        gcpMapper := gcpBind.New(map[string]string{})
+        assignments, err := gcpBind.ParseFile(input)
+        if err != nil {
+            reportError(err)
+        }
+        policies, err := gcpMapper.MapBindingAssignmentsToPolicy(assignments)
+        if err != nil {
+            reportError(err)
+        }
+        MarshalJsonNoEscape(policies, getOutput())
 
-	case "awscedar":
-		cMapper := awsCedar.New(map[string]string{})
+    case "awscedar":
+        cMapper := awsCedar.New(map[string]string{})
 
-		policies, err := cMapper.ParseFile(input)
-		if err != nil {
-			reportError(err)
-		}
-		MarshalJsonNoEscape(policies, getOutput())
-	}
+        policies, err := cMapper.ParseFile(input)
+        if err != nil {
+            reportError(err)
+        }
+        MarshalJsonNoEscape(policies, getOutput())
+    }
 }
 
 func getOutput() io.Writer {
-	if output != "" {
-		out, err := os.Create(output)
-		if err != nil {
-			reportError(err)
-		}
-		return out
-	} else {
-		return os.Stdout
-	}
+    if output != "" {
+        out, err := os.Create(output)
+        if err != nil {
+            reportError(err)
+        }
+        return out
+    } else {
+        return os.Stdout
+    }
 }
 
 func MarshalJsonNoEscape(t interface{}, out io.Writer) error {
 
-	encoder := json.NewEncoder(out)
-	encoder.SetEscapeHTML(false)
-	encoder.SetIndent("", "  ")
-	err := encoder.Encode(t)
-	return err
+    encoder := json.NewEncoder(out)
+    encoder.SetEscapeHTML(false)
+    encoder.SetIndent("", "  ")
+    err := encoder.Encode(t)
+    return err
 }
