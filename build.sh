@@ -17,11 +17,11 @@ while getopts "t" OPTION; do
   esac
 done
 
-go work sync
+# go work sync
 
-echo "  hexaIdql."
+echo "  pkg."
 
-cd ./hexaIdql
+cd ./pkg
 go build ./...
 doTest
 cd ..
