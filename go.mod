@@ -1,6 +1,6 @@
 module github.com/hexa-org/policy-mapper
 
-go 1.21.0
+go 1.21
 
 require (
 	github.com/alecthomas/assert/v2 v2.4.1
