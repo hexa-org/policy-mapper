@@ -87,7 +87,7 @@ resource.tag == "private" };
   "policies": [
     {
       "Meta": {
-        "Version": "0.5"
+        "Version": "0.6"
       },
       "Actions": [
         {

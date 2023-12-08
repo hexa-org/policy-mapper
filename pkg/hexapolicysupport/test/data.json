@@ -2,7 +2,7 @@
   "policies": [
     {
       "meta": {
-        "version": "0.5"
+        "version": "0.6"
       },
       "actions": [
         {
@@ -25,7 +25,7 @@
     },
     {
       "meta": {
-        "version": "0.5"
+        "version": "0.6"
       },
       "actions": [
         {
@@ -48,7 +48,7 @@
     },
     {
       "meta": {
-        "version": "0.5"
+        "version": "0.6"
       },
       "actions": [
         {
@@ -73,7 +73,7 @@
     },
     {
       "meta": {
-        "version": "0.5"
+        "version": "0.6"
       },
       "actions": [
         {
