@@ -1,0 +1,164 @@
+{
+  "hexa_avp": {
+    "entityTypes": {
+      "account": {
+        "memberOfTypes": [],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "owners": {
+              "type": "Set",
+              "required": true,
+              "element": {
+                "type": "Entity",
+                "name": "User"
+              }
+            },
+            "id": {
+              "required": true,
+              "type": "String"
+            },
+            "type": {
+              "type": "String",
+              "required": false
+            },
+            "balance": {
+              "required": true,
+              "type": "Long"
+            }
+          }
+        }
+      },
+      "User": {
+        "shape": {
+          "attributes": {
+            "birthdate": {
+              "required": false,
+              "type": "String"
+            },
+            "address": {
+              "type": "String",
+              "required": false
+            },
+            "given_name": {
+              "type": "String",
+              "required": true
+            },
+            "preferred_username": {
+              "type": "String",
+              "required": false
+            },
+            "phone_number": {
+              "type": "String",
+              "required": false
+            },
+            "name": {
+              "type": "String",
+              "required": false
+            },
+            "middle_name": {
+              "type": "String",
+              "required": false
+            },
+            "family_name": {
+              "required": true,
+              "type": "String"
+            },
+            "email": {
+              "required": true,
+              "type": "String"
+            }
+          },
+          "type": "Record"
+        },
+        "memberOfTypes": []
+      }
+    },
+    "actions": {
+      "Transfer": {
+        "appliesTo": {
+          "context": {
+            "attributes": {},
+            "type": "Record"
+          },
+          "resourceTypes": [
+            "account"
+          ],
+          "principalTypes": [
+            "User"
+          ]
+        }
+      },
+      "DeleteAccount": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "context": {
+            "attributes": {},
+            "type": "Record"
+          },
+          "resourceTypes": [
+            "account"
+          ]
+        }
+      },
+      "Withdrawl": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "account"
+          ],
+          "context": {
+            "attributes": {},
+            "type": "Record"
+          }
+        }
+      },
+      "Deposit": {
+        "appliesTo": {
+          "resourceTypes": [
+            "account"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          },
+          "principalTypes": [
+            "User"
+          ]
+        }
+      },
+      "ReadAccount": {
+        "appliesTo": {
+          "context": {
+            "attributes": {},
+            "type": "Record"
+          },
+          "resourceTypes": [
+            "account"
+          ],
+          "principalTypes": [
+            "User"
+          ]
+        }
+      },
+      "UpdateAccount": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "context": {
+            "attributes": {},
+            "type": "Record"
+          },
+          "resourceTypes": [
+            "account"
+          ]
+        }
+      }
+    }
+  }
+}

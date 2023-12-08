@@ -1,0 +1,5 @@
+permit(
+  principal,
+  action in [hexa_avp::Action::"ReadAccount",hexa_avp::Action::"Transfer",hexa_avp::Action::"Deposit",hexa_avp::Action::"Withdrawl"],
+  resource
+);
