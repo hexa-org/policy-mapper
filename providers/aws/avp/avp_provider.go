@@ -1,212 +1,209 @@
 package avp
 
 import (
-    "net/http"
-    "strings"
+	"net/http"
+	"strings"
 
-    "github.com/aws/aws-sdk-go-v2/service/verifiedpermissions"
-    "github.com/aws/aws-sdk-go-v2/service/verifiedpermissions/types"
-    "github.com/hexa-org/policy-mapper/api/PolicyProvider"
-    "github.com/hexa-org/policy-mapper/mapper/formats/awsCedar"
-    "github.com/hexa-org/policy-mapper/pkg/hexapolicy"
-    "github.com/hexa-org/policy-mapper/providers/aws/avp/avpClient"
-    "github.com/hexa-org/policy-mapper/providers/aws/awscommon"
+	"github.com/aws/aws-sdk-go-v2/service/verifiedpermissions"
+	"github.com/aws/aws-sdk-go-v2/service/verifiedpermissions/types"
+	"github.com/hexa-org/policy-mapper/api/PolicyProvider"
+	"github.com/hexa-org/policy-mapper/mapper/formats/awsCedar"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
+	"github.com/hexa-org/policy-mapper/providers/aws/avp/avpClient"
+	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"
 )
 
 type AvpMeta struct {
-    PolicyId   *string
-    StoreId    *string
-    PolicyType string
-    Principal  interface{}
-    Resource   interface{}
+	PolicyId   *string
+	StoreId    *string
+	PolicyType string
+	Principal  interface{}
+	Resource   interface{}
 }
 
 func MapAvpMeta(item types.PolicyItem) AvpMeta {
-    return AvpMeta{
-        PolicyId:   item.PolicyId,
-        StoreId:    item.PolicyStoreId,
-        Principal:  item.Principal,
-        Resource:   item.Resource,
-        PolicyType: string(types.PolicyTypeStatic),
-    }
+	return AvpMeta{
+		PolicyId:   item.PolicyId,
+		StoreId:    item.PolicyStoreId,
+		Principal:  item.Principal,
+		Resource:   item.Resource,
+		PolicyType: string(types.PolicyTypeStatic),
+	}
 }
 
 func MapAvpTemplate(item *verifiedpermissions.GetPolicyTemplateOutput) AvpMeta {
-    return AvpMeta{
-        PolicyId:   item.PolicyTemplateId,
-        StoreId:    item.PolicyStoreId,
-        PolicyType: string(types.PolicyTypeTemplateLinked),
-    }
+	return AvpMeta{
+		PolicyId:   item.PolicyTemplateId,
+		StoreId:    item.PolicyStoreId,
+		PolicyType: string(types.PolicyTypeTemplateLinked),
+	}
 }
 
 type AmazonAvpProvider struct {
-    AwsClientOpts awscommon.AWSClientOptions
-    cedarMapper   *awsCedar.CedarPolicyMapper
+	AwsClientOpts awscommon.AWSClientOptions
+	cedarMapper   *awsCedar.CedarPolicyMapper
 }
 
 func (a *AmazonAvpProvider) Name() string {
-    return "avp"
+	return "avp"
 }
 
 func (a *AmazonAvpProvider) initCedarMapper() {
-    if a.cedarMapper == nil {
-        a.cedarMapper = awsCedar.New(map[string]string{})
-    }
+	if a.cedarMapper == nil {
+		a.cedarMapper = awsCedar.New(map[string]string{})
+	}
 }
 
 func (a *AmazonAvpProvider) getAvpClient(info PolicyProvider.IntegrationInfo) (avpClient.AvpClient, error) {
-    var err error
-    client, err := avpClient.NewAvpClient(info.Key, a.AwsClientOpts) // NewFromConfig(info.Key, a.AwsClientOpts)
-    if err != nil {
-        return nil, err
-    }
-    a.initCedarMapper()
+	var err error
+	client, err := avpClient.NewAvpClient(info.Key, a.AwsClientOpts) // NewFromConfig(info.Key, a.AwsClientOpts)
+	if err != nil {
+		return nil, err
+	}
+	a.initCedarMapper()
 
-    return client, nil
+	return client, nil
 }
 
 func (a *AmazonAvpProvider) DiscoverApplications(info PolicyProvider.IntegrationInfo) ([]PolicyProvider.ApplicationInfo, error) {
-    if !strings.EqualFold(info.Name, a.Name()) {
-        return []PolicyProvider.ApplicationInfo{}, nil
-    }
+	if !strings.EqualFold(info.Name, a.Name()) {
+		return []PolicyProvider.ApplicationInfo{}, nil
+	}
 
-    client, err := a.getAvpClient(info)
-    if err != nil {
-        return nil, err
-    }
+	client, err := a.getAvpClient(info)
+	if err != nil {
+		return nil, err
+	}
 
-    return client.ListStores()
+	return client.ListStores()
 }
 
 func (a *AmazonAvpProvider) GetPolicyInfo(info PolicyProvider.IntegrationInfo, applicationInfo PolicyProvider.ApplicationInfo) ([]hexapolicy.PolicyInfo, error) {
-    client, err := a.getAvpClient(info)
-    if err != nil {
-        return nil, err
-    }
-    hexaPols := make([]hexapolicy.PolicyInfo, 0)
+	client, err := a.getAvpClient(info)
+	if err != nil {
+		return nil, err
+	}
+	hexaPols := make([]hexapolicy.PolicyInfo, 0)
 
-    avpPolicies, err := client.ListPolicies(applicationInfo)
-    if err != nil {
-        return nil, err
-    }
+	avpPolicies, err := client.ListPolicies(applicationInfo)
+	if err != nil {
+		return nil, err
+	}
 
-    for _, avpPolicy := range avpPolicies {
-        policyType := avpPolicy.PolicyType
+	for _, avpPolicy := range avpPolicies {
+		policyType := avpPolicy.PolicyType
 
-        switch policyType {
-        case types.PolicyTypeStatic:
-            output, err := client.GetPolicy(avpPolicy.PolicyId, applicationInfo)
-            if err != nil {
-                return nil, err
-            }
-            policyDefinition := output.Definition
-            policyStatic := policyDefinition.(*types.PolicyDefinitionDetailMemberStatic).Value
-            cedarPolicy := policyStatic.Statement
-            mapPols, err := a.cedarMapper.ParseAndMapCedarToHexa([]byte(*cedarPolicy))
-            if err != nil {
-                return nil, err
-            }
-            hexaPolicy := mapPols.Policies[0]
+		switch policyType {
+		case types.PolicyTypeStatic:
+			output, err := client.GetPolicy(avpPolicy.PolicyId, applicationInfo)
+			if err != nil {
+				return nil, err
+			}
+			policyDefinition := output.Definition
+			policyStatic := policyDefinition.(*types.PolicyDefinitionDetailMemberStatic).Value
+			cedarPolicy := policyStatic.Statement
+			mapPols, err := a.cedarMapper.ParseAndMapCedarToHexa([]byte(*cedarPolicy))
+			if err != nil {
+				return nil, err
+			}
+			hexaPolicy := mapPols.Policies[0]
 
-            // Update IDQL Meta
-            avpMeta := MapAvpMeta(avpPolicy)
-            hexaPolicy.Meta.SourceMeta = avpMeta
-            hexaPolicy.Meta.Created = avpPolicy.CreatedDate
-            hexaPolicy.Meta.Modified = avpPolicy.LastUpdatedDate
-            hexaPolicy.Meta.Description = *policyStatic.Description
+			// Update IDQL Meta
+			avpMeta := MapAvpMeta(avpPolicy)
+			hexaPolicy.Meta.SourceMeta = avpMeta
+			hexaPolicy.Meta.Created = avpPolicy.CreatedDate
+			hexaPolicy.Meta.Modified = avpPolicy.LastUpdatedDate
+			hexaPolicy.Meta.Description = *policyStatic.Description
+			hexaPolicy.CalculateEtag()
+			hexaPols = append(hexaPols, hexaPolicy)
 
-            hexaPols = append(hexaPols, hexaPolicy)
+		case types.PolicyTypeTemplateLinked:
 
-        case types.PolicyTypeTemplateLinked:
-            continue
-            // TODO: Pending bug fix in policy-mapper
-            /*
-            	policyDefinition := avpPolicy.Definition
-            	policyLinked := policyDefinition.(*types.PolicyDefinitionItemMemberTemplateLinked).Value
+			policyDefinition := avpPolicy.Definition
+			policyLinked := policyDefinition.(*types.PolicyDefinitionItemMemberTemplateLinked).Value
 
-            	output, err := client.GetTemplatePolicy(policyLinked.PolicyTemplateId, applicationInfo)
-            	if err != nil {
-            		return nil, err
-            	}
-            	// permit(
-            	//    principal == ?principal,
-            	//    action in [hexa_avp::Action::"ReadAccount"],
-            	//    resource == ?resource
-            	// );
-            	policyString := *output.Statement
-            	mapPols, err := a.cedarMapper.ParseAndMapCedarToHexa([]byte(policyString))
-            	if err != nil {
-            		return nil, err
-            	}
-            	hexaPolicy := mapPols.Policies[0]
+			output, err := client.GetTemplatePolicy(policyLinked.PolicyTemplateId, applicationInfo)
+			if err != nil {
+				return nil, err
+			}
+			// permit(
+			//    principal == ?principal,
+			//    action in [hexa_avp::Action::"ReadAccount"],
+			//    resource == ?resource
+			// );
+			policyString := *output.Statement
+			mapPols, err := a.cedarMapper.ParseAndMapCedarToHexa([]byte(policyString))
+			if err != nil {
+				return nil, err
+			}
+			hexaPolicy := mapPols.Policies[0]
 
-            	// Update the meta information
-            	avpMeta := MapAvpTemplate(output)
-            	hexaPolicy.Meta.SourceMeta = avpMeta
-            	if output.Description != nil {
-            		hexaPolicy.Meta.Description = *output.Description
-            		hexaPolicy.Meta.Created = output.CreatedDate
-            		hexaPolicy.Meta.Modified = output.LastUpdatedDate
-            	}
-            	hexaPols = append(hexaPols, hexaPolicy)
+			// Update the meta information
+			avpMeta := MapAvpTemplate(output)
+			hexaPolicy.Meta.SourceMeta = avpMeta
+			if output.Description != nil {
+				hexaPolicy.Meta.Description = *output.Description
+				hexaPolicy.Meta.Created = output.CreatedDate
+				hexaPolicy.Meta.Modified = output.LastUpdatedDate
+			}
+			hexaPolicy.CalculateEtag()
+			hexaPols = append(hexaPols, hexaPolicy)
 
-            */
+		default:
+			continue
+		}
 
-        default:
-            continue
-        }
-
-    }
-    // Now to map the policies
-    return hexaPols, nil
+	}
+	// Now to map the policies
+	return hexaPols, nil
 }
 
 func (a *AmazonAvpProvider) SetPolicyInfo(info PolicyProvider.IntegrationInfo, applicationInfo PolicyProvider.ApplicationInfo, hexaPolicies []hexapolicy.PolicyInfo) (int, error) {
-    client, err := a.getAvpClient(info)
-    if err != nil {
-        return http.StatusInternalServerError, err
-    }
-    // Get all existing policies to compare:
-    avpExistingPolicies, err := client.ListPolicies(applicationInfo)
-    if err != nil {
-        return http.StatusInternalServerError, err
-    }
+	client, err := a.getAvpClient(info)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	// Get all existing policies to compare:
+	avpExistingPolicies, err := client.ListPolicies(applicationInfo)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
 
-    var avpMap map[string]types.PolicyItem
-    for _, policy := range avpExistingPolicies {
-        avpMap[*policy.PolicyId] = policy
-    }
+	var avpMap map[string]types.PolicyItem
+	for _, policy := range avpExistingPolicies {
+		avpMap[*policy.PolicyId] = policy
+	}
 
-    for _, hexaPolicy := range hexaPolicies {
-        cedarPolicies, err := a.cedarMapper.MapPolicyToCedar(hexaPolicy)
-        if err != nil {
-            return http.StatusBadRequest, err
-        }
+	for _, hexaPolicy := range hexaPolicies {
+		cedarPolicies, err := a.cedarMapper.MapPolicyToCedar(hexaPolicy)
+		if err != nil {
+			return http.StatusBadRequest, err
+		}
 
-        var cedarDefinition string
-        for i, cedarPolicy := range cedarPolicies {
-            if i != 0 {
-                cedarDefinition = cedarDefinition + "\n"
-            }
-            cedarDefinition = cedarDefinition + cedarPolicy.String()
-        }
+		var cedarDefinition string
+		for i, cedarPolicy := range cedarPolicies {
+			if i != 0 {
+				cedarDefinition = cedarDefinition + "\n"
+			}
+			cedarDefinition = cedarDefinition + cedarPolicy.String()
+		}
 
-        updatePolicyDefinition := types.UpdateStaticPolicyDefinition{
-            Statement:   &cedarDefinition,
-            Description: &hexaPolicy.Meta.Description,
-        }
+		updatePolicyDefinition := types.UpdateStaticPolicyDefinition{
+			Statement:   &cedarDefinition,
+			Description: &hexaPolicy.Meta.Description,
+		}
 
-        updateMemberStatic := types.UpdatePolicyDefinitionMemberStatic{Value: updatePolicyDefinition}
+		updateMemberStatic := types.UpdatePolicyDefinitionMemberStatic{Value: updatePolicyDefinition}
 
-        if hexaPolicy.Meta.SourceMeta != nil {
-            // Can assume this is an update
-            client.UpdatePolicy(&verifiedpermissions.UpdatePolicyInput{
-                Definition:    &updateMemberStatic,
-                PolicyId:      nil,
-                PolicyStoreId: nil,
-            })
-        }
-    }
-    // For each policy, check the Meta.SourceMeta structure to see if this is was a pre-existing policy
-    return http.StatusNotImplemented, nil
+		if hexaPolicy.Meta.SourceMeta != nil {
+			// Can assume this is an update
+			client.UpdatePolicy(&verifiedpermissions.UpdatePolicyInput{
+				Definition:    &updateMemberStatic,
+				PolicyId:      nil,
+				PolicyStoreId: nil,
+			})
+		}
+	}
+	// For each policy, check the Meta.SourceMeta structure to see if this is was a pre-existing policy
+	return http.StatusNotImplemented, nil
 }
