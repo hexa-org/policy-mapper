@@ -48,9 +48,9 @@ type PolicyInfo struct {
 }
 
 /*
-Etag calculates an ETAG hash value for the policy which includes the Subject, Actions, Object, and Conditions objects only
+CalculateEtag calculates an ETAG hash value for the policy which includes the Subject, Actions, Object, and Conditions objects only
 */
-func (p *PolicyInfo) Etag() string {
+func (p *PolicyInfo) CalculateEtag() string {
 	subjectBytes, _ := json.Marshal(p.Subject)
 	actionBytes, _ := json.Marshal(p.Actions)
 	objectBytes, _ := json.Marshal(p.Object)
@@ -67,21 +67,23 @@ func (p *PolicyInfo) Etag() string {
 
 	etagValue := etag.Generate(policyBytes, true)
 
-	p.Meta.Version = etagValue
+	p.Meta.Etag = etagValue
 	return etagValue
 }
 
-// Equals compares the Etag hash values to determine if the policies are equal. Note: does NOT compare meta information.
+// Equals compares the CalculateEtag hash values to determine if the policies are equal. Note: does NOT compare meta information.
 func (p *PolicyInfo) Equals(hexaPolicy PolicyInfo) bool {
-	return p.Etag() == hexaPolicy.Etag()
+	// Re-calculate the policy etag and compare in case either has changed.
+	return p.CalculateEtag() == hexaPolicy.CalculateEtag()
 }
 
 type MetaInfo struct {
-	Version     string      `validate:"required"` // this is a json hash representing a hash of the current idql (used for change detection)
+	Version     string      `validate:"required"` // this is the idql policy format version
 	SourceMeta  interface{} `json:",omitempty"`   // Logistical information required to map in source provider, e.g. type, identifiers
 	Description string      `json:",omitempty"`
 	Created     *time.Time  `json:",omitempty"`
 	Modified    *time.Time  `json:",omitempty"`
+	Etag        string      `json:",omitempty"`
 }
 
 type ActionInfo struct {

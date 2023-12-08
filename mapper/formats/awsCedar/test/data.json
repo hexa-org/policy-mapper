@@ -2,7 +2,7 @@
   "policies": [
     {
       "Meta": {
-        "Version": "0.5"
+        "Version": "0.6"
       },
       "Actions": [
         {
@@ -23,7 +23,7 @@
       }
     },
     {
-      "meta": {"version": "0.5"},
+      "meta": {"version": "0.6"},
       "actions": [{"actionUri": "cedar:Action::ReadFile"},{"actionuri": "cedar:Action::ListFiles"}],
       "subject": {
         "members": [
@@ -39,7 +39,7 @@
       }
     },
     {
-      "meta": {"version": "0.5"},
+      "meta": {"version": "0.6"},
       "actions": [{"actionUri": "cedar:Action::writeFile"}],
       "subject": {
         "members": [
@@ -53,7 +53,7 @@
       }
     },
     {
-      "meta": {"version": "0.5"},
+      "meta": {"version": "0.6"},
       "actions": [{"actionUri": "cedar:Action::ReadFile"},{"actionUri": "cedar:Action::ListFiles"}],
       "subject": {
         "members": [
@@ -70,7 +70,7 @@
     },
     {
       "Meta": {
-        "Version": "0.5"
+        "Version": "0.6"
       },
       "Actions": [
         {

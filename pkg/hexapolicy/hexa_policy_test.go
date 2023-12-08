@@ -11,7 +11,7 @@ import (
 var testPolicy1 = `
 {
       "meta": {
-        "version": "0.5"
+        "version": "0.6"
       },
       "actions": [
         {
@@ -38,7 +38,7 @@ var testPolicy1 = `
 var testPolicy2 = `
 {
       "meta": {
-        "version": "0.5"
+        "version": "0.6"
       },
       "actions": [
         {
@@ -65,7 +65,7 @@ func TestReadPolicy(t *testing.T) {
 
 	_ = json.Unmarshal([]byte(testPolicy1), &policy3)
 
-	etag := policy1.Etag()
+	etag := policy1.CalculateEtag()
 	assert.NoError(t, err, "Check no error with etag gen")
 	assert.NotNil(t, etag, "Check that an etag was returned")
 	assert.False(t, policy1.Equals(policy2), "Check policies not equal")

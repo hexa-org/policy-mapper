@@ -62,7 +62,7 @@ or an attribute "policies" which is assigned an array of policies. For example:
   "policies": [
     {
       "Meta": {
-        "Version": "0.5"
+        "Version": "0.6"
       },
       "Actions": [
         {
@@ -90,7 +90,7 @@ package main
 
 import (
 	"fmt"
-	policysupport "github.com/hexa-org/policy-mapTool/policySupport"
+	policysupport github.com/hexa-org/policy-map/pkg/hexapolicysupport
 )
 
 func main() {
