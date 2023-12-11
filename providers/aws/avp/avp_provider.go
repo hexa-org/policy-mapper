@@ -95,7 +95,7 @@ func (a *AmazonAvpProvider) GetPolicyInfo(info PolicyProvider.IntegrationInfo, a
 
 		switch policyType {
 		case types.PolicyTypeStatic:
-			output, err := client.GetPolicy(avpPolicy.PolicyId, applicationInfo)
+			output, err := client.GetPolicy(*avpPolicy.PolicyId, applicationInfo)
 			if err != nil {
 				return nil, err
 			}
@@ -122,7 +122,7 @@ func (a *AmazonAvpProvider) GetPolicyInfo(info PolicyProvider.IntegrationInfo, a
 			policyDefinition := avpPolicy.Definition
 			policyLinked := policyDefinition.(*types.PolicyDefinitionItemMemberTemplateLinked).Value
 
-			output, err := client.GetTemplatePolicy(policyLinked.PolicyTemplateId, applicationInfo)
+			output, err := client.GetTemplatePolicy(*policyLinked.PolicyTemplateId, applicationInfo)
 			if err != nil {
 				return nil, err
 			}

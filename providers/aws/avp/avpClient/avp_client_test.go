@@ -1,338 +1,120 @@
 package avpClient
 
 import (
-	"context"
-	"fmt"
-	"reflect"
+	"net/http"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/verifiedpermissions"
 	"github.com/aws/aws-sdk-go-v2/service/verifiedpermissions/types"
 	"github.com/hexa-org/policy-mapper/api/PolicyProvider"
+	"github.com/hexa-org/policy-mapper/providers/aws/avp/avpClient/avpTestSupport"
 	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"
 	"github.com/stretchr/testify/assert"
 )
 
 type TestInfo struct {
-	Apps          []PolicyProvider.ApplicationInfo
-	AwsClientOpts awscommon.AWSClientOptions
-	Info          PolicyProvider.IntegrationInfo
-	Client        *verifiedpermissions.Client
+	App           PolicyProvider.ApplicationInfo
+	hexaAvpClient AvpClient
+	vpClient      *verifiedpermissions.Client
+	mockClient    *avpTestSupport.MockVerifiedPermissionsHTTPClient
 }
 
-var testData TestInfo
-var initialized = false
+var testInfo TestInfo
 
-func initializeTests() error {
-	if initialized {
-		return nil
-	}
-	cfg, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		return err
-	}
-	cred, err := cfg.Credentials.Retrieve(context.TODO())
-	if err != nil {
-		return err
-	}
-
-	str := fmt.Sprintf(`
-{
-  "accessKeyID": "%s",
-  "secretAccessKey": "%s",
-  "region": "%s"
-}
-`, cred.AccessKeyID, cred.SecretAccessKey, cfg.Region)
-
-	info := PolicyProvider.IntegrationInfo{Name: "avp", Key: []byte(str)}
-
-	testData = TestInfo{
-		AwsClientOpts: awscommon.AWSClientOptions{DisableRetry: true},
-		Info:          info,
+func TestAvpClient_1_ListStores(t *testing.T) {
+	mockClient := avpTestSupport.NewMockVerifiedPermissionsHTTPClient()
+	key := avpTestSupport.AwsCredentialsForTest()
+	hexaClient, err := NewAvpClient(key, awscommon.AWSClientOptions{
+		HTTPClient:   mockClient,
+		DisableRetry: true,
+	})
+	assert.NoError(t, err, "Should be no error on NewAvpClient")
+	testInfo = TestInfo{
+		hexaAvpClient: hexaClient,
+		mockClient:    mockClient,
 	}
 
-	client := verifiedpermissions.NewFromConfig(cfg)
-	testData.Client = client
-	initialized = true
-	return nil
+	testInfo.mockClient.MockListStores()
+	apps, err := testInfo.hexaAvpClient.ListStores()
+	assert.NoError(t, err, "Should be no error on ListStores")
+	assert.Len(t, apps, 1, "Should be 1 store defined")
+	assert.Equal(t, avpTestSupport.TestPolicyStoreDescription, apps[0].Description)
+	assert.True(t, mockClient.VerifyCalled())
+
+	// Save for future use
+	testInfo.App = apps[0]
+
+	testInfo.mockClient.MockListStoresWithHttpStatus(http.StatusUnauthorized)
+	apps2, err := testInfo.hexaAvpClient.ListStores()
+	assert.Error(t, err)
+	assert.Nil(t, apps2)
+	// assert.Equal(t, avpTestSupport.TestPolicyStoreDescription, apps[0].Description)
+	assert.True(t, mockClient.VerifyCalled())
 }
 
-func TestNewAvpClient(t *testing.T) {
-	initializeTests()
-	client, err := NewAvpClient(testData.Info.Key, testData.AwsClientOpts)
-	assert.NoError(t, err, "NewAVPClient had no error")
-	assert.NotNil(t, client, "avp client returned")
+func TestAvpClient_2_ListPolicies(t *testing.T) {
+	// error test
+	testInfo.mockClient.MockListPoliciesWithHttpStatus(http.StatusBadRequest, 1, 1, nil)
+	noItems, err := testInfo.hexaAvpClient.ListPolicies(testInfo.App)
+	assert.Error(t, err, "Should be a bad request error")
+	assert.Nil(t, noItems, "Should be no items")
+	assert.True(t, testInfo.mockClient.VerifyCalled())
+
+	// Test when no paging needed
+	testInfo.mockClient.MockListPoliciesWithHttpStatus(http.StatusOK, 1, 1, nil)
+
+	policyItems, err := testInfo.hexaAvpClient.ListPolicies(testInfo.App)
+	assert.NoError(t, err, "List policy should have no error")
+	assert.Len(t, policyItems, 2, "Should be 2 policies")
+	pid := *policyItems[0].PolicyId
+	assert.Equal(t, avpTestSupport.TestCedarStaticPolicyId+"0", pid)
+	pid = *policyItems[1].PolicyId
+	assert.Equal(t, avpTestSupport.TestCedarTemplatePolicyId+"0", pid)
+	assert.True(t, testInfo.mockClient.VerifyCalled())
+
+	// Testing paging
+	testInfo.mockClient.MockListPoliciesWithHttpStatus(http.StatusOK, 30, 30, nil)
+	nextToken := "50"
+	testInfo.mockClient.MockListPoliciesWithHttpStatus(http.StatusOK, 5, 5, &nextToken)
+
+	policyItems2, err := testInfo.hexaAvpClient.ListPolicies(testInfo.App)
+	assert.NoError(t, err, "List policy should have no error")
+	assert.Len(t, policyItems2, 60, "Should be 60 policies")
+	assert.True(t, testInfo.mockClient.VerifyCalled())
 }
 
-func Test_avpClient_CreatePolicy(t *testing.T) {
-	initializeTests()
+func TestAvpClient_3_GetPolicy(t *testing.T) {
+	testInfo.mockClient.MockGetPolicyWithHttpStatus(http.StatusBadRequest, "123")
+	noPolicy, err := testInfo.hexaAvpClient.GetPolicy("123", testInfo.App)
+	assert.Error(t, err, "Should be a bad request error")
+	assert.Nil(t, noPolicy, "Should be null policy")
+	assert.True(t, testInfo.mockClient.VerifyCalled())
 
-	type fields struct {
-		client *verifiedpermissions.Client
-		app    PolicyProvider.ApplicationInfo
-	}
-	type args struct {
-		createPolicyInput *verifiedpermissions.CreatePolicyInput
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *verifiedpermissions.CreatePolicyOutput
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &avpClient{
-				client: tt.fields.client,
-				app:    tt.fields.app,
-			}
-			got, err := c.CreatePolicy(tt.args.createPolicyInput)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("CreatePolicy() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("CreatePolicy() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	testInfo.mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, "123")
+	policyItem, err := testInfo.hexaAvpClient.GetPolicy("123", testInfo.App)
+	assert.NoError(t, err, "Should be no error on GetPolicy")
+	var expected *verifiedpermissions.GetPolicyOutput
+	assert.IsType(t, expected, policyItem, "Should be GetPolicyOutput")
+
+	defDetail := policyItem.Definition
+	staticDef := defDetail.(*types.PolicyDefinitionDetailMemberStatic).Value
+	assert.NotNil(t, staticDef.Statement)
+	assert.True(t, testInfo.mockClient.VerifyCalled())
 }
 
-func Test_avpClient_DeletePolicy(t *testing.T) {
-	type fields struct {
-		client *verifiedpermissions.Client
-		app    PolicyProvider.ApplicationInfo
-	}
-	type args struct {
-		deletePolicyInput *verifiedpermissions.DeletePolicyInput
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *verifiedpermissions.DeletePolicyOutput
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &avpClient{
-				client: tt.fields.client,
-				app:    tt.fields.app,
-			}
-			got, err := c.DeletePolicy(tt.args.deletePolicyInput)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("DeletePolicy() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("DeletePolicy() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
+func TestAvpClient_4_GetTemplatePolicy(t *testing.T) {
+	testInfo.mockClient.MockGetPolicyTemplateWithHttpStatus(http.StatusBadRequest, "123")
+	noPolicy, err := testInfo.hexaAvpClient.GetTemplatePolicy("123", testInfo.App)
+	assert.Error(t, err, "Should be a bad request error")
+	assert.Nil(t, noPolicy, "Should be null policy")
+	assert.True(t, testInfo.mockClient.VerifyCalled())
 
-func Test_avpClient_GetPolicy(t *testing.T) {
-	type fields struct {
-		client *verifiedpermissions.Client
-		app    PolicyProvider.ApplicationInfo
-	}
-	type args struct {
-		id  *string
-		app PolicyProvider.ApplicationInfo
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *verifiedpermissions.GetPolicyOutput
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &avpClient{
-				client: tt.fields.client,
-				app:    tt.fields.app,
-			}
-			got, err := c.GetPolicy(tt.args.id, tt.args.app)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetPolicy() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetPolicy() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_avpClient_GetTemplatePolicy(t *testing.T) {
-	type fields struct {
-		client *verifiedpermissions.Client
-		app    PolicyProvider.ApplicationInfo
-	}
-	type args struct {
-		id  *string
-		app PolicyProvider.ApplicationInfo
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *verifiedpermissions.GetPolicyTemplateOutput
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &avpClient{
-				client: tt.fields.client,
-				app:    tt.fields.app,
-			}
-			got, err := c.GetTemplatePolicy(tt.args.id, tt.args.app)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetTemplatePolicy() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetTemplatePolicy() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_avpClient_ListPolicies(t *testing.T) {
-	type fields struct {
-		client *verifiedpermissions.Client
-		app    PolicyProvider.ApplicationInfo
-	}
-	type args struct {
-		app PolicyProvider.ApplicationInfo
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    []types.PolicyItem
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &avpClient{
-				client: tt.fields.client,
-				app:    tt.fields.app,
-			}
-			got, err := c.ListPolicies(tt.args.app)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ListPolicies() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ListPolicies() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_avpClient_ListStores(t *testing.T) {
-	type fields struct {
-		client *verifiedpermissions.Client
-		app    PolicyProvider.ApplicationInfo
-	}
-	tests := []struct {
-		name     string
-		fields   fields
-		wantApps []PolicyProvider.ApplicationInfo
-		wantErr  bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &avpClient{
-				client: tt.fields.client,
-				app:    tt.fields.app,
-			}
-			gotApps, err := c.ListStores()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ListStores() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(gotApps, tt.wantApps) {
-				t.Errorf("ListStores() gotApps = %v, want %v", gotApps, tt.wantApps)
-			}
-		})
-	}
-}
-
-func Test_avpClient_UpdatePolicy(t *testing.T) {
-	type fields struct {
-		client *verifiedpermissions.Client
-		app    PolicyProvider.ApplicationInfo
-	}
-	type args struct {
-		updatePolicy *verifiedpermissions.UpdatePolicyInput
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *verifiedpermissions.UpdatePolicyOutput
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &avpClient{
-				client: tt.fields.client,
-				app:    tt.fields.app,
-			}
-			got, err := c.UpdatePolicy(tt.args.updatePolicy)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("UpdatePolicy() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("UpdatePolicy() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_newAvpClient(t *testing.T) {
-	type args struct {
-		key  []byte
-		opts awscommon.AWSClientOptions
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *verifiedpermissions.Client
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := newAvpClient(tt.args.key, tt.args.opts)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("newAvpClient() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newAvpClient() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	testInfo.mockClient.MockGetPolicyTemplateWithHttpStatus(http.StatusOK, "123")
+	policyItem, err := testInfo.hexaAvpClient.GetTemplatePolicy("123", testInfo.App)
+	assert.NoError(t, err, "Should be no error on GetPolicy")
+	var expected *verifiedpermissions.GetPolicyTemplateOutput
+	assert.IsType(t, expected, policyItem, "Should be GetPolicyOutput")
+	expected = policyItem
+	assert.NotNil(t, expected.Statement)
+	assert.True(t, testInfo.mockClient.VerifyCalled())
 }

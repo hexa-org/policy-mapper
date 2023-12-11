@@ -1,88 +1,67 @@
 package avp_test
 
 import (
-    "context"
-    "encoding/json"
-    "fmt"
-    "testing"
+	"net/http"
+	"testing"
 
-    "github.com/aws/aws-sdk-go-v2/config"
-    "github.com/hexa-org/policy-mapper/api/PolicyProvider"
-    "github.com/hexa-org/policy-mapper/providers/aws/avp"
-    "github.com/hexa-org/policy-mapper/providers/aws/awscommon"
+	"github.com/hexa-org/policy-mapper/api/PolicyProvider"
+	"github.com/hexa-org/policy-mapper/providers/aws/avp"
+	"github.com/hexa-org/policy-mapper/providers/aws/avp/avpClient/avpTestSupport"
 
-    "github.com/stretchr/testify/assert"
+	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"
+	"github.com/stretchr/testify/assert"
 )
 
 type TestInfo struct {
-    Apps     []PolicyProvider.ApplicationInfo
-    Provider avp.AmazonAvpProvider
-    Info     PolicyProvider.IntegrationInfo
+	Apps     []PolicyProvider.ApplicationInfo
+	Provider avp.AmazonAvpProvider
+	Info     PolicyProvider.IntegrationInfo
 }
 
-var testData TestInfo
-var initialized = false
+func TestAvp_1_ListStores(t *testing.T) {
+	mockClient := avpTestSupport.NewMockVerifiedPermissionsHTTPClient()
+	mockClient.MockListStores()
 
-func initializeTests() error {
-    if initialized {
-        return nil
-    }
-    cfg, err := config.LoadDefaultConfig(context.TODO())
-    if err != nil {
-        return err
-    }
-    cred, err := cfg.Credentials.Retrieve(context.TODO())
-    if err != nil {
-        return err
-    }
+	p := avp.AmazonAvpProvider{AwsClientOpts: awscommon.AWSClientOptions{
+		HTTPClient:   mockClient,
+		DisableRetry: true,
+	}}
 
-    str := fmt.Sprintf(`
-{
-  "accessKeyID": "%s",
-  "secretAccessKey": "%s",
-  "region": "%s"
-}
-`, cred.AccessKeyID, cred.SecretAccessKey, cfg.Region)
+	info := avpTestSupport.IntegrationInfo()
+	apps, err := p.DiscoverApplications(info)
+	assert.NoError(t, err)
+	assert.Len(t, apps, 1)
+	assert.Equal(t, avpTestSupport.TestPolicyStoreDescription, apps[0].Description)
+	assert.True(t, mockClient.VerifyCalled())
 
-    info := PolicyProvider.IntegrationInfo{Name: "avp", Key: []byte(str)}
-    avp := avp.AmazonAvpProvider{AwsClientOpts: awscommon.AWSClientOptions{DisableRetry: true}}
-
-    testData = TestInfo{
-        Provider: avp,
-        Info:     info,
-    }
-
-    initialized = true
-    return nil
+	mockClient.MockListStoresWithHttpStatus(http.StatusUnauthorized)
+	apps2, err := p.DiscoverApplications(info)
+	assert.Error(t, err)
+	assert.Nil(t, apps2)
+	// assert.Equal(t, avpTestSupport.TestPolicyStoreDescription, apps[0].Description)
+	assert.True(t, mockClient.VerifyCalled())
 }
 
-func TestAvp_1_DiscoverApplications(t *testing.T) {
+func TestAvp_2_GetPolicies(t *testing.T) {
+	mockClient := avpTestSupport.NewMockVerifiedPermissionsHTTPClient()
 
-    err := initializeTests()
-    assert.NoError(t, err, "Should be initialized")
+	p := avp.AmazonAvpProvider{AwsClientOpts: awscommon.AWSClientOptions{
+		HTTPClient:   mockClient,
+		DisableRetry: true,
+	}}
 
-    apps, err := testData.Provider.DiscoverApplications(testData.Info)
+	mockClient.MockListStores()
+	info := avpTestSupport.IntegrationInfo()
+	apps, err := p.DiscoverApplications(info)
+	assert.NoError(t, err)
+	assert.True(t, mockClient.VerifyCalled())
 
-    assert.NoError(t, err, "check no error")
-    assert.NotNil(t, apps, "Apps not nil")
-
-    fmt.Println("Apps:")
-    fmt.Println(fmt.Sprintf("%s", apps))
-
-    testData.Apps = apps
-}
-
-func TestAvp_2_ListPolicies(t *testing.T) {
-    assert.NotNil(t, testData.Apps, "Apps should be initialized")
-
-    for _, app := range testData.Apps {
-        policies, err := testData.Provider.GetPolicyInfo(testData.Info, app)
-        assert.NoError(t, err, "Get policy has no error")
-        for _, hexaPol := range policies {
-            polBytes, err := json.MarshalIndent(hexaPol, "", "  ")
-            assert.NoError(t, err, "Policy should marshall")
-            fmt.Println(fmt.Sprintf("Policy: \n%s", string(polBytes)))
-        }
-    }
-
+	mockClient.MockListPoliciesWithHttpStatus(http.StatusOK, 1, 1, nil)
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"0")
+	mockClient.MockGetPolicyTemplateWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarTemplatePolicyId+"0")
+	policies, err := p.GetPolicyInfo(info, apps[0])
+	assert.NoError(t, err)
+	assert.NotNil(t, policies)
+	assert.Len(t, policies, 2, "Should be 2 policies")
+	assert.True(t, mockClient.VerifyCalled())
 }
