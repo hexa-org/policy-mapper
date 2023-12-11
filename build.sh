@@ -44,6 +44,12 @@ go build ./...
 doTest
 cd ../../..
 
+echo "  providers/aws."
+cd providers/aws
+go build ./...
+doTest
+cd ../..
+
 echo "  mapTool."
 cd cmd/mapTool
 go build -o ../../mapTool main.go
