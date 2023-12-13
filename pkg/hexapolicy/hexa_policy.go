@@ -2,6 +2,7 @@ package hexapolicy
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
@@ -77,6 +78,69 @@ func (p *PolicyInfo) Equals(hexaPolicy PolicyInfo) bool {
 	return p.CalculateEtag() == hexaPolicy.CalculateEtag()
 }
 
+const (
+	COMPARE_EQUAL         = "EQUAL"
+	COMPARE_DIF_ACTION    = "ACTION"
+	COMPARE_DIF_SUBJECT   = "SUBJECT"
+	COMPARE_DIF_OBJECT    = "OBJECT"
+	COMPARE_DIF_CONDITION = "CONDITION"
+)
+
+func (p *PolicyInfo) Compare(hexaPolicy PolicyInfo) []string {
+	// First do a textual compare
+	if p.Equals(hexaPolicy) {
+		return []string{COMPARE_EQUAL}
+	}
+
+	var difs = make([]string, 0)
+
+	// Now do a semantic compare (e.g. things can be different order but the same)
+	if !p.Subject.equals(&hexaPolicy.Subject) {
+		difs = append(difs, COMPARE_DIF_SUBJECT)
+	}
+
+	if !p.actionEquals(hexaPolicy.Actions) {
+		difs = append(difs, COMPARE_DIF_ACTION)
+	}
+
+	if !p.Object.equals(&hexaPolicy.Object) {
+		difs = append(difs, COMPARE_DIF_OBJECT)
+	}
+
+	if p.Condition != nil && hexaPolicy.Condition == nil || p.Condition == nil && p.Condition != nil {
+		difs = append(difs, COMPARE_DIF_CONDITION)
+	} else {
+		if p.Condition != nil && !p.Condition.Equals(hexaPolicy.Condition) {
+			difs = append(difs, COMPARE_DIF_CONDITION)
+		}
+	}
+
+	if len(difs) == 0 {
+		return []string{COMPARE_EQUAL}
+	}
+
+	return difs
+}
+
+func (p *PolicyInfo) actionEquals(actions []ActionInfo) bool {
+	if len(p.Actions) != len(actions) {
+		return false
+	}
+	for _, action := range p.Actions {
+		isMatch := false
+		for _, caction := range actions {
+			if strings.EqualFold(action.ActionUri, caction.ActionUri) {
+				isMatch = true
+				break
+			}
+		}
+		if !isMatch {
+			return false
+		}
+	}
+	return true
+}
+
 type MetaInfo struct {
 	Version     string      `validate:"required"` // this is the idql policy format version
 	SourceMeta  interface{} `json:",omitempty"`   // Logistical information required to map in source provider, e.g. type, identifiers
@@ -94,6 +158,29 @@ type SubjectInfo struct {
 	Members []string `validate:"required"`
 }
 
+func (s *SubjectInfo) equals(subject *SubjectInfo) bool {
+	if len(s.Members) != len(subject.Members) {
+		return false
+	}
+	for _, member := range s.Members {
+		isMatch := false
+		for _, cmember := range subject.Members {
+			if strings.EqualFold(member, cmember) {
+				isMatch = true
+				break
+			}
+		}
+		if !isMatch {
+			return false
+		}
+	}
+	return true
+}
+
 type ObjectInfo struct {
 	ResourceID string `json:"resource_id" validate:"required"`
+}
+
+func (o *ObjectInfo) equals(object *ObjectInfo) bool {
+	return o.ResourceID == object.ResourceID
 }
