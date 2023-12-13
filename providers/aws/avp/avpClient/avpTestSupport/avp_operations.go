@@ -352,3 +352,79 @@ func ListPoliciesResponse(staticPolCnt int, templatePolCnt int, nextToken *strin
 	outBytes, _ := json.Marshal(output)
 	return outBytes
 }
+
+func (m *MockVerifiedPermissionsHTTPClient) MockCreatePolicyWithHttpStatus(httpStatus int, id string) {
+	if httpStatus != 200 {
+		m.AddRequest(http.MethodPost, AvpApiUrl, "CreatePolicy", httpStatus, []byte{})
+		return
+	}
+	m.AddRequest(http.MethodPost, AvpApiUrl, "CreatePolicy", httpStatus, CreatePolicyResponse(id))
+}
+
+func (m *MockVerifiedPermissionsHTTPClient) MockUpdatePolicyWithHttpStatus(httpStatus int, id string) {
+	if httpStatus != 200 {
+		m.AddRequest(http.MethodPost, AvpApiUrl, "UpdatePolicy", httpStatus, []byte{})
+		return
+	}
+	m.AddRequest(http.MethodPost, AvpApiUrl, "UpdatePolicy", httpStatus, CreatePolicyResponse(id))
+}
+
+type PolicyOutput struct {
+
+	// The date and time the policy was originally created.
+	//
+	// CreatedDate is a required field
+	CreatedDate *time.Time `json:"createdDate" locationName:"createdDate" type:"timestamp" timestampFormat:"iso8601" required:"true"`
+
+	// The date and time the policy was last updated.
+	//
+	// LastUpdatedDate is a required field
+	LastUpdatedDate *time.Time `json:"lastUpdatedDate" locationName:"lastUpdatedDate" type:"timestamp" timestampFormat:"iso8601" required:"true"`
+
+	// The unique ID of the new policy.
+	//
+	// PolicyId is a required field
+	PolicyId *string `json:"policyId" locationName:"policyId" min:"1" type:"string" required:"true"`
+
+	// The ID of the policy store that contains the new policy.
+	//
+	// PolicyStoreId is a required field
+	PolicyStoreId *string `json:"policyStoreId" locationName:"policyStoreId" min:"1" type:"string" required:"true"`
+
+	// The policy type of the new policy.
+	//
+	// PolicyType is a required field
+	PolicyType *string `json:"policyType" locationName:"policyType" type:"string" required:"true" enum:"PolicyType"`
+
+	// The principal specified in the new policy's scope. This response element
+	// isn't present when principal isn't specified in the policy content.
+	Principal *EntityIdentifier `json:"principal" locationName:"principal" type:"structure"`
+
+	// The resource specified in the new policy's scope. This response element isn't
+	// present when the resource isn't specified in the policy content.
+	Resource *EntityIdentifier `json:"resource" locationName:"resource" type:"structure"`
+	// contains filtered or unexported fields
+}
+
+func CreatePolicyResponse(id string) []byte {
+	nowTime := time.Now()
+	ptype := "STATIC"
+	output := PolicyOutput{
+		CreatedDate:     &nowTime,
+		LastUpdatedDate: &nowTime,
+		PolicyId:        &id,
+		PolicyStoreId:   &TestPolicyStoreId,
+		PolicyType:      &ptype,
+	}
+	outBytes, _ := json.Marshal(output)
+	return outBytes
+}
+
+func (m *MockVerifiedPermissionsHTTPClient) MockDeletePolicyWithHttpStatus(httpStatus int) {
+	if httpStatus != 200 {
+		m.AddRequest(http.MethodPost, AvpApiUrl, "DeletePolicy", httpStatus, []byte{})
+		return
+	}
+	emptyJson := "{}"
+	m.AddRequest(http.MethodPost, AvpApiUrl, "DeletePolicy", httpStatus, []byte(emptyJson))
+}
