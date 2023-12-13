@@ -118,3 +118,82 @@ func TestAvpClient_4_GetTemplatePolicy(t *testing.T) {
 	assert.NotNil(t, expected.Statement)
 	assert.True(t, testInfo.mockClient.VerifyCalled())
 }
+
+func TestAvpClient_5_CreatePolicy(t *testing.T) {
+	testInfo.mockClient.MockCreatePolicyWithHttpStatus(http.StatusBadRequest, "123")
+
+	createPolicyDefinition := types.StaticPolicyDefinition{
+		Statement:   &avpTestSupport.TestCedarStaticPolicy,
+		Description: &avpTestSupport.TestCedarStaticPolicyDescription,
+	}
+	createStatic := types.PolicyDefinitionMemberStatic{
+		Value: createPolicyDefinition,
+	}
+	createPolicyInput := verifiedpermissions.CreatePolicyInput{
+		Definition:    &createStatic,
+		PolicyStoreId: &avpTestSupport.TestPolicyStoreId,
+	}
+
+	noOutput, err := testInfo.hexaAvpClient.CreatePolicy(&createPolicyInput)
+	assert.Error(t, err, "Should be a bad request error")
+	assert.Nil(t, noOutput, "Should be null output")
+	assert.True(t, testInfo.mockClient.VerifyCalled())
+
+	testInfo.mockClient.MockCreatePolicyWithHttpStatus(http.StatusOK, "123")
+	output, err := testInfo.hexaAvpClient.CreatePolicy(&createPolicyInput)
+	assert.NoError(t, err)
+	assert.NotNil(t, output)
+	id := *output.PolicyId
+	assert.Equal(t, "123", id)
+	assert.True(t, testInfo.mockClient.VerifyCalled())
+}
+
+func TestAvpClient_6_UpdatePolicy(t *testing.T) {
+	testInfo.mockClient.MockUpdatePolicyWithHttpStatus(http.StatusBadRequest, "123")
+
+	updatePolicyDefinition := types.UpdateStaticPolicyDefinition{
+		Statement:   &avpTestSupport.TestCedarStaticPolicy,
+		Description: &avpTestSupport.TestCedarStaticPolicyDescription,
+	}
+
+	updateMemberStatic := types.UpdatePolicyDefinitionMemberStatic{Value: updatePolicyDefinition}
+	update := verifiedpermissions.UpdatePolicyInput{
+		Definition:    &updateMemberStatic,
+		PolicyId:      &avpTestSupport.TestCedarStaticPolicyId,
+		PolicyStoreId: &avpTestSupport.TestPolicyStoreId,
+	}
+
+	noOutput, err := testInfo.hexaAvpClient.UpdatePolicy(&update)
+	assert.Error(t, err, "Should be a bad request error")
+	assert.Nil(t, noOutput, "Should be null output")
+	assert.True(t, testInfo.mockClient.VerifyCalled())
+
+	testInfo.mockClient.MockUpdatePolicyWithHttpStatus(http.StatusOK, "123")
+	output, err := testInfo.hexaAvpClient.UpdatePolicy(&update)
+	assert.NoError(t, err)
+	assert.NotNil(t, output)
+	id := *output.PolicyId
+	assert.Equal(t, "123", id)
+	assert.True(t, testInfo.mockClient.VerifyCalled())
+}
+
+func TestAvpClient_7_DeletePolicy(t *testing.T) {
+	testInfo.mockClient.MockDeletePolicyWithHttpStatus(http.StatusBadRequest)
+
+	pId := "123"
+	deletePolicyInput := verifiedpermissions.DeletePolicyInput{
+		PolicyId:      &pId,
+		PolicyStoreId: &avpTestSupport.TestPolicyStoreId,
+	}
+
+	noOutput, err := testInfo.hexaAvpClient.DeletePolicy(&deletePolicyInput)
+	assert.Error(t, err, "Should be a bad request error")
+	assert.Nil(t, noOutput, "Should be null output")
+	assert.True(t, testInfo.mockClient.VerifyCalled())
+
+	testInfo.mockClient.MockDeletePolicyWithHttpStatus(http.StatusOK)
+	output, err := testInfo.hexaAvpClient.DeletePolicy(&deletePolicyInput)
+	assert.NoError(t, err)
+	assert.NotNil(t, output)
+	assert.True(t, testInfo.mockClient.VerifyCalled())
+}
