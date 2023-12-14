@@ -7,3 +7,4 @@ paths:
   - mapper/conditionLangs/gcpcel
   - mapper/formats/awsCedar
   - mapper/formats/gcpBind
+  - providers/aws/avp
