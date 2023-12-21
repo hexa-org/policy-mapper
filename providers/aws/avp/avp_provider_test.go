@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/verifiedpermissions"
@@ -195,7 +197,96 @@ func TestAvp_2_GetPolicies(t *testing.T) {
 	assert.True(t, mockClient.VerifyCalled())
 }
 
-func TestAvp_3_SetPolicies(t *testing.T) {
+func TestAvp_3_Reconcile(t *testing.T) {
+	mockClient := avpTestSupport.NewMockVerifiedPermissionsHTTPClient()
+
+	p := avp.AmazonAvpProvider{AwsClientOpts: awscommon.AWSClientOptions{
+		HTTPClient:   mockClient,
+		DisableRetry: true,
+	}}
+
+	mockClient.MockListStores()
+	info := avpTestSupport.IntegrationInfo()
+	apps, err := p.DiscoverApplications(info)
+	assert.NoError(t, err)
+	assert.True(t, mockClient.VerifyCalled())
+
+	mockClient.MockListPoliciesWithHttpStatus(http.StatusOK, 10, 1, nil)
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"0")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"1")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"2")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"3")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"4")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"5")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"6")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"7")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"8")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"9")
+	mockClient.MockGetPolicyTemplateWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarTemplatePolicyId+"0")
+	policies, err := p.GetPolicyInfo(info, apps[0])
+	assert.True(t, mockClient.VerifyCalled())
+
+	// origPolicies := policies[0:]
+	// This section will cause an update since only action changed
+	policy := policies[0]
+	actions := policy.Actions
+
+	actions = append(actions, hexapolicy.ActionInfo{ActionUri: "cedar:hexa_avp::Action::\"UpdateAccount\""})
+
+	policies[0].Actions = actions
+
+	avpMeta := policies[1].Meta.SourceMeta.(avp.AvpMeta)
+	assert.Equal(t, "TEMPLATE_LINKED", avpMeta.PolicyType, "Second [1] policy should be template")
+
+	// this should cause a replacement (delete and add) to occur (subject change)
+	policies[2].Subject.Members = []string{"hexa_avp::User::\"gerry@strata.io\""}
+
+	// this should cause an implied delete by removing policy 5
+	policies = append(policies[0:5], policies[6:]...)
+
+	now := time.Now()
+	// now append a policy by copying and modifying the first
+	newPolicy := policies[0]
+	newPolicy.Meta = hexapolicy.MetaInfo{
+		Version:     "0.5",
+		Description: "Test New Policy",
+		Created:     &now,
+		Modified:    &now,
+	}
+	newPolicy.Subject.Members = []string{"hexa_avp::User::\"nobody@strata.io\""}
+
+	policies = append(policies, newPolicy)
+
+	mockClient.MockListPoliciesWithHttpStatus(http.StatusOK, 10, 1, nil)
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"0")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"1")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"2")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"3")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"4")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"5")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"6")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"7")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"8")
+	mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"9")
+	mockClient.MockGetPolicyTemplateWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarTemplatePolicyId+"0")
+	difs, err := p.Reconcile(info, apps[0], policies, true)
+	assert.NoError(t, err)
+	assert.True(t, mockClient.VerifyCalled())
+	assert.Len(t, difs, 5)
+	assert.Equal(t, hexapolicy.TYPE_UPDATE, difs[0].Type)
+	assert.True(t, slices.Equal([]string{"ACTION"}, difs[0].DifTypes))
+	assert.Equal(t, hexapolicy.TYPE_IGNORED, difs[1].Type)
+	assert.Equal(t, hexapolicy.TYPE_UPDATE, difs[2].Type)
+	assert.True(t, slices.Equal([]string{"SUBJECT"}, difs[2].DifTypes))
+	assert.Equal(t, hexapolicy.TYPE_NEW, difs[3].Type)
+	assert.Equal(t, hexapolicy.TYPE_DELETE, difs[4].Type)
+	for _, dif := range difs {
+		fmt.Println(dif.Report())
+	}
+
+}
+
+func TestAvp_4_SetPolicies(t *testing.T) {
 	mockClient := avpTestSupport.NewMockVerifiedPermissionsHTTPClient()
 
 	p := avp.AmazonAvpProvider{AwsClientOpts: awscommon.AWSClientOptions{

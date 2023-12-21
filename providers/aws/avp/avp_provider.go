@@ -170,79 +170,69 @@ func (a *AmazonAvpProvider) GetPolicyInfo(info PolicyProvider.IntegrationInfo, a
 	return hexaPols, nil
 }
 
-func (a *AmazonAvpProvider) SetPolicyInfo(info PolicyProvider.IntegrationInfo, applicationInfo PolicyProvider.ApplicationInfo, hexaPolicies []hexapolicy.PolicyInfo) (int, error) {
-	client, err := a.getAvpClient(info)
-	if err != nil {
-		return http.StatusInternalServerError, err
-	}
+func (a *AmazonAvpProvider) Reconcile(info PolicyProvider.IntegrationInfo, applicationInfo PolicyProvider.ApplicationInfo, compareHexaPolicies []hexapolicy.PolicyInfo, diffsOnly bool) ([]hexapolicy.PolicyDif, error) {
+
 	// Get all existing policies to compare:
 	avpExistingPolicies, err := a.GetPolicyInfo(info, applicationInfo)
 	if err != nil {
-		return http.StatusInternalServerError, err
+		return []hexapolicy.PolicyDif{}, err
 	}
+
+	var res = make([]hexapolicy.PolicyDif, 0)
 
 	var avpMap = make(map[string]hexapolicy.PolicyInfo, len(avpExistingPolicies))
 	for _, policy := range avpExistingPolicies {
 		policyId := *policy.Meta.SourceMeta.(AvpMeta).PolicyId
 		avpMap[policyId] = policy
 	}
+	for _, comparePolicy := range compareHexaPolicies {
 
-	for _, hexaPolicy := range hexaPolicies {
-
-		if hexaPolicy.Meta.SourceMeta != nil {
-			switch source := hexaPolicy.Meta.SourceMeta.(type) {
+		if comparePolicy.Meta.SourceMeta != nil {
+			switch source := comparePolicy.Meta.SourceMeta.(type) {
 			case AvpMeta:
-				if isTemplate(hexaPolicy) {
+				policyId := *source.PolicyId
+				sourcePolicy, exists := avpMap[policyId]
+				if isTemplate(comparePolicy) {
+					dif := hexapolicy.PolicyDif{
+						Type:          hexapolicy.TYPE_IGNORED,
+						DifTypes:      nil,
+						PolicyExist:   &[]hexapolicy.PolicyInfo{sourcePolicy},
+						PolicyCompare: &comparePolicy,
+					}
+					res = append(res, dif)
+
 					delete(avpMap, *source.PolicyId) // Remove to indicate existing policy handled
 					fmt.Printf("Ignoring AVP policyid %s. Template updates not currently supported\n", *source.PolicyId)
 					continue
 				}
-				policyId := *source.PolicyId
-				sourcePolicy, exists := avpMap[policyId]
+
 				if exists {
-					difs := hexaPolicy.Compare(sourcePolicy)
-					if slices.Contains(difs, hexapolicy.COMPARE_EQUAL) {
-						// policy matched, nothing to do
+					differenceTypes := comparePolicy.Compare(sourcePolicy)
+					if slices.Contains(differenceTypes, hexapolicy.COMPARE_EQUAL) {
+						if !diffsOnly {
+							// policy matches
+							dif := hexapolicy.PolicyDif{
+								Type:          hexapolicy.TYPE_EQUAL,
+								DifTypes:      nil,
+								PolicyExist:   &[]hexapolicy.PolicyInfo{sourcePolicy},
+								PolicyCompare: &comparePolicy,
+							}
+							res = append(res, dif)
+						}
 						delete(avpMap, policyId) // Remove to indicate existing policy handled
 						continue                 // nothing to do
 					}
-					if slices.Contains(difs, hexapolicy.COMPARE_DIF_SUBJECT) || slices.Contains(difs, hexapolicy.COMPARE_DIF_OBJECT) {
-						// this is a delete and replace
-
-						deleteInput := a.prepareDelete(source)
-						_, err = client.DeletePolicy(deleteInput)
-						if err != nil {
-							return http.StatusBadRequest, err
-						}
-						createInput, err := a.prepareCreatePolicy(hexaPolicy, applicationInfo)
-						if err != nil {
-							return http.StatusBadRequest, err
-						}
-						output, err := client.CreatePolicy(createInput)
-						if err != nil {
-							return http.StatusBadRequest, err
-						}
-						newPolicyId := output.PolicyId
-						fmt.Printf("AVP PolicyId %s replaced as %s (hexa etag: %s)\n", policyId, *newPolicyId, hexaPolicy.Meta.Etag)
-
-						delete(avpMap, policyId) // Remove to indicate existing policy handled
-						continue
+					// This is a modify request
+					newPolicy := comparePolicy
+					dif := hexapolicy.PolicyDif{
+						Type:          hexapolicy.TYPE_UPDATE,
+						DifTypes:      differenceTypes,
+						PolicyExist:   &[]hexapolicy.PolicyInfo{sourcePolicy},
+						PolicyCompare: &newPolicy,
 					}
-
-					if slices.Contains(difs, hexapolicy.COMPARE_DIF_ACTION) || slices.Contains(difs, hexapolicy.COMPARE_DIF_CONDITION) {
-						// Do Update
-						update, err := a.preparePolicyUpdate(hexaPolicy, source)
-						if err != nil {
-							return http.StatusBadRequest, err
-						}
-						_, err = client.UpdatePolicy(update)
-						if err != nil {
-							return http.StatusBadRequest, err
-						}
-						delete(avpMap, policyId) // Remove to indicate existing policy handled
-						fmt.Printf("AVP PolicyId %s updated\n", policyId)
-						continue
-					}
+					res = append(res, dif)
+					delete(avpMap, policyId) // Remove to indicate existing policy handled
+					continue
 				}
 			default:
 				// Fall through to create - likely a policy from another source
@@ -251,33 +241,121 @@ func (a *AmazonAvpProvider) SetPolicyInfo(info PolicyProvider.IntegrationInfo, a
 
 		// At this point no match was found. So assume new
 
-		if isTemplate(hexaPolicy) {
-			fmt.Printf("AVP template policy creation not currently supported (Etag: %s)\n", hexaPolicy.CalculateEtag())
+		if isTemplate(comparePolicy) {
+			fmt.Printf("AVP template policy ignored (Etag: %s)\n", comparePolicy.CalculateEtag())
 			continue
 		}
-		createInput, err := a.prepareCreatePolicy(hexaPolicy, applicationInfo)
-		if err != nil {
-			return http.StatusBadRequest, err
+		newPolicy := comparePolicy
+		dif := hexapolicy.PolicyDif{
+			Type:          hexapolicy.TYPE_NEW,
+			DifTypes:      nil,
+			PolicyExist:   nil,
+			PolicyCompare: &newPolicy,
 		}
-		output, err := client.CreatePolicy(createInput)
-		if err != nil {
-			return http.StatusBadRequest, err
-		}
-		policyId := output.PolicyId
-		fmt.Printf("AVP PolicyId %s created (hexa etag: %s)\n", *policyId, hexaPolicy.Meta.Etag)
+		res = append(res, dif)
+
 	}
 
 	// For each remaining pre-existing policy there is an implied delete
 	if len(avpMap) > 0 {
 		fmt.Printf("%v existing AVP policies will be removed.\n", len(avpMap))
 		for _, policy := range avpMap {
-			source := policy.Meta.SourceMeta.(AvpMeta)
-			fmt.Printf("AVP PolicyId %s deleted\n", *source.PolicyId)
-			deleteInput := a.prepareDelete(source)
-			_, err = client.DeletePolicy(deleteInput)
+			dif := hexapolicy.PolicyDif{
+				Type:          hexapolicy.TYPE_DELETE,
+				DifTypes:      nil,
+				PolicyExist:   &[]hexapolicy.PolicyInfo{policy},
+				PolicyCompare: nil,
+			}
+			res = append(res, dif)
+		}
+	}
+	return res, nil
+}
+
+func (a *AmazonAvpProvider) SetPolicyInfo(info PolicyProvider.IntegrationInfo, applicationInfo PolicyProvider.ApplicationInfo, hexaPolicies []hexapolicy.PolicyInfo) (int, error) {
+	client, err := a.getAvpClient(info)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	differences, err := a.Reconcile(info, applicationInfo, hexaPolicies, true)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	for _, dif := range differences {
+		switch dif.Type {
+
+		case hexapolicy.TYPE_NEW:
+			hexaPolicy := *dif.PolicyCompare
+			if isTemplate(hexaPolicy) {
+				fmt.Printf("AVP template policy creation not currently supported (Etag: %s)\n", hexaPolicy.CalculateEtag())
+				continue
+			}
+			createInput, err := a.prepareCreatePolicy(hexaPolicy, applicationInfo)
 			if err != nil {
 				return http.StatusBadRequest, err
 			}
+			output, err := client.CreatePolicy(createInput)
+			if err != nil {
+				return http.StatusBadRequest, err
+			}
+			policyId := output.PolicyId
+			fmt.Printf("AVP PolicyId %s created (hexa etag: %s)\n", *policyId, hexaPolicy.Meta.Etag)
+
+		case hexapolicy.TYPE_DELETE:
+			for _, existPolicy := range *dif.PolicyExist {
+				source := existPolicy.Meta.SourceMeta.(AvpMeta)
+				deleteInput := a.prepareDelete(source)
+				_, err = client.DeletePolicy(deleteInput)
+				if err != nil {
+					return http.StatusBadRequest, err
+				}
+				fmt.Printf("AVP PolicyId %s deleted\n", *source.PolicyId)
+			}
+
+		case hexapolicy.TYPE_UPDATE:
+			hexaPolicy := *dif.PolicyCompare
+			switch source := hexaPolicy.Meta.SourceMeta.(type) {
+			case AvpMeta:
+				policyId := *source.PolicyId
+
+				if slices.Contains(dif.DifTypes, hexapolicy.COMPARE_DIF_SUBJECT) || slices.Contains(dif.DifTypes, hexapolicy.COMPARE_DIF_OBJECT) {
+					// this is a delete and replace
+					deleteInput := a.prepareDelete(source)
+					_, err = client.DeletePolicy(deleteInput)
+					if err != nil {
+						return http.StatusBadRequest, err
+					}
+					createInput, err := a.prepareCreatePolicy(hexaPolicy, applicationInfo)
+					if err != nil {
+						return http.StatusBadRequest, err
+					}
+					output, err := client.CreatePolicy(createInput)
+					if err != nil {
+						return http.StatusBadRequest, err
+					}
+					newPolicyId := output.PolicyId
+					fmt.Printf("AVP PolicyId %s replaced as %s (hexa etag: %s)\n", policyId, *newPolicyId, hexaPolicy.Meta.Etag)
+
+				} else if slices.Contains(dif.DifTypes, hexapolicy.COMPARE_DIF_ACTION) || slices.Contains(dif.DifTypes, hexapolicy.COMPARE_DIF_CONDITION) {
+					// Do Update (if subject or object changed, the update would already be done)
+					update, err := a.preparePolicyUpdate(hexaPolicy, source)
+					if err != nil {
+						return http.StatusBadRequest, err
+					}
+					_, err = client.UpdatePolicy(update)
+					if err != nil {
+						return http.StatusBadRequest, err
+					}
+					fmt.Printf("AVP PolicyId %s updated\n", policyId)
+					continue
+				}
+
+			default:
+				// Fall through to create - likely a policy from another source
+			}
+		case hexapolicy.TYPE_IGNORED, hexapolicy.TYPE_EQUAL:
+			// do nothing
 		}
 	}
 

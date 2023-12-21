@@ -2,6 +2,7 @@ package hexapolicy
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -46,6 +47,11 @@ type PolicyInfo struct {
 	Actions   []ActionInfo              `validate:"required"`
 	Object    ObjectInfo                `validate:"required"`
 	Condition *conditions.ConditionInfo `json:",omitempty"` // Condition is optional
+}
+
+func (p *PolicyInfo) String() string {
+	policyBytes, _ := json.MarshalIndent(p, "", " ")
+	return string(policyBytes)
 }
 
 /*
@@ -183,4 +189,35 @@ type ObjectInfo struct {
 
 func (o *ObjectInfo) equals(object *ObjectInfo) bool {
 	return o.ResourceID == object.ResourceID
+}
+
+var (
+	TYPE_NEW     = "NEW"
+	TYPE_EQUAL   = "MATCHED"
+	TYPE_UPDATE  = "UPDATE"
+	TYPE_DELETE  = "DELETE"
+	TYPE_IGNORED = "UNSUPPORTED"
+)
+
+type PolicyDif struct {
+	Type          string
+	DifTypes      []string
+	PolicyExist   *[]PolicyInfo // for n to 1
+	PolicyCompare *PolicyInfo
+}
+
+func (d *PolicyDif) Report() string {
+	switch d.Type {
+	case TYPE_NEW, TYPE_EQUAL, TYPE_IGNORED:
+		return fmt.Sprintf("DIF: %s\n%s", d.Type, d.PolicyCompare.String())
+	case TYPE_DELETE:
+		policies := *d.PolicyExist
+		sourceMeta := policies[0].Meta.SourceMeta
+		metaBytes, _ := json.Marshal(sourceMeta)
+		return fmt.Sprintf("DIF: %s PolicyId: %s", d.Type, string(metaBytes))
+	case TYPE_UPDATE:
+		return fmt.Sprintf("DIF: %s %v\n%s", d.Type, d.DifTypes, d.PolicyCompare.String())
+	default:
+		return fmt.Sprintf("DIF: %s\n%s", "Unexpected type", d.PolicyCompare.String())
+	}
 }
