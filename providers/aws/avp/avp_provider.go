@@ -15,29 +15,42 @@ import (
 	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"
 )
 
-type AvpMeta struct {
-	PolicyId   *string
-	StoreId    *string
-	PolicyType string
-	Principal  interface{}
-	Resource   interface{}
-}
+const (
+	ProviderTypeAvp string = "avp"
+	ParamResource   string = "resource"
+	ParamPrincipal  string = "principal"
+	ParamPolicyType string = "policyType"
+)
 
-func MapAvpMeta(item types.PolicyItem) AvpMeta {
-	return AvpMeta{
-		PolicyId:   item.PolicyId,
-		StoreId:    item.PolicyStoreId,
-		Principal:  item.Principal,
-		Resource:   item.Resource,
-		PolicyType: string(types.PolicyTypeStatic),
+func MapAvpMeta(item types.PolicyItem) hexapolicy.MetaInfo {
+	data := map[string]interface{}{}
+
+	data[ParamPrincipal] = item.Principal
+	data[ParamResource] = item.Resource
+	data[ParamPolicyType] = string(types.PolicyTypeStatic)
+
+	return hexapolicy.MetaInfo{
+		Version:      hexapolicy.IDQL_VERSION,
+		ProviderType: ProviderTypeAvp,
+		Created:      item.CreatedDate,
+		Modified:     item.LastUpdatedDate,
+		PolicyId:     item.PolicyId,
+		PapId:        item.PolicyStoreId,
+		SourceData:   data,
 	}
 }
 
-func MapAvpTemplate(item *verifiedpermissions.GetPolicyTemplateOutput) AvpMeta {
-	return AvpMeta{
-		PolicyId:   item.PolicyTemplateId,
-		StoreId:    item.PolicyStoreId,
-		PolicyType: string(types.PolicyTypeTemplateLinked),
+func MapAvpTemplate(item *verifiedpermissions.GetPolicyTemplateOutput) hexapolicy.MetaInfo {
+	data := map[string]interface{}{}
+	data[ParamPolicyType] = string(types.PolicyTypeTemplateLinked)
+	return hexapolicy.MetaInfo{
+		Version:      hexapolicy.IDQL_VERSION,
+		ProviderType: ProviderTypeAvp,
+		Created:      item.CreatedDate,
+		Modified:     item.LastUpdatedDate,
+		PolicyId:     item.PolicyTemplateId,
+		PapId:        item.PolicyStoreId,
+		SourceData:   data,
 	}
 }
 
@@ -47,7 +60,7 @@ type AmazonAvpProvider struct {
 }
 
 func (a *AmazonAvpProvider) Name() string {
-	return "avp"
+	return ProviderTypeAvp
 }
 
 func (a *AmazonAvpProvider) initCedarMapper() {
@@ -101,9 +114,7 @@ func (a *AmazonAvpProvider) mapAvpPolicyToHexa(avpPolicy types.PolicyItem, clien
 
 		// Update IDQL Meta
 		avpMeta := MapAvpMeta(avpPolicy)
-		hexaPolicy.Meta.SourceMeta = avpMeta
-		hexaPolicy.Meta.Created = avpPolicy.CreatedDate
-		hexaPolicy.Meta.Modified = avpPolicy.LastUpdatedDate
+		hexaPolicy.Meta = avpMeta
 		hexaPolicy.Meta.Description = *policyStatic.Description
 		hexaPolicy.CalculateEtag()
 		hexaPols = append(hexaPols, hexaPolicy)
@@ -131,13 +142,11 @@ func (a *AmazonAvpProvider) mapAvpPolicyToHexa(avpPolicy types.PolicyItem, clien
 
 		// Update the meta information
 		avpMeta := MapAvpTemplate(output)
-		avpMeta.Resource = avpPolicy.Resource
-		avpMeta.Principal = avpPolicy.Principal
-		hexaPolicy.Meta.SourceMeta = avpMeta
+		avpMeta.SourceData[ParamResource] = avpPolicy.Resource
+		avpMeta.SourceData[ParamPrincipal] = avpPolicy.Principal
+		hexaPolicy.Meta = avpMeta
 		if output.Description != nil {
 			hexaPolicy.Meta.Description = *output.Description
-			hexaPolicy.Meta.Created = output.CreatedDate
-			hexaPolicy.Meta.Modified = output.LastUpdatedDate
 		}
 		hexaPolicy.CalculateEtag()
 		hexaPols = append(hexaPols, hexaPolicy)
@@ -182,15 +191,16 @@ func (a *AmazonAvpProvider) Reconcile(info PolicyProvider.IntegrationInfo, appli
 
 	var avpMap = make(map[string]hexapolicy.PolicyInfo, len(avpExistingPolicies))
 	for _, policy := range avpExistingPolicies {
-		policyId := *policy.Meta.SourceMeta.(AvpMeta).PolicyId
+		policyId := *policy.Meta.PolicyId
 		avpMap[policyId] = policy
 	}
 	for _, comparePolicy := range compareHexaPolicies {
 
-		if comparePolicy.Meta.SourceMeta != nil {
-			switch source := comparePolicy.Meta.SourceMeta.(type) {
-			case AvpMeta:
-				policyId := *source.PolicyId
+		if comparePolicy.Meta.SourceData != nil {
+			meta := comparePolicy.Meta
+			switch meta.ProviderType {
+			case ProviderTypeAvp:
+				policyId := *meta.PolicyId
 				sourcePolicy, exists := avpMap[policyId]
 				if isTemplate(comparePolicy) {
 					dif := hexapolicy.PolicyDif{
@@ -201,8 +211,9 @@ func (a *AmazonAvpProvider) Reconcile(info PolicyProvider.IntegrationInfo, appli
 					}
 					res = append(res, dif)
 
-					delete(avpMap, *source.PolicyId) // Remove to indicate existing policy handled
-					fmt.Printf("Ignoring AVP policyid %s. Template updates not currently supported\n", *source.PolicyId)
+					delete(avpMap, *meta.PolicyId) // Remove to indicate existing policy handled
+					fmt.Printf("Ignoring AVP policyid %s. Template updates not currently supported\n",
+						*meta.PolicyId)
 					continue
 				}
 
@@ -304,7 +315,7 @@ func (a *AmazonAvpProvider) SetPolicyInfo(info PolicyProvider.IntegrationInfo, a
 
 		case hexapolicy.TYPE_DELETE:
 			for _, existPolicy := range *dif.PolicyExist {
-				source := existPolicy.Meta.SourceMeta.(AvpMeta)
+				source := existPolicy.Meta
 				deleteInput := a.prepareDelete(source)
 				_, err = client.DeletePolicy(deleteInput)
 				if err != nil {
@@ -315,12 +326,14 @@ func (a *AmazonAvpProvider) SetPolicyInfo(info PolicyProvider.IntegrationInfo, a
 
 		case hexapolicy.TYPE_UPDATE:
 			hexaPolicy := *dif.PolicyCompare
-			switch source := hexaPolicy.Meta.SourceMeta.(type) {
-			case AvpMeta:
+			source := hexaPolicy.Meta
+			metaType := source.ProviderType
+			switch metaType {
+			case ProviderTypeAvp:
 				policyId := *source.PolicyId
 
 				if slices.Contains(dif.DifTypes, hexapolicy.COMPARE_DIF_SUBJECT) || slices.Contains(dif.DifTypes, hexapolicy.COMPARE_DIF_OBJECT) {
-					// this is a delete and replace
+					// will delete and replace
 					deleteInput := a.prepareDelete(source)
 					_, err = client.DeletePolicy(deleteInput)
 					if err != nil {
@@ -400,7 +413,7 @@ func (a *AmazonAvpProvider) prepareCreatePolicy(hexaPolicy hexapolicy.PolicyInfo
 	return &createPolicyInput, nil
 }
 
-func (a *AmazonAvpProvider) preparePolicyUpdate(hexaPolicy hexapolicy.PolicyInfo, meta AvpMeta) (*verifiedpermissions.UpdatePolicyInput, error) {
+func (a *AmazonAvpProvider) preparePolicyUpdate(hexaPolicy hexapolicy.PolicyInfo, meta hexapolicy.MetaInfo) (*verifiedpermissions.UpdatePolicyInput, error) {
 	cedarStatement, err := a.convertCedarStatement(hexaPolicy)
 	if err != nil {
 		return nil, err
@@ -415,24 +428,25 @@ func (a *AmazonAvpProvider) preparePolicyUpdate(hexaPolicy hexapolicy.PolicyInfo
 	update := verifiedpermissions.UpdatePolicyInput{
 		Definition:    &updateMemberStatic,
 		PolicyId:      meta.PolicyId,
-		PolicyStoreId: meta.StoreId,
+		PolicyStoreId: meta.PapId,
 	}
 	return &update, nil
 }
 
-func (a *AmazonAvpProvider) prepareDelete(avpMeta AvpMeta) *verifiedpermissions.DeletePolicyInput {
-	if avpMeta.PolicyType == string(types.PolicyTypeTemplateLinked) {
+func (a *AmazonAvpProvider) prepareDelete(avpMeta hexapolicy.MetaInfo) *verifiedpermissions.DeletePolicyInput {
+	policyType := avpMeta.SourceData[ParamPolicyType]
+	if policyType == string(types.PolicyTypeTemplateLinked) {
 		return nil // template deletions not currently supported
 	}
 	deletePolicyInput := verifiedpermissions.DeletePolicyInput{
 		PolicyId:      avpMeta.PolicyId,
-		PolicyStoreId: avpMeta.StoreId,
+		PolicyStoreId: avpMeta.PapId,
 	}
 	return &deletePolicyInput
 }
 
 func isTemplate(hexaPolicy hexapolicy.PolicyInfo) bool {
-	if hexaPolicy.Meta.SourceMeta == nil {
+	if hexaPolicy.Meta.SourceData == nil {
 		// in the case where a policy is new, but contains template we need to test for ?resource and ?principle
 		if slices.Contains(hexaPolicy.Subject.Members, "?principal") {
 			return true
@@ -443,10 +457,6 @@ func isTemplate(hexaPolicy hexapolicy.PolicyInfo) bool {
 
 		return false
 	}
-	switch smeta := hexaPolicy.Meta.SourceMeta.(type) {
-	case AvpMeta:
-		return smeta.PolicyType == string(types.PolicyTypeTemplateLinked)
-	default:
-	}
-	return false
+	policyType, exists := hexaPolicy.Meta.SourceData[ParamPolicyType]
+	return exists && policyType == string(types.PolicyTypeTemplateLinked)
 }

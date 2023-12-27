@@ -43,7 +43,9 @@ type ApplicationInfo struct {
 	Service     string // Service describes an identifier for a service to be administered
 }
 
-type DifProvider interface {
-	Name() string
+var PROVIDER_TYPE_AVP = "avp"
+
+type V2Provider interface {
+	Provider
 	Reconcile(IntegrationInfo, ApplicationInfo, []hexapolicy.PolicyInfo, bool) ([]hexapolicy.PolicyDif, error)
 }

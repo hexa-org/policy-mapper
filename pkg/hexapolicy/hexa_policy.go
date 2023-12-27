@@ -17,6 +17,8 @@ const (
 	SJwtAuth   string = "jwt"
 	SSamlAuth  string = "saml"
 	SCidr      string = "net"
+
+	IDQL_VERSION string = "0.6"
 )
 
 type Policies struct {
@@ -148,12 +150,15 @@ func (p *PolicyInfo) actionEquals(actions []ActionInfo) bool {
 }
 
 type MetaInfo struct {
-	Version     string      `validate:"required"` // this is the idql policy format version
-	SourceMeta  interface{} `json:",omitempty"`   // Logistical information required to map in source provider, e.g. type, identifiers
-	Description string      `json:",omitempty"`
-	Created     *time.Time  `json:",omitempty"`
-	Modified    *time.Time  `json:",omitempty"`
-	Etag        string      `json:",omitempty"`
+	Version      string                 `json:"version,omitempty" validate:"required"` // this is the idql policy format version
+	SourceData   map[string]interface{} `json:",omitempty"`                            // Logistical information required to map in source provider, e.g. type, identifiers
+	Description  string                 `json:",omitempty"`
+	Created      *time.Time             `json:",omitempty"`
+	Modified     *time.Time             `json:",omitempty"`
+	Etag         string                 `json:",omitempty"`
+	PolicyId     *string                `json:"policyId,omitempty"`
+	PapId        *string                `json:"papId,omitempty"`
+	ProviderType string                 `json:"type,omitempty"`
 }
 
 type ActionInfo struct {
@@ -212,7 +217,7 @@ func (d *PolicyDif) Report() string {
 		return fmt.Sprintf("DIF: %s\n%s", d.Type, d.PolicyCompare.String())
 	case TYPE_DELETE:
 		policies := *d.PolicyExist
-		sourceMeta := policies[0].Meta.SourceMeta
+		sourceMeta := policies[0].Meta.SourceData
 		metaBytes, _ := json.Marshal(sourceMeta)
 		return fmt.Sprintf("DIF: %s PolicyId: %s", d.Type, string(metaBytes))
 	case TYPE_UPDATE:

@@ -235,8 +235,11 @@ func TestAvp_3_Reconcile(t *testing.T) {
 
 	policies[0].Actions = actions
 
-	avpMeta := policies[1].Meta.SourceMeta.(avp.AvpMeta)
-	assert.Equal(t, "TEMPLATE_LINKED", avpMeta.PolicyType, "Second [1] policy should be template")
+	avpMeta := policies[1].Meta
+	var avpType string
+	avpType, exist := avpMeta.SourceData[avp.ParamPolicyType].(string)
+	assert.True(t, exist, "Check policy type exists")
+	assert.Equal(t, "TEMPLATE_LINKED", avpType, "Second [1] policy should be template")
 
 	// this should cause a replacement (delete and add) to occur (subject change)
 	policies[2].Subject.Members = []string{"hexa_avp::User::\"gerry@strata.io\""}
