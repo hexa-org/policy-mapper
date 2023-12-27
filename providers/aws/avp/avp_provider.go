@@ -196,58 +196,56 @@ func (a *AmazonAvpProvider) Reconcile(info PolicyProvider.IntegrationInfo, appli
 	}
 	for _, comparePolicy := range compareHexaPolicies {
 
-		if comparePolicy.Meta.SourceData != nil {
-			meta := comparePolicy.Meta
-			switch meta.ProviderType {
-			case ProviderTypeAvp:
-				policyId := *meta.PolicyId
-				sourcePolicy, exists := avpMap[policyId]
-				if isTemplate(comparePolicy) {
-					dif := hexapolicy.PolicyDif{
-						Type:          hexapolicy.TYPE_IGNORED,
-						DifTypes:      nil,
-						PolicyExist:   &[]hexapolicy.PolicyInfo{sourcePolicy},
-						PolicyCompare: &comparePolicy,
-					}
-					res = append(res, dif)
-
-					delete(avpMap, *meta.PolicyId) // Remove to indicate existing policy handled
-					fmt.Printf("Ignoring AVP policyid %s. Template updates not currently supported\n",
-						*meta.PolicyId)
-					continue
+		meta := comparePolicy.Meta
+		switch meta.ProviderType {
+		case ProviderTypeAvp:
+			policyId := *meta.PolicyId
+			sourcePolicy, exists := avpMap[policyId]
+			if isTemplate(comparePolicy) {
+				dif := hexapolicy.PolicyDif{
+					Type:          hexapolicy.TYPE_IGNORED,
+					DifTypes:      nil,
+					PolicyExist:   &[]hexapolicy.PolicyInfo{sourcePolicy},
+					PolicyCompare: &comparePolicy,
 				}
+				res = append(res, dif)
 
-				if exists {
-					differenceTypes := comparePolicy.Compare(sourcePolicy)
-					if slices.Contains(differenceTypes, hexapolicy.COMPARE_EQUAL) {
-						if !diffsOnly {
-							// policy matches
-							dif := hexapolicy.PolicyDif{
-								Type:          hexapolicy.TYPE_EQUAL,
-								DifTypes:      nil,
-								PolicyExist:   &[]hexapolicy.PolicyInfo{sourcePolicy},
-								PolicyCompare: &comparePolicy,
-							}
-							res = append(res, dif)
-						}
-						delete(avpMap, policyId) // Remove to indicate existing policy handled
-						continue                 // nothing to do
-					}
-					// This is a modify request
-					newPolicy := comparePolicy
-					dif := hexapolicy.PolicyDif{
-						Type:          hexapolicy.TYPE_UPDATE,
-						DifTypes:      differenceTypes,
-						PolicyExist:   &[]hexapolicy.PolicyInfo{sourcePolicy},
-						PolicyCompare: &newPolicy,
-					}
-					res = append(res, dif)
-					delete(avpMap, policyId) // Remove to indicate existing policy handled
-					continue
-				}
-			default:
-				// Fall through to create - likely a policy from another source
+				delete(avpMap, *meta.PolicyId) // Remove to indicate existing policy handled
+				fmt.Printf("Ignoring AVP policyid %s. Template updates not currently supported\n",
+					*meta.PolicyId)
+				continue
 			}
+
+			if exists {
+				differenceTypes := comparePolicy.Compare(sourcePolicy)
+				if slices.Contains(differenceTypes, hexapolicy.COMPARE_EQUAL) {
+					if !diffsOnly {
+						// policy matches
+						dif := hexapolicy.PolicyDif{
+							Type:          hexapolicy.TYPE_EQUAL,
+							DifTypes:      nil,
+							PolicyExist:   &[]hexapolicy.PolicyInfo{sourcePolicy},
+							PolicyCompare: &comparePolicy,
+						}
+						res = append(res, dif)
+					}
+					delete(avpMap, policyId) // Remove to indicate existing policy handled
+					continue                 // nothing to do
+				}
+				// This is a modify request
+				newPolicy := comparePolicy
+				dif := hexapolicy.PolicyDif{
+					Type:          hexapolicy.TYPE_UPDATE,
+					DifTypes:      differenceTypes,
+					PolicyExist:   &[]hexapolicy.PolicyInfo{sourcePolicy},
+					PolicyCompare: &newPolicy,
+				}
+				res = append(res, dif)
+				delete(avpMap, policyId) // Remove to indicate existing policy handled
+				continue
+			}
+		default:
+			// Fall through to create - likely a policy from another source
 		}
 
 		// At this point no match was found. So assume new

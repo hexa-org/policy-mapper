@@ -150,15 +150,15 @@ func (p *PolicyInfo) actionEquals(actions []ActionInfo) bool {
 }
 
 type MetaInfo struct {
-	Version      string                 `json:"version,omitempty" validate:"required"` // this is the idql policy format version
+	Version      string                 `json:"Version,omitempty" validate:"required"` // this is the idql policy format version
 	SourceData   map[string]interface{} `json:",omitempty"`                            // Logistical information required to map in source provider, e.g. type, identifiers
 	Description  string                 `json:",omitempty"`
 	Created      *time.Time             `json:",omitempty"`
 	Modified     *time.Time             `json:",omitempty"`
 	Etag         string                 `json:",omitempty"`
-	PolicyId     *string                `json:"policyId,omitempty"`
-	PapId        *string                `json:"papId,omitempty"`
-	ProviderType string                 `json:"type,omitempty"`
+	PolicyId     *string                `json:",omitempty"`
+	PapId        *string                `json:",omitempty"`
+	ProviderType string                 `json:",omitempty"`
 }
 
 type ActionInfo struct {
