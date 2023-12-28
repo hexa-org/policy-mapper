@@ -18,7 +18,7 @@ const (
 	SSamlAuth  string = "saml"
 	SCidr      string = "net"
 
-	IDQL_VERSION string = "0.6"
+	IdqlVersion string = "0.6"
 )
 
 type Policies struct {

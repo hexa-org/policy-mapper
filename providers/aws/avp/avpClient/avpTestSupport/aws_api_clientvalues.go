@@ -50,7 +50,7 @@ func AwsCredentialsForTest() []byte {
 }
 
 func IntegrationInfo() PolicyProvider.IntegrationInfo {
-	return PolicyProvider.IntegrationInfo{Name: "avp", Key: AwsCredentialsForTest()}
+	return PolicyProvider.IntegrationInfo{Name: PolicyProvider.PROVIDER_TYPE_AVP, Key: AwsCredentialsForTest()}
 }
 
 func AppInfo() PolicyProvider.ApplicationInfo {

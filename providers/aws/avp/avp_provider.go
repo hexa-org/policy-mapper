@@ -30,7 +30,7 @@ func MapAvpMeta(item types.PolicyItem) hexapolicy.MetaInfo {
 	data[ParamPolicyType] = string(types.PolicyTypeStatic)
 
 	return hexapolicy.MetaInfo{
-		Version:      hexapolicy.IDQL_VERSION,
+		Version:      hexapolicy.IdqlVersion,
 		ProviderType: ProviderTypeAvp,
 		Created:      item.CreatedDate,
 		Modified:     item.LastUpdatedDate,
@@ -44,7 +44,7 @@ func MapAvpTemplate(item *verifiedpermissions.GetPolicyTemplateOutput) hexapolic
 	data := map[string]interface{}{}
 	data[ParamPolicyType] = string(types.PolicyTypeTemplateLinked)
 	return hexapolicy.MetaInfo{
-		Version:      hexapolicy.IDQL_VERSION,
+		Version:      hexapolicy.IdqlVersion,
 		ProviderType: ProviderTypeAvp,
 		Created:      item.CreatedDate,
 		Modified:     item.LastUpdatedDate,
