@@ -3,6 +3,7 @@ package hexapolicy
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -225,4 +226,77 @@ func (d *PolicyDif) Report() string {
 	default:
 		return fmt.Sprintf("DIF: %s\n%s", "Unexpected type", d.PolicyCompare.String())
 	}
+}
+
+func ReconcilePolicies(existingPolicies []PolicyInfo, comparePolicies []PolicyInfo, diffsOnly bool) ([]PolicyDif, error) {
+	var res = make([]PolicyDif, 0)
+
+	var policyIdMap = make(map[string]PolicyInfo, len(existingPolicies))
+	for _, policy := range existingPolicies {
+		policyId := *policy.Meta.PolicyId
+		policyIdMap[policyId] = policy
+	}
+	for _, comparePolicy := range comparePolicies {
+
+		meta := comparePolicy.Meta
+
+		policyId := *meta.PolicyId
+		sourcePolicy, exists := policyIdMap[policyId]
+
+		if exists {
+			differenceTypes := comparePolicy.Compare(sourcePolicy)
+			if slices.Contains(differenceTypes, COMPARE_EQUAL) {
+				if !diffsOnly {
+					// policy matches
+					dif := PolicyDif{
+						Type:          TYPE_EQUAL,
+						DifTypes:      nil,
+						PolicyExist:   &[]PolicyInfo{sourcePolicy},
+						PolicyCompare: &comparePolicy,
+					}
+					res = append(res, dif)
+				}
+				delete(policyIdMap, policyId) // Remove to indicate existing policy handled
+				continue                      // nothing to do
+			}
+			// This is a modify request
+			newPolicy := comparePolicy
+			dif := PolicyDif{
+				Type:          TYPE_UPDATE,
+				DifTypes:      differenceTypes,
+				PolicyExist:   &[]PolicyInfo{sourcePolicy},
+				PolicyCompare: &newPolicy,
+			}
+			res = append(res, dif)
+			delete(policyIdMap, policyId) // Remove to indicate existing policy handled
+			continue
+		}
+
+		// At this point no match was found. So assume new
+
+		newPolicy := comparePolicy
+		dif := PolicyDif{
+			Type:          TYPE_NEW,
+			DifTypes:      nil,
+			PolicyExist:   nil,
+			PolicyCompare: &newPolicy,
+		}
+		res = append(res, dif)
+
+	}
+
+	// For each remaining pre-existing policy there is an implied delete
+	if len(policyIdMap) > 0 {
+		fmt.Printf("%v existing AVP policies will be removed.\n", len(policyIdMap))
+		for _, policy := range policyIdMap {
+			dif := PolicyDif{
+				Type:          TYPE_DELETE,
+				DifTypes:      nil,
+				PolicyExist:   &[]PolicyInfo{policy},
+				PolicyCompare: nil,
+			}
+			res = append(res, dif)
+		}
+	}
+	return res, nil
 }

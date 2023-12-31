@@ -4,14 +4,21 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/hexa-org/policy-mapper/api/PolicyProvider"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/providers/aws/avp"
 	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"
+	"github.com/hexa-org/policy-mapper/providers/test"
 )
 
-var PROVIDER_TYPE_AVP = "avp"
+const (
+	ProviderTypeAvp  string = avp.ProviderTypeAvp
+	ProviderTypeMock string = test.ProviderTypeMock
+
+	EnvTestProvider string = "HEXA_TEST_PROVIDER" // EnvTestProvider overrides whatever provider is requested and uses the specified provider instead (by name)
+)
 
 type Integration struct {
 	Alias    string                                    `json:"alias"`
@@ -52,22 +59,36 @@ are automatically opened if Open is not called. Primary purpose is to expose the
 some integrations such as Orchestrator.
 */
 func (i *Integration) open() (PolicyProvider.Provider, error) {
+	if i.provider != nil {
+		return i.provider, nil
+	}
+	testOverride := os.Getenv(EnvTestProvider)
 	info := i.Opts.Info
 	if info == nil {
 		return nil, errors.New("missing PolicyProvider.IntegrationInfo object")
 	}
-	switch info.Name {
-	case PROVIDER_TYPE_AVP:
-		if i.provider == nil {
-			opts := awscommon.AWSClientOptions{DisableRetry: true}
-			if i.Opts.ProviderOpts != nil {
-				switch v := i.Opts.ProviderOpts.(type) {
-				case awscommon.AWSClientOptions:
-					opts = v
-				default:
-				}
+	provType := info.Name
+	if testOverride != "" {
+		fmt.Println("Overriding " + provType + " with " + testOverride)
+		provType = testOverride
+	}
+	switch provType {
+	case ProviderTypeAvp:
+		opts := awscommon.AWSClientOptions{DisableRetry: true}
+		if i.Opts.ProviderOpts != nil {
+			switch v := i.Opts.ProviderOpts.(type) {
+			case awscommon.AWSClientOptions:
+				opts = v
+			default:
 			}
-			i.provider = &avp.AmazonAvpProvider{AwsClientOpts: opts}
+		}
+		i.provider = &avp.AmazonAvpProvider{AwsClientOpts: opts}
+
+		return i.provider, nil
+
+	case ProviderTypeMock:
+		i.provider = &test.MockProvider{
+			Info: *i.Opts.Info,
 		}
 		return i.provider, nil
 	default:
@@ -85,8 +106,12 @@ func (i *Integration) GetType() string {
 
 func (i *Integration) checkOpen() {
 	if i.provider == nil {
-		i.open()
+		_, _ = i.open()
 	}
+}
+
+func (i *Integration) GetProvider() PolicyProvider.Provider {
+	return i.provider
 }
 
 /*
