@@ -62,7 +62,7 @@ func (p *MockProvider) SetPolicyInfo(info PolicyProvider.IntegrationInfo, pap Po
 		return http.StatusBadRequest, errors.New("invalid PAP objectid")
 	}
 	// Check if meta information has been assigned
-	for _, policy := range policies {
+	for i, policy := range policies {
 		meta := policy.Meta
 		if meta.PapId == nil {
 			meta.PapId = &p.PapId
@@ -81,6 +81,7 @@ func (p *MockProvider) SetPolicyInfo(info PolicyProvider.IntegrationInfo, pap Po
 		}
 		meta.ProviderType = ProviderTypeMock
 		policy.Meta = meta
+		policies[i] = policy
 	}
 	p.Policies = policies
 
@@ -89,7 +90,7 @@ func (p *MockProvider) SetPolicyInfo(info PolicyProvider.IntegrationInfo, pap Po
 
 func (p *MockProvider) Reconcile(info PolicyProvider.IntegrationInfo, app PolicyProvider.ApplicationInfo, comparePolicies []hexapolicy.PolicyInfo, diffsOnly bool) ([]hexapolicy.PolicyDif, error) {
 	p.checkInit()
-	if info.Name != ProviderTypeMock || !bytes.Equal(p.Info.Key, info.Key) {
+	if info.Name != p.Info.Name || !bytes.Equal(p.Info.Key, info.Key) {
 		return nil, errors.New("invalid integration")
 	}
 	if p.PapId != app.ObjectID {
