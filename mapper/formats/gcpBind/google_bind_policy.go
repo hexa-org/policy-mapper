@@ -141,6 +141,7 @@ func convertActionToRole(policy hexapolicy.PolicyInfo) string {
 		if strings.HasPrefix(action, "gcp:") {
 			return action[4:]
 		}
+		return action // allow non gcp specific roles to be passed unmapped
 	}
 	return ""
 }
