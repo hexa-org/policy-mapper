@@ -1,9 +1,9 @@
 package avpTestSupport
 
 import (
-	"fmt"
+    "fmt"
 
-	"github.com/hexa-org/policy-mapper/api/PolicyProvider"
+    "github.com/hexa-org/policy-mapper/api/policyprovider"
 )
 
 const TestAwsRegion = "us-west-1"
@@ -38,7 +38,7 @@ var TestCedarTemplateId = "temp1"
 // const TestResourceServerName = "some-resource-server-name"
 
 func AwsCredentialsForTest() []byte {
-	str := fmt.Sprintf(`
+    str := fmt.Sprintf(`
 {
   "accessKeyID": "%s",
   "secretAccessKey": "%s",
@@ -46,18 +46,18 @@ func AwsCredentialsForTest() []byte {
 }
 `, TestAwsAccessKeyId, TestAwsSecretAccessKey, TestAwsRegion)
 
-	return []byte(str)
+    return []byte(str)
 }
 
-func IntegrationInfo() PolicyProvider.IntegrationInfo {
-	return PolicyProvider.IntegrationInfo{Name: PolicyProvider.PROVIDER_TYPE_AVP, Key: AwsCredentialsForTest()}
+func IntegrationInfo() policyprovider.IntegrationInfo {
+    return policyprovider.IntegrationInfo{Name: policyprovider.PROVIDER_TYPE_AVP, Key: AwsCredentialsForTest()}
 }
 
-func AppInfo() PolicyProvider.ApplicationInfo {
-	return PolicyProvider.ApplicationInfo{
-		ObjectID:    TestPolicyStoreId,
-		Name:        "Test Policy Store",
-		Description: "AVP Mock Test",
-		Service:     TestResourceServerIdentifier,
-	}
+func AppInfo() policyprovider.ApplicationInfo {
+    return policyprovider.ApplicationInfo{
+        ObjectID:    TestPolicyStoreId,
+        Name:        "Test Policy Store",
+        Description: "AVP Mock Test",
+        Service:     TestResourceServerIdentifier,
+    }
 }
