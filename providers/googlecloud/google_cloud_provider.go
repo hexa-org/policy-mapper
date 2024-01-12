@@ -50,12 +50,17 @@ func (g *GoogleProvider) DiscoverApplications(info policyprovider.IntegrationInf
 	}
 	googleClient := GoogleClient{client, foundCredentials.ProjectId}
 
-	backendApplications, _ := googleClient.GetBackendApplications()
+	backendApplications, err1 := googleClient.GetBackendApplications()
 	apps = append(apps, backendApplications...)
 
-	appEngineApplications, _ := googleClient.GetAppEngineApplications()
+	appEngineApplications, err2 := googleClient.GetAppEngineApplications()
 	apps = append(apps, appEngineApplications...)
 
+	err = err2
+	// report first error
+	if err1 != nil {
+		err = err1
+	}
 	return apps, err
 }
 
