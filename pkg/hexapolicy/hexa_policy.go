@@ -24,6 +24,16 @@ const (
 
 type Policies struct {
 	Policies []PolicyInfo `json:"policies"`
+	App      *string      `json:"app,omitempty"`
+}
+
+func (p *Policies) CalculateEtags() {
+	if p.Policies == nil {
+		return
+	}
+	for i := range p.Policies {
+		p.Policies[i].CalculateEtag()
+	}
 }
 
 func (p *Policies) AddPolicy(info PolicyInfo) {
@@ -75,57 +85,65 @@ func (p *PolicyInfo) CalculateEtag() string {
 	policyBytes = append(policyBytes, objectBytes...)
 	policyBytes = append(policyBytes, conditionBytes...)
 
-	etagValue := etag.Generate(policyBytes, true)
-
+	etagValue := etag.Generate(policyBytes, false)
+	if etagValue[0:1] == "\"" {
+		etagValue = etagValue[1:(len(etagValue) - 1)]
+	}
 	p.Meta.Etag = etagValue
 	return etagValue
 }
 
-// Equals compares the CalculateEtag hash values to determine if the policies are equal. Note: does NOT compare meta information.
+// Equals compares values to determine if the policies are equal. Note: does NOT compare meta information.
 func (p *PolicyInfo) Equals(hexaPolicy PolicyInfo) bool {
 	// Re-calculate the policy etag and compare in case either has changed.
-	return p.CalculateEtag() == hexaPolicy.CalculateEtag()
+	if p.CalculateEtag() == hexaPolicy.CalculateEtag() {
+		return true
+	}
+
+	// check for semantic equivalence.
+	return p.Subject.equals(&hexaPolicy.Subject) && p.actionEquals(hexaPolicy.Actions) && p.Object.equals(&hexaPolicy.Object)
+
 }
 
 const (
-	COMPARE_EQUAL         = "EQUAL"
-	COMPARE_DIF_ACTION    = "ACTION"
-	COMPARE_DIF_SUBJECT   = "SUBJECT"
-	COMPARE_DIF_OBJECT    = "OBJECT"
-	COMPARE_DIF_CONDITION = "CONDITION"
+	CompareEqual        string = "EQUAL"
+	CompareDifAction    string = "ACTION"
+	CompareDifSubject   string = "SUBJECT"
+	CompareDifObject    string = "OBJECT"
+	CompareDifCondition string = "CONDITION"
 )
 
 func (p *PolicyInfo) Compare(hexaPolicy PolicyInfo) []string {
 	// First do a textual compare
 	if p.Equals(hexaPolicy) {
-		return []string{COMPARE_EQUAL}
+		return []string{CompareEqual}
 	}
 
 	var difs = make([]string, 0)
 
 	// Now do a semantic compare (e.g. things can be different order but the same)
 	if !p.Subject.equals(&hexaPolicy.Subject) {
-		difs = append(difs, COMPARE_DIF_SUBJECT)
+		difs = append(difs, CompareDifSubject)
 	}
 
 	if !p.actionEquals(hexaPolicy.Actions) {
-		difs = append(difs, COMPARE_DIF_ACTION)
+		difs = append(difs, CompareDifAction)
 	}
 
 	if !p.Object.equals(&hexaPolicy.Object) {
-		difs = append(difs, COMPARE_DIF_OBJECT)
+		difs = append(difs, CompareDifObject)
 	}
 
 	if p.Condition != nil && hexaPolicy.Condition == nil || p.Condition == nil && p.Condition != nil {
-		difs = append(difs, COMPARE_DIF_CONDITION)
+		difs = append(difs, CompareDifCondition)
 	} else {
 		if p.Condition != nil && !p.Condition.Equals(hexaPolicy.Condition) {
-			difs = append(difs, COMPARE_DIF_CONDITION)
+			difs = append(difs, CompareDifCondition)
 		}
 	}
 
 	if len(difs) == 0 {
-		return []string{COMPARE_EQUAL}
+		return []string{CompareEqual}
 	}
 
 	return difs
@@ -198,71 +216,98 @@ func (o *ObjectInfo) equals(object *ObjectInfo) bool {
 }
 
 var (
-	TYPE_NEW     = "NEW"
-	TYPE_EQUAL   = "MATCHED"
-	TYPE_UPDATE  = "UPDATE"
-	TYPE_DELETE  = "DELETE"
-	TYPE_IGNORED = "UNSUPPORTED"
+	ChangeTypeNew    = "NEW"
+	ChangeTypeEqual  = "MATCHED"
+	ChangeTypeUpdate = "UPDATE"
+	ChangeTypeDelete = "DELETE"
+	ChangeTypeIgnore = "UNSUPPORTED"
 )
 
 type PolicyDif struct {
 	Type          string
+	PolicyId      string
+	Hash          string
 	DifTypes      []string
 	PolicyExist   *[]PolicyInfo // for n to 1
 	PolicyCompare *PolicyInfo
 }
 
+func (d *PolicyDif) getIdentifier() string {
+	if d.PolicyId != "" {
+		return "PolicyId: " + d.PolicyId
+	}
+	if d.Hash != "" {
+		return "Hash: " + d.Hash
+	}
+	return ""
+}
+
 func (d *PolicyDif) Report() string {
 	switch d.Type {
-	case TYPE_NEW, TYPE_EQUAL, TYPE_IGNORED:
-		return fmt.Sprintf("DIF: %s\n%s", d.Type, d.PolicyCompare.String())
-	case TYPE_DELETE:
-		policies := *d.PolicyExist
-		sourceMeta := policies[0].Meta.SourceData
-		metaBytes, _ := json.Marshal(sourceMeta)
-		return fmt.Sprintf("DIF: %s PolicyId: %s", d.Type, string(metaBytes))
-	case TYPE_UPDATE:
-		return fmt.Sprintf("DIF: %s %v\n%s", d.Type, d.DifTypes, d.PolicyCompare.String())
+	case ChangeTypeNew, ChangeTypeEqual, ChangeTypeIgnore:
+		return fmt.Sprintf("DIF: %s %s\n%s", d.Type, d.getIdentifier(), d.PolicyCompare.String())
+	case ChangeTypeDelete:
+		return fmt.Sprintf("DIF: %s %s", d.Type, d.getIdentifier())
+	case ChangeTypeUpdate:
+		return fmt.Sprintf("DIF: %s %s %v\n%s", d.Type, d.getIdentifier(), d.DifTypes, d.PolicyCompare.String())
 	default:
-		return fmt.Sprintf("DIF: %s\n%s", "Unexpected type", d.PolicyCompare.String())
+		return fmt.Sprintf("DIF: %s %s\n%s", "Unexpected type", d.getIdentifier(), d.PolicyCompare.String())
 	}
 }
 
-func ReconcilePolicies(existingPolicies []PolicyInfo, comparePolicies []PolicyInfo, diffsOnly bool) ([]PolicyDif, error) {
+func (p *Policies) ReconcilePolicies(comparePolicies []PolicyInfo, diffsOnly bool) []PolicyDif {
 	var res = make([]PolicyDif, 0)
-
+	existingPolicies := p.Policies
 	var policyIdMap = make(map[string]PolicyInfo, len(existingPolicies))
+	var policyEtagMap = make(map[string]PolicyInfo, len(existingPolicies))
+
 	for _, policy := range existingPolicies {
-		policyId := *policy.Meta.PolicyId
-		policyIdMap[policyId] = policy
+		if policy.Meta.PolicyId != nil {
+			id := *policy.Meta.PolicyId
+			policyIdMap[id] = policy
+		} else {
+			policyEtagMap[policy.CalculateEtag()] = policy
+		}
 	}
+
 	for _, comparePolicy := range comparePolicies {
 
 		meta := comparePolicy.Meta
 
-		policyId := *meta.PolicyId
-		sourcePolicy, exists := policyIdMap[policyId]
+		// Because comparePolicy is an iterator, take a copy to avoid it changing
+		newPolicy := comparePolicy
 
+		exists := false
+		var sourcePolicy PolicyInfo
+		var policyId string
+		if meta.PolicyId != nil {
+			policyId = *meta.PolicyId
+			sourcePolicy, exists = policyIdMap[policyId]
+		}
+
+		// A policy was matched based on policyId
 		if exists {
 			differenceTypes := comparePolicy.Compare(sourcePolicy)
-			if slices.Contains(differenceTypes, COMPARE_EQUAL) {
+			if slices.Contains(differenceTypes, CompareEqual) {
 				if !diffsOnly {
-					// policy matches
+					// policy matches, only return an equal difference if diffsOnly is false
 					dif := PolicyDif{
-						Type:          TYPE_EQUAL,
-						DifTypes:      nil,
+						Type:          ChangeTypeEqual,
+						PolicyId:      *sourcePolicy.Meta.PolicyId,
+						DifTypes:      differenceTypes,
 						PolicyExist:   &[]PolicyInfo{sourcePolicy},
-						PolicyCompare: &comparePolicy,
+						PolicyCompare: &newPolicy,
 					}
 					res = append(res, dif)
 				}
 				delete(policyIdMap, policyId) // Remove to indicate existing policy handled
 				continue                      // nothing to do
 			}
+
 			// This is a modify request
-			newPolicy := comparePolicy
 			dif := PolicyDif{
-				Type:          TYPE_UPDATE,
+				Type:          ChangeTypeUpdate,
+				PolicyId:      *sourcePolicy.Meta.PolicyId,
 				DifTypes:      differenceTypes,
 				PolicyExist:   &[]PolicyInfo{sourcePolicy},
 				PolicyCompare: &newPolicy,
@@ -272,11 +317,30 @@ func ReconcilePolicies(existingPolicies []PolicyInfo, comparePolicies []PolicyIn
 			continue
 		}
 
-		// At this point no match was found. So assume new
+		// Check for a match based on hash
+		sourcePolicy, hashExists := policyEtagMap[comparePolicy.CalculateEtag()]
+		if hashExists {
+			if !diffsOnly {
+				// Because it is a hash compare, the policies must be equal (even though meta data may be different)
+				// policy matches
+				dif := PolicyDif{
+					Type:          ChangeTypeEqual,
+					Hash:          sourcePolicy.Meta.Etag,
+					DifTypes:      []string{CompareEqual},
+					PolicyExist:   &[]PolicyInfo{sourcePolicy},
+					PolicyCompare: &newPolicy,
+				}
+				res = append(res, dif)
+			}
+			delete(policyEtagMap, comparePolicy.Meta.Etag)
+			continue
+		}
 
-		newPolicy := comparePolicy
+		// At this point no match was found. So assume new
 		dif := PolicyDif{
-			Type:          TYPE_NEW,
+			Type:          ChangeTypeNew,
+			PolicyId:      policyId,
+			Hash:          comparePolicy.Meta.Etag,
 			DifTypes:      nil,
 			PolicyExist:   nil,
 			PolicyCompare: &newPolicy,
@@ -287,10 +351,11 @@ func ReconcilePolicies(existingPolicies []PolicyInfo, comparePolicies []PolicyIn
 
 	// For each remaining pre-existing policy there is an implied delete
 	if len(policyIdMap) > 0 {
-		fmt.Printf("%v existing AVP policies will be removed.\n", len(policyIdMap))
+		fmt.Printf("%v existing policies with Policy Ids will be removed.\n", len(policyIdMap))
 		for _, policy := range policyIdMap {
 			dif := PolicyDif{
-				Type:          TYPE_DELETE,
+				Type:          ChangeTypeDelete,
+				PolicyId:      *policy.Meta.PolicyId,
 				DifTypes:      nil,
 				PolicyExist:   &[]PolicyInfo{policy},
 				PolicyCompare: nil,
@@ -298,5 +363,19 @@ func ReconcilePolicies(existingPolicies []PolicyInfo, comparePolicies []PolicyIn
 			res = append(res, dif)
 		}
 	}
-	return res, nil
+	if len(policyEtagMap) > 0 {
+		fmt.Printf("%v existing policies (without policy ids) will be removed.\n", len(policyEtagMap))
+		for _, policy := range policyEtagMap {
+			pol := policy
+			dif := PolicyDif{
+				Type:          ChangeTypeDelete,
+				Hash:          policy.Meta.Etag,
+				DifTypes:      nil,
+				PolicyExist:   &[]PolicyInfo{pol},
+				PolicyCompare: nil,
+			}
+			res = append(res, dif)
+		}
+	}
+	return res
 }

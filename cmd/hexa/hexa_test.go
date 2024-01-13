@@ -323,15 +323,15 @@ func (suite *testSuite) Test5_SetPolicies() {
 	ignoreCnt := 0
 	for _, dif := range difs {
 		switch dif.Type {
-		case hexapolicy.TYPE_NEW:
+		case hexapolicy.ChangeTypeNew:
 			newCnt++
-		case hexapolicy.TYPE_UPDATE:
+		case hexapolicy.ChangeTypeUpdate:
 			updateCnt++
-		case hexapolicy.TYPE_EQUAL:
+		case hexapolicy.ChangeTypeEqual:
 			matchCnt++
-		case hexapolicy.TYPE_DELETE:
+		case hexapolicy.ChangeTypeDelete:
 			deleteCnt++
-		case hexapolicy.TYPE_IGNORED:
+		case hexapolicy.ChangeTypeIgnore:
 			ignoreCnt++
 		default:
 			assert.Fail(suite.T(), "Unknown difference type: "+dif.Type)

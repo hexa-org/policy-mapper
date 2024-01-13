@@ -133,13 +133,13 @@ func (s *testSuite) Test3_Reconcile() {
     assert.NoError(s.T(), err)
     assert.True(s.T(), s.mockClient.VerifyCalled())
     assert.Len(s.T(), difs, 5)
-    assert.Equal(s.T(), hexapolicy.TYPE_UPDATE, difs[0].Type)
+    assert.Equal(s.T(), hexapolicy.ChangeTypeUpdate, difs[0].Type)
     assert.True(s.T(), slices.Equal([]string{"ACTION"}, difs[0].DifTypes))
-    assert.Equal(s.T(), hexapolicy.TYPE_IGNORED, difs[1].Type)
-    assert.Equal(s.T(), hexapolicy.TYPE_UPDATE, difs[2].Type)
+    assert.Equal(s.T(), hexapolicy.ChangeTypeIgnore, difs[1].Type)
+    assert.Equal(s.T(), hexapolicy.ChangeTypeUpdate, difs[2].Type)
     assert.True(s.T(), slices.Equal([]string{"SUBJECT"}, difs[2].DifTypes))
-    assert.Equal(s.T(), hexapolicy.TYPE_NEW, difs[3].Type)
-    assert.Equal(s.T(), hexapolicy.TYPE_DELETE, difs[4].Type)
+    assert.Equal(s.T(), hexapolicy.ChangeTypeNew, difs[3].Type)
+    assert.Equal(s.T(), hexapolicy.ChangeTypeDelete, difs[4].Type)
     for _, dif := range difs {
         fmt.Println(dif.Report())
     }
