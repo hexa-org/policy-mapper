@@ -203,7 +203,7 @@ func (a *AmazonAvpProvider) Reconcile(info policyprovider.IntegrationInfo, appli
             sourcePolicy, exists := avpMap[policyId]
             if isTemplate(comparePolicy) {
                 dif := hexapolicy.PolicyDif{
-                    Type:          hexapolicy.TYPE_IGNORED,
+                    Type:          hexapolicy.ChangeTypeIgnore,
                     DifTypes:      nil,
                     PolicyExist:   &[]hexapolicy.PolicyInfo{sourcePolicy},
                     PolicyCompare: &comparePolicy,
@@ -218,11 +218,11 @@ func (a *AmazonAvpProvider) Reconcile(info policyprovider.IntegrationInfo, appli
 
             if exists {
                 differenceTypes := comparePolicy.Compare(sourcePolicy)
-                if slices.Contains(differenceTypes, hexapolicy.COMPARE_EQUAL) {
+                if slices.Contains(differenceTypes, hexapolicy.CompareEqual) {
                     if !diffsOnly {
                         // policy matches
                         dif := hexapolicy.PolicyDif{
-                            Type:          hexapolicy.TYPE_EQUAL,
+                            Type:          hexapolicy.ChangeTypeEqual,
                             DifTypes:      nil,
                             PolicyExist:   &[]hexapolicy.PolicyInfo{sourcePolicy},
                             PolicyCompare: &comparePolicy,
@@ -235,7 +235,7 @@ func (a *AmazonAvpProvider) Reconcile(info policyprovider.IntegrationInfo, appli
                 // This is a modify request
                 newPolicy := comparePolicy
                 dif := hexapolicy.PolicyDif{
-                    Type:          hexapolicy.TYPE_UPDATE,
+                    Type:          hexapolicy.ChangeTypeUpdate,
                     DifTypes:      differenceTypes,
                     PolicyExist:   &[]hexapolicy.PolicyInfo{sourcePolicy},
                     PolicyCompare: &newPolicy,
@@ -256,7 +256,7 @@ func (a *AmazonAvpProvider) Reconcile(info policyprovider.IntegrationInfo, appli
         }
         newPolicy := comparePolicy
         dif := hexapolicy.PolicyDif{
-            Type:          hexapolicy.TYPE_NEW,
+            Type:          hexapolicy.ChangeTypeNew,
             DifTypes:      nil,
             PolicyExist:   nil,
             PolicyCompare: &newPolicy,
@@ -270,7 +270,7 @@ func (a *AmazonAvpProvider) Reconcile(info policyprovider.IntegrationInfo, appli
         fmt.Printf("%v existing AVP policies will be removed.\n", len(avpMap))
         for _, policy := range avpMap {
             dif := hexapolicy.PolicyDif{
-                Type:          hexapolicy.TYPE_DELETE,
+                Type:          hexapolicy.ChangeTypeDelete,
                 DifTypes:      nil,
                 PolicyExist:   &[]hexapolicy.PolicyInfo{policy},
                 PolicyCompare: nil,
@@ -294,7 +294,7 @@ func (a *AmazonAvpProvider) SetPolicyInfo(info policyprovider.IntegrationInfo, a
     for _, dif := range differences {
         switch dif.Type {
 
-        case hexapolicy.TYPE_NEW:
+        case hexapolicy.ChangeTypeNew:
             hexaPolicy := *dif.PolicyCompare
             if isTemplate(hexaPolicy) {
                 fmt.Printf("AVP template policy creation not currently supported (Etag: %s)\n", hexaPolicy.CalculateEtag())
@@ -311,7 +311,7 @@ func (a *AmazonAvpProvider) SetPolicyInfo(info policyprovider.IntegrationInfo, a
             policyId := output.PolicyId
             fmt.Printf("AVP PolicyId %s created (hexa etag: %s)\n", *policyId, hexaPolicy.Meta.Etag)
 
-        case hexapolicy.TYPE_DELETE:
+        case hexapolicy.ChangeTypeDelete:
             for _, existPolicy := range *dif.PolicyExist {
                 source := existPolicy.Meta
                 deleteInput := a.prepareDelete(source)
@@ -322,7 +322,7 @@ func (a *AmazonAvpProvider) SetPolicyInfo(info policyprovider.IntegrationInfo, a
                 fmt.Printf("AVP PolicyId %s deleted\n", *source.PolicyId)
             }
 
-        case hexapolicy.TYPE_UPDATE:
+        case hexapolicy.ChangeTypeUpdate:
             hexaPolicy := *dif.PolicyCompare
             source := hexaPolicy.Meta
             metaType := source.ProviderType
@@ -330,7 +330,7 @@ func (a *AmazonAvpProvider) SetPolicyInfo(info policyprovider.IntegrationInfo, a
             case ProviderTypeAvp:
                 policyId := *source.PolicyId
 
-                if slices.Contains(dif.DifTypes, hexapolicy.COMPARE_DIF_SUBJECT) || slices.Contains(dif.DifTypes, hexapolicy.COMPARE_DIF_OBJECT) {
+                if slices.Contains(dif.DifTypes, hexapolicy.CompareDifSubject) || slices.Contains(dif.DifTypes, hexapolicy.CompareDifObject) {
                     // will delete and replace
                     deleteInput := a.prepareDelete(source)
                     _, err = client.DeletePolicy(deleteInput)
@@ -348,7 +348,7 @@ func (a *AmazonAvpProvider) SetPolicyInfo(info policyprovider.IntegrationInfo, a
                     newPolicyId := output.PolicyId
                     fmt.Printf("AVP PolicyId %s replaced as %s (hexa etag: %s)\n", policyId, *newPolicyId, hexaPolicy.Meta.Etag)
 
-                } else if slices.Contains(dif.DifTypes, hexapolicy.COMPARE_DIF_ACTION) || slices.Contains(dif.DifTypes, hexapolicy.COMPARE_DIF_CONDITION) {
+                } else if slices.Contains(dif.DifTypes, hexapolicy.CompareDifAction) || slices.Contains(dif.DifTypes, hexapolicy.CompareDifCondition) {
                     // Do Update (if subject or object changed, the update would already be done)
                     update, err := a.preparePolicyUpdate(hexaPolicy, source)
                     if err != nil {
@@ -365,7 +365,7 @@ func (a *AmazonAvpProvider) SetPolicyInfo(info policyprovider.IntegrationInfo, a
             default:
                 // Fall through to create - likely a policy from another source
             }
-        case hexapolicy.TYPE_IGNORED, hexapolicy.TYPE_EQUAL:
+        case hexapolicy.ChangeTypeIgnore, hexapolicy.ChangeTypeEqual:
             // do nothing
         }
     }

@@ -29,12 +29,13 @@ type Globals struct {
 type CLI struct {
 	Globals
 
-	Add  AddCmd  `cmd:"" help:"Add a new integration"`
-	Get  GetCmd  `cmd:"" help:"Retrieve or update information and display"`
-	Set  SetCmd  `cmd:"" help:"Set or update policies (e.g. set policies -file=idql.json)"`
-	Show ShowCmd `cmd:"" help:"Show locally stored information about integrations and applications"`
-	Exit ExitCmd `cmd:"" help:"Exit the shell"`
-	Help HelpCmd `cmd:"" help:"Show help on a command"`
+	Add       AddCmd       `cmd:"" help:"Add a new integration"`
+	Get       GetCmd       `cmd:"" help:"Retrieve or update information and display"`
+	Set       SetCmd       `cmd:"" help:"Set or update policies (e.g. set policies -file=idql.json)"`
+	Reconcile ReconcileCmd `cmd:"" help:"Reconcile compares a source set of policies another source (file or alias) of policies to determine differences."`
+	Show      ShowCmd      `cmd:"" help:"Show locally stored information about integrations and applications"`
+	Exit      ExitCmd      `cmd:"" help:"Exit the shell"`
+	Help      HelpCmd      `cmd:"" help:"Show help on a command"`
 }
 
 /*

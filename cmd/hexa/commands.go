@@ -11,6 +11,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicysupport"
 	"github.com/hexa-org/policy-mapper/sdk"
 )
@@ -91,7 +92,7 @@ func (a *AddGcpIntegrationCmd) Run(cli *CLI) error {
 
 	info := policyprovider.IntegrationInfo{
 		Name: sdk.ProviderTypeGcp,
-		Key:  []byte(keyStr),
+		Key:  keyStr,
 	}
 
 	integration, err := openIntegration(alias, info)
@@ -373,6 +374,69 @@ func (l *ListAppCmd) Run(cli *CLI) error {
 type ShowCmd struct {
 	Integration ShowIntegrationCmd `cmd:"" aliases:"int,i" help:"Show locally defined information about a provider integration"`
 	Pap         ListAppCmd         `cmd:"" aliases:"app,p,a" help:"Show locally stored information about a policy application"`
+}
+
+type ReconcileCmd struct {
+	AliasSource  string `arg:"" required:"" help:"The alias of a Policy Application, or a file path to a file containing IDQL to act as the source to reconcile against."`
+	AliasCompare string `arg:"" required:"" help:"The alias of a Policy Application, or a file path to a file containing IDQL to be reconciled against a source."`
+	Differences  bool   `optional:"" short:"d" default:"false" help:"By specifying true, then only the differences are reported (matches are excluded)"`
+}
+
+func (r *ReconcileCmd) Run(cli *CLI) error {
+	sourceIntegration, appSource := cli.Data.GetApplicationInfo(r.AliasSource)
+	compareIntegration, appCompare := cli.Data.GetApplicationInfo(r.AliasCompare)
+
+	var err error
+	var comparePolicies []hexapolicy.PolicyInfo
+	if appCompare == nil {
+		policyBytes, err := os.ReadFile(r.AliasCompare)
+		if err != nil {
+			return err
+		}
+		comparePolicies, err = hexapolicysupport.ParsePolicies(policyBytes)
+		if err != nil {
+			return err
+		}
+	} else {
+		policies, err := compareIntegration.GetPolicies(r.AliasCompare)
+		if err != nil {
+			return err
+		}
+		comparePolicies = policies.Policies
+	}
+
+	var difs []hexapolicy.PolicyDif
+	var sourcePolicies *hexapolicy.Policies
+
+	if appSource == nil {
+		// try file path
+		policyBytes, err := os.ReadFile(r.AliasSource)
+		if err != nil {
+			return err
+		}
+		hexaPolicies, err := hexapolicysupport.ParsePolicies(policyBytes)
+		if err != nil {
+			return err
+		}
+		sourcePolicies = &hexapolicy.Policies{Policies: hexaPolicies}
+		difs = sourcePolicies.ReconcilePolicies(comparePolicies, r.Differences)
+	} else {
+		difs, err = sourceIntegration.ReconcilePolicy(r.AliasSource, comparePolicies, r.Differences)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	for i, diff := range difs {
+		fmt.Println(fmt.Sprintf("%d: %s", i, diff.Report()))
+	}
+	fmt.Println()
+	// Write to output if specified
+	output, _ := json.MarshalIndent(difs, "", "  ")
+	cli.GetOutputWriter().WriteBytes(output, true)
+
+	return nil
 }
 
 func ConfirmProceed(msg string) bool {

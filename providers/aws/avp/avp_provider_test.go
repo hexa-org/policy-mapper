@@ -276,13 +276,13 @@ func TestAvp_3_Reconcile(t *testing.T) {
     assert.NoError(t, err)
     assert.True(t, mockClient.VerifyCalled())
     assert.Len(t, difs, 5)
-    assert.Equal(t, hexapolicy.TYPE_UPDATE, difs[0].Type)
+    assert.Equal(t, hexapolicy.ChangeTypeUpdate, difs[0].Type)
     assert.True(t, slices.Equal([]string{"ACTION"}, difs[0].DifTypes))
-    assert.Equal(t, hexapolicy.TYPE_IGNORED, difs[1].Type)
-    assert.Equal(t, hexapolicy.TYPE_UPDATE, difs[2].Type)
+    assert.Equal(t, hexapolicy.ChangeTypeIgnore, difs[1].Type)
+    assert.Equal(t, hexapolicy.ChangeTypeUpdate, difs[2].Type)
     assert.True(t, slices.Equal([]string{"SUBJECT"}, difs[2].DifTypes))
-    assert.Equal(t, hexapolicy.TYPE_NEW, difs[3].Type)
-    assert.Equal(t, hexapolicy.TYPE_DELETE, difs[4].Type)
+    assert.Equal(t, hexapolicy.ChangeTypeNew, difs[3].Type)
+    assert.Equal(t, hexapolicy.ChangeTypeDelete, difs[4].Type)
     for _, dif := range difs {
         fmt.Println(dif.Report())
     }

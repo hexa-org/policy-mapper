@@ -344,6 +344,67 @@ func (suite *testSuite) Test5_SetPolicies() {
 	assert.Equal(suite.T(), 0, ignoreCnt, "no ignored records")
 }
 
+func (suite *testSuite) Test6_Reconcile() {
+	integration := suite.pd.cli.Data.GetIntegration("test")
+	assert.NotNil(suite.T(), integration)
+
+	// This uses output from previous test
+	papAliases := getPapIds(suite)
+	policyOrig := fmt.Sprintf("%s/policytest1-%s.json", suite.testDir, papAliases[0])
+	newPolicyPath := fmt.Sprintf("%s/policytest2-%s.json", suite.testDir, papAliases[0])
+	outputFile := fmt.Sprintf("%s/policytest6-rec.json", suite.testDir)
+	command := fmt.Sprintf("reconcile %s %s --output %s", policyOrig, newPolicyPath, outputFile)
+
+	res, err := suite.executeCommand(command, 2)
+	assert.NoError(suite.T(), err, "Check no error on reconcile")
+	assert.Greater(suite.T(), len(res), 0, "check result returned")
+
+	var difs []hexapolicy.PolicyDif
+	difBytes, err := os.ReadFile(outputFile)
+	assert.NoError(suite.T(), err)
+	err = json.Unmarshal(difBytes, &difs)
+	assert.Len(suite.T(), difs, 4, "Should be 4 difs")
+
+	// test that differences works
+	command2 := fmt.Sprintf("reconcile %s %s -d --output %s", policyOrig, newPolicyPath, outputFile)
+
+	res, err = suite.executeCommand(command2, 2)
+	assert.NoError(suite.T(), err, "Check no error on reconcile")
+	assert.Greater(suite.T(), len(res), 0, "check result returned")
+
+	var difs2 []hexapolicy.PolicyDif
+	difBytes, err = os.ReadFile(outputFile)
+	assert.NoError(suite.T(), err)
+	err = json.Unmarshal(difBytes, &difs2)
+	assert.Len(suite.T(), difs2, 3, "Should be 3 difs")
+
+	// test against alias first param
+	command3 := fmt.Sprintf("reconcile %s %s --output %s", papAliases[0], newPolicyPath, outputFile)
+
+	res, err = suite.executeCommand(command3, 2)
+	assert.NoError(suite.T(), err, "Check no error on reconcile")
+	assert.Greater(suite.T(), len(res), 0, "check result returned")
+
+	var difs3 []hexapolicy.PolicyDif
+	difBytes, err = os.ReadFile(outputFile)
+	assert.NoError(suite.T(), err)
+	err = json.Unmarshal(difBytes, &difs3)
+	assert.Len(suite.T(), difs3, 3, "Should be 3 difs")
+
+	// test against alias first param
+	command4 := fmt.Sprintf("reconcile %s %s --output %s", newPolicyPath, papAliases[0], outputFile)
+
+	res, err = suite.executeCommand(command4, 2)
+	assert.NoError(suite.T(), err, "Check no error on reconcile")
+	assert.Greater(suite.T(), len(res), 0, "check result returned")
+
+	var difs4 []hexapolicy.PolicyDif
+	difBytes, err = os.ReadFile(outputFile)
+	assert.NoError(suite.T(), err)
+	err = json.Unmarshal(difBytes, &difs4)
+	assert.Len(suite.T(), difs4, 3, "Should be 3 difs")
+}
+
 func (suite *testSuite) Test99_ConfigSave() {
 
 	config := suite.pd.cli.Data
