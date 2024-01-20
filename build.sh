@@ -1,5 +1,3 @@
-echo "Building 5 sub-modules in workspace..."
-
 doTest () {
   if [ "$test" = 'Y' ];then
     echo "   running tests..."
@@ -17,9 +15,22 @@ while getopts "t" OPTION; do
   esac
 done
 
+echo "Policy Mapper installation"
+echo "  building..."
+go build ./...
+doTest
+echo "  installing..."
+go install ./...
+exit
+
+// This section is for when policy-mapper is multi-module - not currently used
+
+echo "Building 5 sub-modules in workspace..."
+
+
 # go work sync
 
-echo "  pkg."
+echo " pkg "
 
 cd ./pkg
 go build ./...

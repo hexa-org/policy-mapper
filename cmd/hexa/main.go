@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 
 	"log"
 	"os"
@@ -31,8 +32,9 @@ type CLI struct {
 
 	Add       AddCmd       `cmd:"" help:"Add a new integration"`
 	Get       GetCmd       `cmd:"" help:"Retrieve or update information and display"`
-	Set       SetCmd       `cmd:"" help:"Set or update policies (e.g. set policies -file=idql.json)"`
+	Map       MapCmd       `cmd:"" help:"Convert syntactical policies to and from IDQL"`
 	Reconcile ReconcileCmd `cmd:"" help:"Reconcile compares a source set of policies another source (file or alias) of policies to determine differences."`
+	Set       SetCmd       `cmd:"" help:"Set or update policies (e.g. set policies -file=idql.json)"`
 	Show      ShowCmd      `cmd:"" help:"Show locally stored information about integrations and applications"`
 	Exit      ExitCmd      `cmd:"" help:"Exit Hexa admin tool"`
 	Help      HelpCmd      `cmd:"" help:"Show help on a command"`
@@ -98,6 +100,13 @@ func (cli *CLI) GetOutputWriter() *OutputWriter {
 
 }
 
+func (o *OutputWriter) GetOutput() io.Writer {
+	if o.isReady {
+		return o.output
+	}
+	return nil
+}
+
 func (o *OutputWriter) WriteString(msg string, andClose bool) {
 
 	if msg != "" && o.isReady {
@@ -121,6 +130,7 @@ func (o *OutputWriter) WriteBytes(msgBytes []byte, andClose bool) {
 
 func (o *OutputWriter) Close() {
 	if o.isReady {
+		_ = o.output.Sync()
 		o.isReady = false
 		_ = o.output.Close()
 	}

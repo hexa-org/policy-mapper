@@ -1,17 +1,17 @@
 # Hexa Policy Mapper Project
 
-This beta project provides the ability to map and support IDQL access policy to and from platforms that support a policy language format.
+The Hexa Policy-Mapper Project provides an sdk for provisioning and mapping various policy systems into a common policy format known as [IDQL](https://github.com/hexa-org/policy/blob/main/specs/IDQL-core-specification.md).
+
+This project provides:
+* a GOLANG SDK which can be used in open source and commercial implementations to leverage this community library.
+* a Hexa administration tool which can be used to provision policies to web accessible policy systems
+* a common interface (provider) which enables the development of new policy provisioning providers to extend policy-mapper capabilities
+
 
 ## Development Note
-**_Note: This branch is currently under development and documentation needs to be updated._**
-The current branch uses replace commands in each module to direct the go compiler to load locally
-Use build.sh to build the project as go build ./... only builds the root go.mod
+**_Note: This code is currently under development and documentation may be out of date._**
 
-## Introduction
-
-The goal of this project is to provide a simple way to take policies of different forms, parse them, map them and produce
-the translated from. This package uses [IDQL Policy](https://github.com/hexa-org/policy/blob/main/specs/IDQL-core-specification.md) as the neutral representation format.
-
+## Supported Provider Integrations
 
 Currently, mapping support is provided for:
 
@@ -21,9 +21,9 @@ Currently, mapping support is provided for:
 
 The project is broken into the following parts:
 * [Policy Conditions](CONDITIONS.md)
-* [IDQL Policy and Policy Mapping](policySupport)
-* [OPA Server Extensions ](server/ReadME.md)
+* IDQL Policy and Policy Mapping
 * [HexaMapper command line utility](DEMO.md)
+* [Hexa admin utility](cmd/hexa/README.md)
 
 ## Getting Started
 
@@ -33,22 +33,12 @@ For general introduction to Hexa, please see the [Policy-Orchestrator ReadMe](ht
 
 Install the following dependencies.
 
-- [go 1.20](https://go.dev)
+- [go 1.21](https://go.dev)
 - Clone the project and run the following in the terminal window:
 ```shell
 git clone https://github.com/hexa-org/policy-mapper.git
 sh ./build.sh
 ```
-
-### Tidy up and run tests
-```shell
-cd policy-mapper
-go list -f '{{.Dir}}' -m | xargs -L1 go mod tidy -C
-go work sync
-go list -f '{{.Dir}}/...' -m | xargs go test
-```
-
-See [here](DEMO.md) more instructions on how to run the hexaMapper command line utility.
 
 ## Using Hexa-Mapper in Go Projects
 

@@ -192,39 +192,56 @@ Example commands:
 * `reconcile currentpolicies.json newpolicies.json` - reconciles to files against each other
 * `reconcile rKO yHQ` - reconciles two PAP sources against each other
 
+## Mapping Policies
+
+
 ## General Help
 ```text
+Hexa IDQL Orchestrator administration tool
+
 Flags:
---config=STRING    Location of client config files ($HEXA_HOME)
--o, --output=STRING    To redirect output to a file
--a, --append-output    When true, output to file (--output) will be appended
+      --config=STRING    Location of client config files ($HEXA_HOME)
+  -o, --output=STRING    To redirect output to a file
+  -a, --append-output    When true, output to file (--output) will be appended
 
 Commands:
-add                        Add a new integration
-  avp (cedar)              Add an Amazon Verified Permissions integration
-    [<alias>]              A new local alias that will be used to refer to the integration in subsequent operations. Defaults to an auto-generated alias
-  gcp                      Add a Google Cloud GCP integration
-    [<alias>]              A new local alias that will be used to refer to the integration in subsequent operations. Defaults to an auto-generated alias
+  add                        Add a new integration
+    avp (cedar)              Add an Amazon Verified Permissions integration
+      [<alias>]              A new local alias that will be used to refer to the integration in subsequent operations. Defaults to an auto-generated alias
+    gcp                      Add a Google Cloud GCP integration
+      [<alias>]              A new local alias that will be used to refer to the integration in subsequent operations. Defaults to an auto-generated alias
 
-get                        Retrieve or update information and display
-  paps (apps)              Retrieve or discover policy application points from the specified integration alias
-    <alias>                Alias for a previously defined integration to retrieve from
-  policies (pol)           Get and map policies from a PAP.
-    <alias>                Alias for a Policy Application Point to retrieve policies from
+  get                        Retrieve or update information and display
+    paps (apps)              Retrieve or discover policy application points from the specified integration alias
+      <alias>                Alias for a previously defined integration to retrieve from
+    policies (pol)           Get and map policies from a PAP.
+      <alias>                Alias for a Policy Application Point to retrieve policies from
 
-set                        Set or update policies (e.g. set policies -file=idql.json)
-  policies (pol,policy)    Set policies at a policy application point
-    <alias>                The alias of a PAP (application) where policies are to be set/reconciled with the provided policies
+  map                        Convert syntactical policies to and from IDQL
+    to                       Map IDQL policy to a specified policy format
+      <format>               Target format: gcp, or cedar
+      <file>                 A file containing IDQL policy to be mapped
+    from                     Map from a specified policy format to IDQL format
+      <format>               Input format: gcp, or cedar
+      <file>                 A file containing policy to be mapped into IDQL
 
-reconcile                  Reconcile compares a source set of policies another source (file or alias) of policies to determine differences.
-  <alias-source>           The alias of a Policy Application, or a file path to a file containing IDQL to act as the source to reconcile against.
-  <alias-compare>          The alias of a Policy Application, or a file path to a file containing IDQL to be reconciled against a source.
+  reconcile                  Reconcile compares a source set of policies another source (file or alias) of policies to determine differences.
+    <alias-source>           The alias of a Policy Application, or a file path to a file containing IDQL to act as the source to reconcile against.
+    <alias-compare>          The alias of a Policy Application, or a file path to a file containing IDQL to be reconciled against a source.
 
-show                       Show locally stored information about integrations and applications
-  integration (int,i)      Show locally defined information about a provider integration
-    [<alias>]              An alias for an integration or * to list all. Defaults to listing all
-  pap (app,p,a)            Show locally stored information about a policy application
-    <alias>                The alias of an application or integration whose applications are to be listed.
+  set                        Set or update policies (e.g. set policies -file=idql.json)
+    policies (pol,policy)    Set policies at a policy application point
+      <alias>                The alias of a PAP (application) where policies are to be set/reconciled with the provided policies
 
-exit                       Exit Hexa admin tool
+  show                       Show locally stored information about integrations and applications
+    integration (int,i)      Show locally defined information about a provider integration
+      [<alias>]              An alias for an integration or * to list all. Defaults to listing all
+    pap (app,p,a)            Show locally stored information about a policy application
+      <alias>                The alias of an application or integration whose applications are to be listed.
+
+  exit                       Exit Hexa admin tool
+
+  help                       Show help on a command
+    [<command> ...]          Show help on command.
+
 ```

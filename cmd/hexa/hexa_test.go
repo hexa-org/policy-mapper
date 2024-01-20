@@ -33,14 +33,14 @@ type testSuite struct {
 	Info     policyprovider.IntegrationInfo
 }
 
-func (s *testSuite) initializeParser() error {
+func (suite *testSuite) initializeParser() error {
 	var err error
 	dir, _ := os.MkdirTemp(os.TempDir(), "hexaTest-*")
-	s.testDir = dir
+	suite.testDir = dir
 
 	cli := &CLI{}
 
-	s.pd, err = initParser(cli) // calls the main init parser
+	suite.pd, err = initParser(cli) // calls the main init parser
 	if err != nil {
 		testLog.Printf(err.Error())
 	}
@@ -48,7 +48,7 @@ func (s *testSuite) initializeParser() error {
 	return nil
 }
 
-func (s *testSuite) executeCommand(cmd string, confirmCnt int) ([]byte, error) {
+func (suite *testSuite) executeCommand(cmd string, confirmCnt int) ([]byte, error) {
 	// args := strings.Split(cmd, " ")
 	quoted := false
 	args := strings.FieldsFunc(cmd, func(r rune) bool {
@@ -59,10 +59,10 @@ func (s *testSuite) executeCommand(cmd string, confirmCnt int) ([]byte, error) {
 	})
 
 	var ctx *kong.Context
-	ctx, err := s.pd.parser.Parse(args)
+	ctx, err := suite.pd.parser.Parse(args)
 
 	if err != nil {
-		s.pd.parser.Errorf("%s", err.Error())
+		suite.pd.parser.Errorf("%s", err.Error())
 		var errParse *kong.ParseError
 		if errors.As(err, &errParse) {
 			testLog.Println(err.Error())
@@ -87,7 +87,7 @@ func (s *testSuite) executeCommand(cmd string, confirmCnt int) ([]byte, error) {
 
 	}
 
-	err = ctx.Run(&s.pd.cli.Globals)
+	err = ctx.Run(&suite.pd.cli.Globals)
 	if confirmCnt > 0 {
 		os.Stdin = input
 		_ = ir.Close()
@@ -403,6 +403,50 @@ func (suite *testSuite) Test6_Reconcile() {
 	assert.NoError(suite.T(), err)
 	err = json.Unmarshal(difBytes, &difs4)
 	assert.Len(suite.T(), difs4, 3, "Should be 3 difs")
+}
+
+func (suite *testSuite) Test7_MapToCmd() {
+	command := "map to abc"
+	_, err := suite.executeCommand(command, 0)
+
+	assert.Error(suite.T(), err, "hexa: error: expected \"<file>\"")
+
+	command = "map to abc examples/idqlAlice.json"
+	res, err := suite.executeCommand(command, 0)
+	assert.Error(suite.T(), err, fmt.Sprintf("Invalid format. Valid values are: %v", MapFormats))
+	assert.Nil(suite.T(), res, "Should be no display text")
+
+	command = "map to cedar examples/idqlAlice.json"
+	res, err = suite.executeCommand(command, 0)
+	assert.NoError(suite.T(), err, "Should be successful map of cedar")
+	assert.Contains(suite.T(), string(res), "permit (")
+
+	command = "map to gcp examples/idqlAlice.json"
+	res, err = suite.executeCommand(command, 0)
+	assert.NoError(suite.T(), err, "Should be successful map of gcp")
+	assert.Contains(suite.T(), string(res), "bindings")
+}
+
+func (suite *testSuite) Test8_MapFromCmd() {
+	command := "map from abc"
+	_, err := suite.executeCommand(command, 0)
+
+	assert.Error(suite.T(), err, "hexa: error: expected \"<file>\"")
+
+	command = "map from abc examples/cedarAlice.txt"
+	res, err := suite.executeCommand(command, 0)
+	assert.Error(suite.T(), err, fmt.Sprintf("Invalid format. Valid values are: %v", MapFormats))
+	assert.Nil(suite.T(), res, "Should be no display text")
+
+	command = "map from cedar examples/cedarAlice.txt"
+	res, err = suite.executeCommand(command, 0)
+	assert.NoError(suite.T(), err, "Should be successful map of cedar")
+	assert.Contains(suite.T(), string(res), "cedar:Photo:")
+
+	command = "map from gcp examples/example_bindings.json"
+	res, err = suite.executeCommand(command, 0)
+	assert.NoError(suite.T(), err, "Should be successful map of gcp")
+	assert.Contains(suite.T(), string(res), "req.ip sw 127 and req.method eq ")
 }
 
 func (suite *testSuite) Test99_ConfigSave() {

@@ -6,11 +6,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
+	"slices"
+	"strings"
 
 	"github.com/alecthomas/kong"
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
+	"github.com/hexa-org/policy-mapper/mapper/formats/awsCedar"
+	"github.com/hexa-org/policy-mapper/mapper/formats/gcpBind"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicysupport"
 	"github.com/hexa-org/policy-mapper/sdk"
@@ -230,9 +235,11 @@ func (a *GetPoliciesCmd) Run(cli *CLI) error {
 
 	fmt.Println(fmt.Sprintf("Policies retrieved for %s:", a.Alias))
 
-	output, _ := json.MarshalIndent(policies, "", "  ")
-	cli.GetOutputWriter().WriteBytes(output, true)
-	fmt.Println(fmt.Sprintf("%s", output))
+	_ = MarshalJsonNoEscape(policies, os.Stdout)
+	outWriter := cli.GetOutputWriter()
+	_ = MarshalJsonNoEscape(policies, outWriter.GetOutput())
+	outWriter.Close()
+
 	return nil
 }
 
@@ -376,6 +383,105 @@ type ShowCmd struct {
 	Pap         ListAppCmd         `cmd:"" aliases:"app,p,a" help:"Show locally stored information about a policy application"`
 }
 
+type MapToCmd struct {
+	Format string `arg:"" required:"" help:"Target format: gcp, or cedar"`
+	File   string `arg:"" type:"path" help:"A file containing IDQL policy to be mapped"`
+}
+
+var MapFormats = []string{"gcp", "cedar"}
+
+func (m *MapToCmd) AfterApply(_ *kong.Context) error {
+	if slices.Contains(MapFormats, strings.ToLower(m.Format)) {
+		return nil
+	}
+
+	return errors.New(fmt.Sprintf("Invalid format. Valid values are: %v", MapFormats))
+}
+
+func (m *MapToCmd) Run(cli *CLI) error {
+	fmt.Println(fmt.Sprintf("Mapping IDQL to %s", m.Format))
+	policies, err := hexapolicysupport.ParsePolicyFile(m.File)
+	if err != nil {
+		return err
+	}
+
+	switch strings.ToLower(m.Format) {
+	case "gcp":
+		gcpMapper := gcpBind.New(map[string]string{})
+		bindings := gcpMapper.MapPoliciesToBindings(policies)
+		_ = MarshalJsonNoEscape(bindings, os.Stdout)
+		outWriter := cli.GetOutputWriter()
+		_ = MarshalJsonNoEscape(bindings, outWriter.GetOutput())
+		outWriter.Close()
+	case "cedar":
+		cMapper := awsCedar.New(map[string]string{})
+
+		cedar, err := cMapper.MapPoliciesToCedar(policies)
+		if err != nil {
+			return err
+		}
+
+		for _, v := range cedar.Policies {
+			policy := v.String()
+			fmt.Println(policy)
+			cli.GetOutputWriter().WriteString(policy, false)
+		}
+		cli.GetOutputWriter().Close()
+	}
+	return nil
+}
+
+type MapFromCmd struct {
+	Format string `arg:"" required:"" help:"Input format: gcp, or cedar"`
+	File   string `arg:"" type:"path" help:"A file containing policy to be mapped into IDQL"`
+}
+
+func (m *MapFromCmd) AfterApply(_ *kong.Context) error {
+	if slices.Contains(MapFormats, strings.ToLower(m.Format)) {
+		return nil
+	}
+
+	return errors.New(fmt.Sprintf("Invalid format. Valid values are: %v", MapFormats))
+}
+
+func (m *MapFromCmd) Run(cli *CLI) error {
+	fmt.Println(fmt.Sprintf("Mapping from %s to IDQL", m.Format))
+	var policies []hexapolicy.PolicyInfo
+	switch strings.ToLower(m.Format) {
+	case "gcp":
+		gcpMapper := gcpBind.New(map[string]string{})
+		assignments, err := gcpBind.ParseFile(m.File)
+		if err != nil {
+			return err
+		}
+		policies, err = gcpMapper.MapBindingAssignmentsToPolicy(assignments)
+		if err != nil {
+			return err
+		}
+
+	case "cedar":
+		cMapper := awsCedar.New(map[string]string{})
+
+		pols, err := cMapper.ParseFile(m.File)
+		if err != nil {
+			return err
+		}
+		policies = pols.Policies
+	}
+
+	_ = MarshalJsonNoEscape(policies, os.Stdout)
+	outWriter := cli.GetOutputWriter()
+	_ = MarshalJsonNoEscape(policies, outWriter.GetOutput())
+	outWriter.Close()
+	cli.GetOutputWriter().Close()
+	return nil
+}
+
+type MapCmd struct {
+	To   MapToCmd   `cmd:"" help:"Map IDQL policy to a specified policy format"`
+	From MapFromCmd `cmd:"" help:"Map from a specified policy format to IDQL format"`
+}
+
 type ReconcileCmd struct {
 	AliasSource  string `arg:"" required:"" help:"The alias of a Policy Application, or a file path to a file containing IDQL to act as the source to reconcile against."`
 	AliasCompare string `arg:"" required:"" help:"The alias of a Policy Application, or a file path to a file containing IDQL to be reconciled against a source."`
@@ -490,4 +596,15 @@ func (h *HelpCmd) Run(realCtx *kong.Context) error {
 	}
 	_, _ = fmt.Fprintln(realCtx.Stdout)
 	return nil
+}
+
+func MarshalJsonNoEscape(t interface{}, out io.Writer) error {
+	if out == nil {
+		return nil // do nothing
+	}
+	encoder := json.NewEncoder(out)
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", "  ")
+	err := encoder.Encode(t)
+	return err
 }
