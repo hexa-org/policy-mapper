@@ -107,9 +107,9 @@ func (a *AddGcpIntegrationCmd) Run(cli *CLI) error {
 
 type AddAvpIntegrationCmd struct {
 	Alias  string  `arg:"" optional:"" help:"A new local alias that will be used to refer to the integration in subsequent operations. Defaults to an auto-generated alias"`
-	Region *string `short:"r" required:"" help:"The Amazon data center (e.g. us-west-1)"`
-	Keyid  *string `short:"k" required:"" help:"Amazon Access Key ID"`
-	Secret *string `short:"s" required:"" help:"Secret access key"`
+	Region *string `short:"r" help:"The Amazon data center (e.g. us-west-1)"`
+	Keyid  *string `short:"k" help:"Amazon Access Key ID"`
+	Secret *string `short:"s" help:"Secret access key"`
 	File   []byte  `short:"f" xor:"Keyid" required:"" type:"filecontent" help:"File containing the amazon credential information"`
 }
 

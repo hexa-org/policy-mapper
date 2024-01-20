@@ -19,7 +19,7 @@ type ParserData struct {
 }
 
 type Globals struct {
-	Config       string     `help:"Location of client config files (env HEXA_HOME)" env:"HEXA_HOME" type:"path"`
+	Config       string     `help:"Location of client config files" env:"HEXA_HOME" type:"path"`
 	Data         ConfigData `kong:"-"`
 	ConfigFile   string     `kong:"-"`
 	Output       string     `short:"o" help:"To redirect output to a file" type:"path" `
@@ -34,7 +34,7 @@ type CLI struct {
 	Set       SetCmd       `cmd:"" help:"Set or update policies (e.g. set policies -file=idql.json)"`
 	Reconcile ReconcileCmd `cmd:"" help:"Reconcile compares a source set of policies another source (file or alias) of policies to determine differences."`
 	Show      ShowCmd      `cmd:"" help:"Show locally stored information about integrations and applications"`
-	Exit      ExitCmd      `cmd:"" help:"Exit the shell"`
+	Exit      ExitCmd      `cmd:"" help:"Exit Hexa admin tool"`
 	Help      HelpCmd      `cmd:"" help:"Show help on a command"`
 }
 

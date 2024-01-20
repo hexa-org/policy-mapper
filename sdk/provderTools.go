@@ -177,13 +177,22 @@ func (i *Integration) GetApplicationInfo(papAlias string) (*policyprovider.Appli
 /*
 GetPolicies queries the designated 'pap' and returns a set of mapped hexapolicy.PolicyInfo policies.
 */
-func (i *Integration) GetPolicies(papAlias string) ([]hexapolicy.PolicyInfo, error) {
+func (i *Integration) GetPolicies(papAlias string) (*hexapolicy.Policies, error) {
 	i.checkOpen()
 	app, err := i.GetApplicationInfo(papAlias)
 	if err != nil {
 		return nil, err
 	}
-	return i.provider.GetPolicyInfo(*i.Opts.Info, *app)
+
+	pols, err := i.provider.GetPolicyInfo(*i.Opts.Info, *app)
+	if err != nil {
+		return nil, err
+	}
+	return &hexapolicy.Policies{
+		Policies: pols,
+		App:      &app.ObjectID,
+	}, nil
+
 }
 
 /*
@@ -220,10 +229,6 @@ func (i *Integration) ReconcilePolicy(papAlias string, comparePolicies []hexapol
 		if err != nil {
 			return []hexapolicy.PolicyDif{}, err
 		}
-		policies := hexapolicy.Policies{
-			Policies: existPolicies,
-			App:      &papAlias,
-		}
-		return policies.ReconcilePolicies(comparePolicies, diffsOnly), nil
+		return existPolicies.ReconcilePolicies(comparePolicies, diffsOnly), nil
 	}
 }
