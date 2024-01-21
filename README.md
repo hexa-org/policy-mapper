@@ -7,27 +7,35 @@ This project provides:
 * a Hexa administration tool which can be used to provision policies to web accessible policy systems
 * a common interface (provider) which enables the development of new policy provisioning providers to extend policy-mapper capabilities
 
-
-## Development Note
-**_Note: This code is currently under development and documentation may be out of date._**
+> [!Note]
+> This project is currently under initial development and documentation may be out of date._**
 
 ## Supported Provider Integrations
 
-Currently, mapping support is provided for:
+Policy Mapper supports two major areas of functionality:
 
+Syntactical Mapping
+: Policy systems that support a defined policy format, can be represented in a "tuple" (subject, action, resource, conditions, scope) are considered "syntactical". Policy-Mapper can map these formats to and from IDQL JSON format.
+
+Policy Provisioning
+: Policy Mapper consists of a set of `Provider`s that can retrieve, and map access policy as well as be able to set policy.
+
+Mapping support is provided for:
 * Google Bind Policy and Google Conditional Expression Language (CEL)
 * AWS Verified Permissions and Cedar policy language including support for CEL
-* OPA Extensions to Support IDQL and an OPA Extension Plugin to support ABAC policy (conditions) processing
 
-The project is broken into the following parts:
-* [Policy Conditions](CONDITIONS.md)
-* IDQL Policy and Policy Mapping
-* [HexaMapper command line utility](DEMO.md)
-* [Hexa admin utility](cmd/hexa/README.md)
+Provisioning support is provided for:
+* Google Bind Policy (Application Engine and Compute Engine)
+* Amazon Verified Permissions
+* (coming) OPA Extensions to Support IDQL and an OPA Extension Plugin to support ABAC policy (conditions) processing
+* Provisioning to RBAC based policy systems including (to be ported from hexa-org/policy-orchestrator):
+  * Amazon
+    * Cognito
+    * API Gateway
+  * Microsoft Azure
 
+  
 ## Getting Started
-
-For general introduction to Hexa, please see the [Policy-Orchestrator ReadMe](https://github.com/hexa-org/policy-orchestrator).
 
 ### Prerequisites
 

@@ -4,14 +4,12 @@ Hexa Policy Conditions provides support for IDQL Policy Conditions (see
 [IDQL Specification section 4.7](https://github.com/hexa-org/policy/blob/main/specs/IDQL-core-specification.md#47-condition))
 intended for use by [Hexa Policy Orchestrator](https://github.com/hexa-org/policy-orchestrator).
 
-IDQL is a "tuple" based policy language which has 5 key components to a policy rule
-which allows most Policy systems such as ABAC, RBAC, Zanzibar, Cedar and OPA to be
-mappable from IDQL. In addition to `subject`, `actions`, `object` of policy, the `conditions`
-component allows policies to have a conditional component (eg. such as with ABAC). A
+In addition to `subject`, `actions`, `object` of a typical policy, the `conditions`
+component allows policies to have a conditional component (eg. attribute based access control). A
 condition, is a run-time matching condition that can be applied in addition to courser
 matches for subjects (e.g. roles), actions (permissions), and objects (targets).
 
-For example, a condition may be applied that tests the type of authentication of a subject and request parameters.
+For example, an IDQL condition may be applied that tests the type of authentication of a subject and request parameters.
 ```
 "condition": {
   "rule": "subject.type eq \"Bearer+JWT\" and (subject.roles co privateBanking or subject.roles co prestige)",
@@ -49,37 +47,46 @@ example below.  Note that attributes not defined in the configuration are passed
 are case-insensitive.
 
 A code example:
+
 ```go
+package main
+
 import (
-	"github.com/hexa-org/policySupport/conditions"
-    "github.com/hexa-org/policySupport/conditions/googleCel"
+  "fmt"
+
+  "github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel"
+  "github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
 )
 
 func main() {
-    mapper = GoogleConditionMapper{
-        NameMapper: conditions.NewNameMapper(map[string]string{
-        "a":        "b",
-        "req.sub": "userid",
-        }),
-    }
-	
-	idqlCondition := conditions.ConditionInfo{
-		Rule: "subject.common_name eq \"google.com\" and (subject.country_code eq \"US\" or subject.country_code eq \"IR\")",
-		Action: "allow",
-    }
-	
-	// Map to Google CEL Language
-	celString, err := mapper.MapConditionToProvider(idqlCondition)
-	
-	// Convert a CEL expression back into an IDQL Condition
-	condition, err := mapper.MapProviderToCondition(celString)
-	
-	/*
-	 Note that in the above code, idqlCondition.Rule should be logically equivalent to condition.Rule. Some differences
-	 may occur due to case normalization, removal of unnecessary parentheses, etc.
-	*/
+  mapper := gcpcel.GoogleConditionMapper{NameMapper: conditions.NewNameMapper(map[string]string{
+    "a":       "b",
+    "req.sub": "userid",
+  })}
+
+  idqlCondition := conditions.ConditionInfo{
+    Rule:   "subject.common_name eq \"google.com\" and (subject.country_code eq \"US\" or subject.country_code eq \"IR\")",
+    Action: "allow",
+  }
+
+  // Map to Google CEL Language
+  celString, err := mapper.MapConditionToProvider(idqlCondition)
+  if err != nil {
+    fmt.Println(err.Error())
+    panic(-1)
+  }
+  fmt.Println("Mapped Google CEL format: " + celString)
+
+  // Convert a CEL expression back into an IDQL Condition
+  condition, err := mapper.MapProviderToCondition(celString)
+  if err != nil {
+    fmt.Println(err.Error())
+    panic(-1)
+  }
+  fmt.Println(fmt.Sprintf("Mapped IDQL Condition: %v", condition))
 }
 ```
+
 ### CEL Mapping Scope of Support
 The current scope of support for mapping Google CEL expression is limited to common IAM policy cases.
 The following Google CEL functions and operators are currently not support.
