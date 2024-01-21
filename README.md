@@ -1,6 +1,6 @@
 # Hexa Policy Mapper Project
 
-The Hexa Policy-Mapper Project provides an sdk for provisioning and mapping various policy systems into a common policy format known as [IDQL](https://github.com/hexa-org/policy/blob/main/specs/IDQL-core-specification.md).
+The Hexa Policy-Mapper Project provides administrative tools and development libraries for provisioning and mapping various policy systems into a common policy format known as [IDQL](https://github.com/hexa-org/policy/blob/main/specs/IDQL-core-specification.md).
 
 This project provides:
 * a GOLANG SDK which can be used in open source and commercial implementations to leverage this community library.
@@ -8,7 +8,7 @@ This project provides:
 * a common interface (provider) which enables the development of new policy provisioning providers to extend policy-mapper capabilities
 
 > [!Note]
-> This project is currently under initial development and documentation may be out of date._**
+> This project is currently under initial development and documentation may be out of date.
 
 ## Supported Provider Integrations
 
@@ -37,103 +37,19 @@ Provisioning support is provided for:
   
 ## Getting Started
 
-### Prerequisites
+### Installation
 
-Install the following dependencies.
+Install [go 1.21](https://go.dev), clone and build the project as follows:
 
-- [go 1.21](https://go.dev)
-- Clone the project and run the following in the terminal window:
 ```shell
 git clone https://github.com/hexa-org/policy-mapper.git
 sh ./build.sh
 ```
+## Hexa Administration Tool
 
-## Using Hexa-Mapper in Go Projects
+To test the Hexa SDK and or develop using scripts, use the [Hexa command line tool](docs/HexaAdmin.md).
 
-### Parsing IDQL
+## Hexa Developer Documentation
 
-To parse a file, or stream of bytes, use the `policySupport.ParsePolicyFile` or `policySupport.ParsePolicies` functions
-to return an array of `[]policySupport.PolicyInfo` objects.  The parser will except either a JSON array of policy objects
-or an attribute "policies" which is assigned an array of policies. For example:
-```json
-{
-  "policies": [
-    {
-      "Meta": {
-        "Version": "0.6"
-      },
-      "Actions": [
-        {
-          "ActionUri": "cedar:Action::\"view\""
-        }
-      ],
-      "Subject": {
-        "Members": [
-          "User:\"alice\""
-        ]
-      },
-      "Object": {
-        "resource_id": "cedar:Photo::\"VacationPhoto94.jpg\""
-      }
-    }
-  ]
-}
-```
+See: [Developer documentation](docs/Developer.md).
 
-
-The follow shows parsing IDQL JSON into `PolicyInfo` objects:
-
-```go
-package main
-
-import (
-	"fmt"
-	policysupport github.com/hexa-org/policy-map/pkg/hexapolicysupport
-)
-
-func main() {
-	input := "examples/example_idql.json"
-	policies, err := policysupport.ParsePolicyFile(input)
-	if (err != nil) {
-		fmt.Println(err.Error())
-	}
-	
-	// ...
-}
-```
-
-### Mapping to a Platform
-
-When mapping to and from a platform, the mapper
-will translate attribute names based on a map provided at instantiation.  For example `username` translates to `account.userid` in Google Bind policy.
-The when an attribute name map is provided, only attributes listed in the map are translated. All other attribute names are passed unchanged.
-
-To policy from a platform (e.g. Google Bind), instantiate the mapper by providing
-a map of strings which indicates IDQL names to platform names. 
-
-```go
-    gcpMapper := gcpBind.New(map[string]string{
-        "username": "account.userid",
-    })
-    assignments, err := gcpBind.ParseFile(input)
-    if err != nil {
-        reportError(err)
-    }
-    policies, err := gcpMapper.MapBindingAssignmentsToPolicy(assignments)
-    if err != nil {
-        reportError(err)
-    }
-```
-
-### Mapping from a Platform
-
-The following shows an example of mapping Cedar Policy to IDQL
-
-```go
-    cedarMapper := awsCedar.New(map[string]string{})
-
-    idqlPolicies, err := cedarMapper.ParseFile(input)
-    if err != nil {
-        reportError(err)
-    }
-```

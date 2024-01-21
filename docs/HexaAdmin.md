@@ -1,8 +1,8 @@
-
+<div style="text-align: right; float: left"><img src="hexa-boomer.png" title="Boomer" width=75 alt="Hexa-Admin"/></div>
 
 # Hexa Administration Tool
 
-The Hexa administration tool can be used to provision policy to public policy administrative APIs such as Amazon Verified Permissions, and Google Cloud Bind.
+The Hexa administration tool uses the Hexa SDK to provision access policy to administrative APIs such as Amazon Verified Permissions, and Google Cloud Bind.
 
 ## Adding an Integration
 
@@ -32,7 +32,7 @@ Arguments:
 
 ```
 
-As an example:
+Example adding an Amazon AVP integration with the alias `myavp`:
 ```text
 % hexa
 hexa> add avp myavp --file=aws-cred.json
@@ -194,54 +194,42 @@ Example commands:
 
 ## Mapping Policies
 
+At present, the Hexa Mapper can convert IDQL to and from Google Bind and Amazon Cedar formats. This includes conversion of 
+IDQL condition expressions into Google Condition Expression Language(CEL) and the Cedar equivalent.
+
+The map command is of the form:
+```text
+map to|from <format> <input-filepath> -o <output-path>
+```
+
+Valid `<format>` values are `gcp` and `cedar`. When the command is `map from`, the `<input-filepath>` is a file containing 
+GCP Bind or AVP Cedar policy. When the command is `map to`, the `<input-filepath>` is a JSON file containing IDQL policy.
+
 
 ## General Help
+
+Help is accessible at any time, using the `help` command. For more details, enter the full command such as `help add avp`.
+
+To redirect output for any command to a file, use the `-o` option. If you would like the output to be appended to an existing file,
+use the `-a` option.
+
+Hexa Admin maintains a configuration file in order to save previously retrieved integrations and policy administration points.
+By default, the path is `.hexa/config.json`. This can be overriden by setting the environment variable `$HEXA_HOME`.
+
+Hexa can also accept redirected input in order to script a series of commands. For example:
+
+Create a script, `avp-fetch.hexa`:
 ```text
-Hexa IDQL Orchestrator administration tool
+add avp mycedar --file=aws-int.json
+get policies 334911564 -o avp-564.idql
+exit
+```
+> [!Tip]
+> In the above script, since local PAP may not be known in advance, use the remote application object id directly in the script.
 
-Flags:
-      --config=STRING    Location of client config files ($HEXA_HOME)
-  -o, --output=STRING    To redirect output to a file
-  -a, --append-output    When true, output to file (--output) will be appended
-
-Commands:
-  add                        Add a new integration
-    avp (cedar)              Add an Amazon Verified Permissions integration
-      [<alias>]              A new local alias that will be used to refer to the integration in subsequent operations. Defaults to an auto-generated alias
-    gcp                      Add a Google Cloud GCP integration
-      [<alias>]              A new local alias that will be used to refer to the integration in subsequent operations. Defaults to an auto-generated alias
-
-  get                        Retrieve or update information and display
-    paps (apps)              Retrieve or discover policy application points from the specified integration alias
-      <alias>                Alias for a previously defined integration to retrieve from
-    policies (pol)           Get and map policies from a PAP.
-      <alias>                Alias for a Policy Application Point to retrieve policies from
-
-  map                        Convert syntactical policies to and from IDQL
-    to                       Map IDQL policy to a specified policy format
-      <format>               Target format: gcp, or cedar
-      <file>                 A file containing IDQL policy to be mapped
-    from                     Map from a specified policy format to IDQL format
-      <format>               Input format: gcp, or cedar
-      <file>                 A file containing policy to be mapped into IDQL
-
-  reconcile                  Reconcile compares a source set of policies another source (file or alias) of policies to determine differences.
-    <alias-source>           The alias of a Policy Application, or a file path to a file containing IDQL to act as the source to reconcile against.
-    <alias-compare>          The alias of a Policy Application, or a file path to a file containing IDQL to be reconciled against a source.
-
-  set                        Set or update policies (e.g. set policies -file=idql.json)
-    policies (pol,policy)    Set policies at a policy application point
-      <alias>                The alias of a PAP (application) where policies are to be set/reconciled with the provided policies
-
-  show                       Show locally stored information about integrations and applications
-    integration (int,i)      Show locally defined information about a provider integration
-      [<alias>]              An alias for an integration or * to list all. Defaults to listing all
-    pap (app,p,a)            Show locally stored information about a policy application
-      <alias>                The alias of an application or integration whose applications are to be listed.
-
-  exit                       Exit Hexa admin tool
-
-  help                       Show help on a command
-    [<command> ...]          Show help on command.
-
+The file can then be run in a bash/shell script as follows:
+```shell
+export HEXA_HOME=/work/hexa-config.json
+echo "Loading policy from AVP Cedar..."
+hexa <avp-fetch.hexa
 ```
