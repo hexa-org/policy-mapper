@@ -411,17 +411,17 @@ func (suite *testSuite) Test7_MapToCmd() {
 
 	assert.Error(suite.T(), err, "hexa: error: expected \"<file>\"")
 
-	command = "map to abc examples/idqlAlice.json"
+	command = "map to abc ../../examples/policyExamples/idqlAlice.json"
 	res, err := suite.executeCommand(command, 0)
 	assert.Error(suite.T(), err, fmt.Sprintf("Invalid format. Valid values are: %v", MapFormats))
 	assert.Nil(suite.T(), res, "Should be no display text")
 
-	command = "map to cedar examples/idqlAlice.json"
+	command = "map to cedar ../../examples/policyExamples/idqlAlice.json"
 	res, err = suite.executeCommand(command, 0)
 	assert.NoError(suite.T(), err, "Should be successful map of cedar")
 	assert.Contains(suite.T(), string(res), "permit (")
 
-	command = "map to gcp examples/idqlAlice.json"
+	command = "map to gcp ../../examples/policyExamples/idqlAlice.json"
 	res, err = suite.executeCommand(command, 0)
 	assert.NoError(suite.T(), err, "Should be successful map of gcp")
 	assert.Contains(suite.T(), string(res), "bindings")
@@ -433,17 +433,17 @@ func (suite *testSuite) Test8_MapFromCmd() {
 
 	assert.Error(suite.T(), err, "hexa: error: expected \"<file>\"")
 
-	command = "map from abc examples/cedarAlice.txt"
+	command = "map from abc ../../examples/policyExamples/cedarAlice.txt"
 	res, err := suite.executeCommand(command, 0)
 	assert.Error(suite.T(), err, fmt.Sprintf("Invalid format. Valid values are: %v", MapFormats))
 	assert.Nil(suite.T(), res, "Should be no display text")
 
-	command = "map from cedar examples/cedarAlice.txt"
+	command = "map from cedar ../../examples/policyExamples/cedarAlice.txt"
 	res, err = suite.executeCommand(command, 0)
 	assert.NoError(suite.T(), err, "Should be successful map of cedar")
 	assert.Contains(suite.T(), string(res), "cedar:Photo:")
 
-	command = "map from gcp examples/example_bindings.json"
+	command = "map from gcp ../../examples/policyExamples/example_bindings.json"
 	res, err = suite.executeCommand(command, 0)
 	assert.NoError(suite.T(), err, "Should be successful map of gcp")
 	assert.Contains(suite.T(), string(res), "req.ip sw 127 and req.method eq ")

@@ -168,10 +168,18 @@ func (i *Integration) GetApplicationInfo(papAlias string) (*policyprovider.Appli
 		}
 	}
 	info, exist := i.Apps[papAlias]
-	if !exist {
-		return nil, errors.New(fmt.Sprintf("alias [%s] not found", papAlias))
+
+	if exist {
+		return &info, nil
 	}
-	return &info, nil
+
+	// Check for match by object id
+	for _, app := range i.Apps {
+		if app.ObjectID == papAlias {
+			return &app, nil
+		}
+	}
+	return nil, errors.New(fmt.Sprintf("alias [%s] not found", papAlias))
 }
 
 /*

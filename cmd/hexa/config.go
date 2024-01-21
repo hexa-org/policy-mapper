@@ -2,108 +2,114 @@
 package main
 
 import (
-    "encoding/json"
-    "fmt"
-    "os"
-    "os/user"
-    "path/filepath"
+	"encoding/json"
+	"fmt"
+	"os"
+	"os/user"
+	"path/filepath"
 
-    "github.com/hexa-org/policy-mapper/api/policyprovider"
-    "github.com/hexa-org/policy-mapper/sdk"
+	"github.com/hexa-org/policy-mapper/api/policyprovider"
+	"github.com/hexa-org/policy-mapper/sdk"
 )
 
 var ConfigFile = "config.json"
 
 type ConfigData struct {
-    Selected     string                      `json:"selected"`
-    Integrations map[string]*sdk.Integration `json:"integrations"`
+	Selected     string                      `json:"selected"`
+	Integrations map[string]*sdk.Integration `json:"integrations"`
 }
 
 func (c *ConfigData) GetIntegration(alias string) *sdk.Integration {
-    integration, exist := c.Integrations[alias]
-    if exist {
-        return integration
-    }
-    return nil
+	integration, exist := c.Integrations[alias]
+	if exist {
+		return integration
+	}
+	return nil
 }
 
 func (c *ConfigData) GetApplicationInfo(applicationAlias string) (*sdk.Integration, *policyprovider.ApplicationInfo) {
-    for _, integration := range c.Integrations {
-        app, exist := integration.Apps[applicationAlias]
-        if exist {
-            return integration, &app
-        }
-    }
-    return nil, nil
+	for _, integration := range c.Integrations {
+		app, exist := integration.Apps[applicationAlias]
+		if exist {
+			return integration, &app
+		}
+		// Check for match by object id
+		for _, app := range integration.Apps {
+			if app.ObjectID == applicationAlias {
+				return integration, &app
+			}
+		}
+	}
+	return nil, nil
 }
 
 func (c *ConfigData) checkConfigPath(g *Globals) error {
-    configPath := g.Config
-    if configPath == "" {
-        configPath = ".hexa/" + ConfigFile
-        usr, err := user.Current()
-        if err == nil {
-            configPath = filepath.Join(usr.HomeDir, configPath)
-        }
-    }
+	configPath := g.Config
+	if configPath == "" {
+		configPath = ".hexa/" + ConfigFile
+		usr, err := user.Current()
+		if err == nil {
+			configPath = filepath.Join(usr.HomeDir, configPath)
+		}
+	}
 
-    dirPath := filepath.Dir(configPath)
-    i := len(dirPath)
-    if dirPath[i-1:i-1] != "/" {
-        dirPath = dirPath + "/"
-    }
-    baseFile := filepath.Base(configPath)
-    if filepath.Ext(baseFile) == "" {
-        dirPath = configPath
-        baseFile = ConfigFile
-    }
+	dirPath := filepath.Dir(configPath)
+	i := len(dirPath)
+	if dirPath[i-1:i-1] != "/" {
+		dirPath = dirPath + "/"
+	}
+	baseFile := filepath.Base(configPath)
+	if filepath.Ext(baseFile) == "" {
+		dirPath = configPath
+		baseFile = ConfigFile
+	}
 
-    _, err := os.Stat(dirPath)
-    if os.IsNotExist(err) {
+	_, err := os.Stat(dirPath)
+	if os.IsNotExist(err) {
 
-        // path/to/whatever does not exist
-        err = os.Mkdir(dirPath, 0770)
-        if err != nil {
-            return err
-        }
-    }
+		// path/to/whatever does not exist
+		err = os.Mkdir(dirPath, 0770)
+		if err != nil {
+			return err
+		}
+	}
 
-    g.ConfigFile = configPath
+	g.ConfigFile = configPath
 
-    return nil
+	return nil
 }
 
 func (c *ConfigData) Load(g *Globals) error {
-    // configFile := filepath.Join(g.Config, ConfigFile)
+	// configFile := filepath.Join(g.Config, ConfigFile)
 
-    if _, err := os.Stat(g.ConfigFile); os.IsNotExist(err) {
-        return nil // No existing configuration
-    }
+	if _, err := os.Stat(g.ConfigFile); os.IsNotExist(err) {
+		return nil // No existing configuration
+	}
 
-    configBytes, err := os.ReadFile(g.ConfigFile)
-    if err != nil {
-        fmt.Println("Error reading configuration: " + err.Error())
-        return nil
-    }
-    if len(configBytes) == 0 {
-        return nil
-    }
-    err = json.Unmarshal(configBytes, c)
-    if err != nil {
-        fmt.Println("Error parsing stored configuration: " + err.Error())
-    }
-    return err
+	configBytes, err := os.ReadFile(g.ConfigFile)
+	if err != nil {
+		fmt.Println("Error reading configuration: " + err.Error())
+		return nil
+	}
+	if len(configBytes) == 0 {
+		return nil
+	}
+	err = json.Unmarshal(configBytes, c)
+	if err != nil {
+		fmt.Println("Error parsing stored configuration: " + err.Error())
+	}
+	return err
 }
 
 func (c *ConfigData) Save(g *Globals) error {
 
-    out, err := json.MarshalIndent(c, "", " ")
-    if err != nil {
-        return err
-    }
-    err = os.WriteFile(g.ConfigFile, out, 0660)
-    if err != nil {
-        fmt.Println("Error saving configuration: " + err.Error())
-    }
-    return err
+	out, err := json.MarshalIndent(c, "", " ")
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(g.ConfigFile, out, 0660)
+	if err != nil {
+		fmt.Println("Error saving configuration: " + err.Error())
+	}
+	return err
 }

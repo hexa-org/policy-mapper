@@ -219,7 +219,7 @@ func (a *GetPolicyApplicationsCmd) Run(cli *CLI) error {
 }
 
 type GetPoliciesCmd struct {
-	Alias string `arg:"" required:"" help:"Alias for a Policy Application Point to retrieve policies from"`
+	Alias string `arg:"" required:"" help:"Alias or object id of a PAP (application) to retrieve policies from"`
 }
 
 func (a *GetPoliciesCmd) Run(cli *CLI) error {
@@ -249,7 +249,7 @@ type GetCmd struct {
 }
 
 type SetPoliciesCmd struct {
-	Alias       string `arg:"" required:"" help:"The alias of a PAP (application) where policies are to be set/reconciled with the provided policies"`
+	Alias       string `arg:"" required:"" help:"The alias or object id of a PAP (application) where policies are to be set/reconciled with specified policies"`
 	File        string `short:"f" required:"" type:"path" help:"A file containing IDQL policy to be applied (REQUIRED)"`
 	Differences bool   `optional:"" default:"false" short:"d" help:"When specified, the list of changes to be applied will be shown before confirming change (if supported by provider)"`
 }
