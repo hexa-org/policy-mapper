@@ -7,21 +7,21 @@ require (
 	github.com/alecthomas/kong v0.8.1
 	github.com/alecthomas/participle/v2 v2.1.1
 	github.com/aws/aws-sdk-go-v2 v1.24.1
-	github.com/aws/aws-sdk-go-v2/config v1.26.3
-	github.com/aws/aws-sdk-go-v2/credentials v1.16.14
+	github.com/aws/aws-sdk-go-v2/config v1.26.5
+	github.com/aws/aws-sdk-go-v2/credentials v1.16.16
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.32.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.48.0
 	github.com/aws/aws-sdk-go-v2/service/verifiedpermissions v1.8.4
 	github.com/chzyer/readline v1.5.1
 	github.com/envoyproxy/go-control-plane v0.12.0
-	github.com/go-playground/validator/v10 v10.16.0
-	github.com/google/cel-go v0.18.2
+	github.com/go-playground/validator/v10 v10.17.0
+	github.com/google/cel-go v0.19.0
 	github.com/google/uuid v1.5.0
 	github.com/hhsnopek/etag v0.0.0-20171206181245-aea95f647346
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/exp v0.0.0-20240110193028-0dcbfd608b1e
-	google.golang.org/api v0.156.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20240108191215-35c7eff3a6b1
+	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
+	google.golang.org/api v0.157.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20240116215550-a9fa1716bcac
 	gopkg.in/square/go-jose.v2 v2.6.0
 )
 
@@ -40,8 +40,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.2.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.16.10 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.18.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.21.6 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.18.7 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.21.7 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.26.7 // indirect
 	github.com/aws/smithy-go v1.19.0 // indirect
 	github.com/cncf/xds/go v0.0.0-20231128003011-0fa0005c9caa // indirect
@@ -65,17 +65,17 @@ require (
 	github.com/stretchr/objx v0.5.1 // indirect
 	github.com/tj/assert v0.0.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.1 // indirect
-	go.opentelemetry.io/otel v1.21.0 // indirect
-	go.opentelemetry.io/otel/metric v1.21.0 // indirect
-	go.opentelemetry.io/otel/trace v1.21.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0 // indirect
+	go.opentelemetry.io/otel v1.22.0 // indirect
+	go.opentelemetry.io/otel/metric v1.22.0 // indirect
+	go.opentelemetry.io/otel/trace v1.22.0 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240108191215-35c7eff3a6b1 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac // indirect
 	google.golang.org/grpc v1.60.1 // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
