@@ -1,8 +1,8 @@
 package idql
 
 import (
-	"github.com/hexa-org/policy-mapper/hexaIdql/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/mapper/testhelper"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 )
 
 const MetaVersion = "5.0"
