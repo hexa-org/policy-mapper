@@ -11,8 +11,8 @@ import (
 
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
-	"github.com/hexa-org/policy-mapper/providers/aws/avp"
-	"github.com/hexa-org/policy-mapper/providers/aws/avp/avpClient/avpTestSupport"
+	"github.com/hexa-org/policy-mapper/providers/aws/avpProvider"
+	"github.com/hexa-org/policy-mapper/providers/aws/avpProvider/avpClient/avpTestSupport"
 	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -101,7 +101,7 @@ func (s *testSuite) Test3_Reconcile() {
 
 	avpMeta := policies[1].Meta
 	var avpType string
-	avpType, exist := avpMeta.SourceData[avp.ParamPolicyType].(string)
+	avpType, exist := avpMeta.SourceData[avpProvider.ParamPolicyType].(string)
 	assert.True(s.T(), exist, "Check policy type exists")
 	assert.Equal(s.T(), "TEMPLATE_LINKED", avpType, "Second [1] policy should be template")
 

@@ -87,14 +87,14 @@ will reconcile the existing policies against the policies specified in the polic
 received, the policies are applied.
 
 > [!NOTE]
-> While AWS Policy Templates are mapped on retrieval using `get policies`, template policies are not currently supported for update. 
+> While AVP Template Policies are mapped on retrieval using `get policies`, template policies are not currently supported for update. 
 
 In the following example, the file policies.json contains 2 policies. The first policy has a change to the actions attribute, and the second is a policy template which is
 marked as `UNSUPPORTED`.  The first policy is marked `DIF: UPDATE  [ACTION]`. This indicates that the update detected is in the IDQL Action portion. In the case of AVP,
 and update is permitted. 
 
 > [!TIP]
-> Amazon AVP only supports updating the action and condition portions of a policy. If the Hexa AVP Provider notes a difference to Subject or Object, it will automatically
+> Amazon AVP only supports updating the action and condition portions of a policy. If the Hexa AVP Provider detects a difference to Subject or Object, it will automatically
 > convert the update into a Delete and Add operation to accomodate the change.
 
 ```shell

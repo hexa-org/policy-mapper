@@ -1,8 +1,9 @@
-package policyprovider
+package rarprovider
 
 import (
 	"github.com/hexa-org/policy-mapper/api/idp"
-	"github.com/hexa-org/policy-mapper/hexaIdql/pkg/hexapolicy"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
+
 	"github.com/hexa-org/policy-mapper/mapper/rbac/policystore"
 	"github.com/hexa-org/policy-mapper/mapper/rbac/rar"
 

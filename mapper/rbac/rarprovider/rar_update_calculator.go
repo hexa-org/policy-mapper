@@ -1,4 +1,4 @@
-package policyprovider
+package rarprovider
 
 import (
 	"github.com/hexa-org/policy-mapper/mapper/rbac/rar"

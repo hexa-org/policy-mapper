@@ -1,4 +1,4 @@
-package policyprovider
+package rarprovider
 
 import (
 	"net/http"

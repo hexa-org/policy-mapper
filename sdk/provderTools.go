@@ -8,18 +8,19 @@ import (
 
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
-	"github.com/hexa-org/policy-mapper/providers/aws/avp"
+	"github.com/hexa-org/policy-mapper/providers/aws/avpProvider"
 	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"
 	"github.com/hexa-org/policy-mapper/providers/googlecloud"
 	"github.com/hexa-org/policy-mapper/providers/test"
 )
 
 const (
-	ProviderTypeAvp  string = avp.ProviderTypeAvp
-	ProviderTypeGcp  string = "google_cloud"
-	ProviderTypeMock string = test.ProviderTypeMock
-
-	EnvTestProvider string = "HEXA_TEST_PROVIDER" // EnvTestProvider overrides whatever provider is requested and uses the specified provider instead (by name)
+	ProviderTypeAvp     string = avpProvider.ProviderTypeAvp
+	ProviderTypeGcp     string = "google_cloud"
+	ProviderTypeMock    string = test.ProviderTypeMock
+	ProviderTypeCognito string = "cognito"
+	ProviderTypeAzure   string = "azure"
+	EnvTestProvider     string = "HEXA_TEST_PROVIDER" // EnvTestProvider overrides whatever provider is requested and uses the specified provider instead (by name)
 )
 
 type Integration struct {
@@ -50,7 +51,7 @@ func OpenIntegration(integrationInfo *policyprovider.IntegrationInfo, options ..
 		opt(&i.Opts)
 	}
 
-	_, err := i.open()
+	err := i.open()
 
 	return i, err
 }
@@ -60,14 +61,14 @@ Open causes the provider to be instantiated and a handle to the Provider interfa
 are automatically opened if Open is not called. Primary purpose is to expose the underlying Provider interface for
 some integrations such as policyprovider.
 */
-func (i *Integration) open() (policyprovider.Provider, error) {
+func (i *Integration) open() error {
 	if i.provider != nil {
-		return i.provider, nil
+		return nil
 	}
 	testOverride := os.Getenv(EnvTestProvider)
 	info := i.Opts.Info
 	if info == nil {
-		return nil, errors.New("missing PolicyProvider.IntegrationInfo object")
+		return errors.New("missing PolicyProvider.IntegrationInfo object")
 	}
 	provType := info.Name
 	if testOverride != "" {
@@ -84,21 +85,27 @@ func (i *Integration) open() (policyprovider.Provider, error) {
 			default:
 			}
 		}
-		i.provider = &avp.AmazonAvpProvider{AwsClientOpts: opts}
+		i.provider = &avpProvider.AmazonAvpProvider{AwsClientOpts: opts}
 
-		return i.provider, nil
+		return nil
+		/*
+			case ProviderTypeCognito, ProviderTypeAzure:
+				var err error
+				i.provider, err = v2providerwrapper.NewV2ProviderWrapper(provType, i.Opts.Info)
+				return err
+		*/
 
 	case ProviderTypeGcp:
 		i.provider = &googlecloud.GoogleProvider{}
-		return i.provider, nil
+		return nil
 
 	case ProviderTypeMock:
 		i.provider = &test.MockProvider{
 			Info: *i.Opts.Info,
 		}
-		return i.provider, nil
+		return nil
 	default:
-		return nil, errors.New("provider not available in hexa policy SDK")
+		return errors.New("provider not available in hexa policy SDK")
 	}
 }
 
@@ -112,7 +119,7 @@ func (i *Integration) GetType() string {
 
 func (i *Integration) checkOpen() {
 	if i.provider == nil {
-		_, _ = i.open()
+		_ = i.open()
 	}
 }
 
@@ -134,7 +141,11 @@ func (i *Integration) GetPolicyApplicationPoints(aliasGen func() string) ([]poli
 			aliasMap[app.ObjectID] = k
 		}
 	}
-	apps, err := i.provider.DiscoverApplications(*i.Opts.Info)
+
+	var apps []policyprovider.ApplicationInfo
+	var err error
+
+	apps, err = i.provider.DiscoverApplications(*i.Opts.Info)
 	if err != nil {
 		return nil, err
 	}
@@ -187,12 +198,15 @@ GetPolicies queries the designated 'pap' and returns a set of mapped hexapolicy.
 */
 func (i *Integration) GetPolicies(papAlias string) (*hexapolicy.Policies, error) {
 	i.checkOpen()
+	var err error
 	app, err := i.GetApplicationInfo(papAlias)
 	if err != nil {
 		return nil, err
 	}
 
-	pols, err := i.provider.GetPolicyInfo(*i.Opts.Info, *app)
+	var pols []hexapolicy.PolicyInfo
+
+	pols, err = i.provider.GetPolicyInfo(*i.Opts.Info, *app)
 	if err != nil {
 		return nil, err
 	}

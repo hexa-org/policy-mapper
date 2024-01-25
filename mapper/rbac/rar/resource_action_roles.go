@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hexa-org/policy-mapper/hexaIdql/pkg/hexapolicy"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"golang.org/x/exp/slices"
 	log "golang.org/x/exp/slog"
 )
