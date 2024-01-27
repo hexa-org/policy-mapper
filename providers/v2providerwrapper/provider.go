@@ -8,6 +8,7 @@ import (
 	"github.com/hexa-org/policy-mapper/models/rbac/policystore"
 	"github.com/hexa-org/policy-mapper/models/rbac/rar"
 	"github.com/hexa-org/policy-mapper/providers/aws/cognitoProvider"
+	"github.com/hexa-org/policy-mapper/providers/azure/azureV2provider"
 	"github.com/hexa-org/policy-mapper/sdk"
 
 	"github.com/hexa-org/policy-mapper/models/rbac/rarprovider"
@@ -91,7 +92,22 @@ func NewV2ProviderWrapper(name string, info policyprovider.IntegrationInfo) (pol
 			service:        rarprovider.NewProviderService[rar.DynamicResourceActionRolesMapper](appInfoSvc, backendService),
 		}, nil
 	case sdk.ProviderTypeAzure:
+		idp := azureV2provider.NewApimAppProvider(info.Key)
+		appInfoSvc, err := idp.Provider()
+		if err != nil {
+			return nil, err
+		}
+		policyStoreSvc, err := azureV2provider.NewEmptyPolicyStore().Provider()
+		if err != nil {
+			return nil, err
+		}
 
+		service := rarprovider.NewProviderService[rar.DynamicResourceActionRolesMapper](appInfoSvc, policyStoreSvc)
+		return &ProviderWrapper{
+			name:           name,
+			appInfoService: appInfoSvc,
+			service:        service,
+		}, nil
 	default:
 	}
 
