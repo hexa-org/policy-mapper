@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/hexa-org/policy-mapper/mapper/testhelper"
+	"github.com/hexa-org/policy-mapper/models/testhelper"
 	"github.com/stretchr/testify/assert"
 )
 

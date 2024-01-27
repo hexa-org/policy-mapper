@@ -3,7 +3,7 @@ package dynamodbpolicystore
 import (
 	"encoding/json"
 
-	"github.com/hexa-org/policy-mapper/mapper/rbac/rar"
+	"github.com/hexa-org/policy-mapper/models/rbac/rar"
 	"github.com/hexa-org/policy-mapper/providers/aws/policystore/dynamodbpolicystore/internal/table"
 
 	log "golang.org/x/exp/slog"

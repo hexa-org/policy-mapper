@@ -9,8 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	ddb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/hexa-org/policy-mapper/api/idp"
-	"github.com/hexa-org/policy-mapper/mapper/rbac/policystore"
-	"github.com/hexa-org/policy-mapper/mapper/rbac/rar"
+	"github.com/hexa-org/policy-mapper/models/rbac/policystore"
+	"github.com/hexa-org/policy-mapper/models/rbac/rar"
 	"github.com/hexa-org/policy-mapper/providers/aws/policystore/dynamodbpolicystore/internal/client"
 	"github.com/hexa-org/policy-mapper/providers/aws/policystore/dynamodbpolicystore/internal/table"
 

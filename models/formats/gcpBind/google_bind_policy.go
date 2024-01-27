@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel"
+	"github.com/hexa-org/policy-mapper/models/conditionLangs/gcpcel"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
 	"google.golang.org/api/iam/v1"

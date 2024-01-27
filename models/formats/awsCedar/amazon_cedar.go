@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/alecthomas/participle/v2"
-	"github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel"
+	"github.com/hexa-org/policy-mapper/models/conditionLangs/gcpcel"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	policyCond "github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
 )

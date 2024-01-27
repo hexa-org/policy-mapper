@@ -1,7 +1,7 @@
 package cognitoProvider
 
 import (
-	"github.com/hexa-org/policy-mapper/mapper/rbac/policystore"
+	"github.com/hexa-org/policy-mapper/models/rbac/policystore"
 )
 
 type PolicyStore[R any] interface {

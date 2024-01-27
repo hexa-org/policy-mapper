@@ -2,7 +2,7 @@ package cognitoProvider
 
 import (
 	"github.com/hexa-org/policy-mapper/api/idp"
-	"github.com/hexa-org/policy-mapper/mapper/rbac/apps"
+	"github.com/hexa-org/policy-mapper/models/rbac/apps"
 	"github.com/hexa-org/policy-mapper/providers/aws/cognitoidp"
 )
 

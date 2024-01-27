@@ -14,8 +14,8 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
-	"github.com/hexa-org/policy-mapper/mapper/formats/awsCedar"
-	"github.com/hexa-org/policy-mapper/mapper/formats/gcpBind"
+	"github.com/hexa-org/policy-mapper/models/formats/awsCedar"
+	"github.com/hexa-org/policy-mapper/models/formats/gcpBind"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicysupport"
 	"github.com/hexa-org/policy-mapper/sdk"

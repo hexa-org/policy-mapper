@@ -2,7 +2,7 @@ package policystore
 
 import (
 	"github.com/hexa-org/policy-mapper/api/idp"
-	"github.com/hexa-org/policy-mapper/mapper/rbac/rar"
+	"github.com/hexa-org/policy-mapper/models/rbac/rar"
 )
 
 type PolicyBackendSvc[R any] interface {

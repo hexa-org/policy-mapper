@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hexa-org/policy-mapper/mapper/rbac/rar"
+	"github.com/hexa-org/policy-mapper/models/rbac/rar"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 
 	"strings"

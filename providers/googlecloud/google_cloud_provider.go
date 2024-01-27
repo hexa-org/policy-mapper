@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
-	"github.com/hexa-org/policy-mapper/mapper/formats/gcpBind"
+	"github.com/hexa-org/policy-mapper/models/formats/gcpBind"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 
 	"google.golang.org/api/option"

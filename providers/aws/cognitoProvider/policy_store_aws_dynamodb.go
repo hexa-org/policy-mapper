@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/hexa-org/policy-mapper/mapper/rbac/policystore"
-	"github.com/hexa-org/policy-mapper/mapper/rbac/rar"
+	"github.com/hexa-org/policy-mapper/models/rbac/policystore"
+	"github.com/hexa-org/policy-mapper/models/rbac/rar"
 	"github.com/hexa-org/policy-mapper/providers/aws/policystore/dynamodbpolicystore"
 	log "golang.org/x/exp/slog"
 )

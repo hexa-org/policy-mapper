@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/hexa-org/policy-mapper/mapper/formats/gcpBind"
+	"github.com/hexa-org/policy-mapper/models/formats/gcpBind"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/pkg/testsupport"
 	"github.com/hexa-org/policy-mapper/providers/googlecloud"

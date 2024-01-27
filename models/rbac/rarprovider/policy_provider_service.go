@@ -4,8 +4,8 @@ import (
 	"github.com/hexa-org/policy-mapper/api/idp"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 
-	"github.com/hexa-org/policy-mapper/mapper/rbac/policystore"
-	"github.com/hexa-org/policy-mapper/mapper/rbac/rar"
+	"github.com/hexa-org/policy-mapper/models/rbac/policystore"
+	"github.com/hexa-org/policy-mapper/models/rbac/rar"
 
 	log "golang.org/x/exp/slog"
 )

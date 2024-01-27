@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/hexa-org/policy-mapper/mapper/conditionLangs/gcpcel"
+	"github.com/hexa-org/policy-mapper/models/conditionLangs/gcpcel"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
 )
 

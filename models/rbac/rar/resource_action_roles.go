@@ -19,7 +19,7 @@ var supportedHttpMethods = []string{http.MethodGet, http.MethodHead, http.Method
 // ResourceActionRolesMapper - Clients provide implementation based on their policy schema
 // The external vendor specific policy struct must implement this interface
 // which will be used to convert the vendor specific policy to ResourceActionRoles
-// Simple mapper with
+// Simple models with
 // - non composite keys and values
 // auto generated table definition
 type ResourceActionRolesMapper interface {

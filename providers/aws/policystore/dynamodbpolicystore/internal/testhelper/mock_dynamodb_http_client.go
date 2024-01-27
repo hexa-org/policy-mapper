@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/hexa-org/policy-mapper/mapper/rbac/rar"
+	"github.com/hexa-org/policy-mapper/models/rbac/rar"
 	"github.com/stretchr/testify/mock"
 	log "golang.org/x/exp/slog"
 )

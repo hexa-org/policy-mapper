@@ -2,7 +2,7 @@ package ddbtest
 
 import (
 	"github.com/hexa-org/policy-mapper/api/idp"
-	"github.com/hexa-org/policy-mapper/mapper/rbac/rar"
+	"github.com/hexa-org/policy-mapper/models/rbac/rar"
 	"github.com/stretchr/testify/mock"
 )
 

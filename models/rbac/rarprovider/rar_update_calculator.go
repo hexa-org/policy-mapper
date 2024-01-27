@@ -1,7 +1,7 @@
 package rarprovider
 
 import (
-	"github.com/hexa-org/policy-mapper/mapper/rbac/rar"
+	"github.com/hexa-org/policy-mapper/models/rbac/rar"
 	"golang.org/x/exp/slices"
 	log "golang.org/x/exp/slog"
 )

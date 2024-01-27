@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/verifiedpermissions"
 	"github.com/aws/aws-sdk-go-v2/service/verifiedpermissions/types"
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
-	"github.com/hexa-org/policy-mapper/mapper/formats/awsCedar"
+	"github.com/hexa-org/policy-mapper/models/formats/awsCedar"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/providers/aws/avpProvider/avpClient"
 	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"

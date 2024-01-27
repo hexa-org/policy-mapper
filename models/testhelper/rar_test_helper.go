@@ -1,7 +1,7 @@
 package testhelper
 
 import (
-	"github.com/hexa-org/policy-mapper/mapper/rbac/rar"
+	"github.com/hexa-org/policy-mapper/models/rbac/rar"
 )
 
 // MakeRarMap - builds a map with as many elements as in the given httpMethods array

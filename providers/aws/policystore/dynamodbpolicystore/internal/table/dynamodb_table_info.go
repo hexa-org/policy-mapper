@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/hexa-org/policy-mapper/mapper/rbac/rar"
+	"github.com/hexa-org/policy-mapper/models/rbac/rar"
 	log "golang.org/x/exp/slog"
 )
 

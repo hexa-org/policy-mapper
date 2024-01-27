@@ -23,7 +23,7 @@ echo "  installing..."
 go install ./...
 exit
 
-// This section is for when policy-mapper is multi-module - not currently used
+// This section is for when policy-models is multi-module - not currently used
 
 echo "Building 5 sub-modules in workspace..."
 
@@ -38,19 +38,19 @@ doTest
 cd ..
 
 echo "  mapper/conditionLangs/gcpcel."
-cd mapper/conditionLangs/gcpcel
+cd models/conditionLangs/gcpcel
 go build ./...
 doTest
 cd ../../..
 
 echo "  mapper/formats/awsCedar."
-cd mapper/formats/awsCedar
+cd models/formats/awsCedar
 go build ./...
 doTest
 cd ../../..
 
 echo "  mapper/formats/gcpBind."
-cd mapper/formats/gcpBind
+cd models/formats/gcpBind
 go build ./...
 doTest
 cd ../../..

@@ -4,7 +4,12 @@ paths:
   - cmd/mapTool
   - pkg/hexapolicy
   - pkg/hexapolicysupport
-  - mapper/conditionLangs/gcpcel
-  - mapper/formats/awsCedar
-  - mapper/formats/gcpBind
-  - providers/aws/avp
+  - models/conditionLangs/gcpcel
+  - models/formats/awsCedar
+  - models/formats/gcpBind
+  - models/rbac
+  - models/testhelper
+  - providers/aws
+  - providers/googlecloud
+  - providers/openpolicyagent
+  - sdk

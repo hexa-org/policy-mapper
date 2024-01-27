@@ -1,7 +1,7 @@
 package idql
 
 import (
-	"github.com/hexa-org/policy-mapper/mapper/testhelper"
+	"github.com/hexa-org/policy-mapper/models/testhelper"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 )
 
