@@ -1,0 +1,46 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+
+	"github.com/hexa-org/policy-mapper/api/policyprovider"
+	"github.com/hexa-org/policy-mapper/sdk"
+)
+
+func main() {
+	keybytes, err := os.ReadFile("awscred.txt")
+	if err != nil {
+		panic(-1)
+	}
+
+	info := policyprovider.IntegrationInfo{
+		Name: sdk.ProviderTypeAvp,
+		Key:  keybytes,
+	}
+
+	integration, err := sdk.OpenIntegration(&info)
+	if err != nil {
+		fmt.Println("Error opening integration: " + err.Error())
+		panic(-1)
+	}
+
+	apps, err := integration.GetPolicyApplicationPoints(nil)
+	if err != nil {
+		panic(-1)
+	}
+
+	for _, app := range apps {
+
+		fmt.Println("PAP " + app.ObjectID)
+
+		policies, err := integration.GetPolicies(app.ObjectID)
+		if err != nil {
+			fmt.Println("Error retrieving policies: " + err.Error())
+		}
+		jsonBytes, _ := json.MarshalIndent(policies, "", "  ")
+		fmt.Println("IDQL returned:")
+		fmt.Println(string(jsonBytes))
+	}
+}

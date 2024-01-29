@@ -21,6 +21,8 @@ import (
 	"github.com/hexa-org/policy-mapper/sdk"
 )
 
+var MapFormats = []string{"gcp", "cedar"}
+
 var seperatorline = "==============================================================================="
 
 func openIntegration(alias string, info policyprovider.IntegrationInfo) (*sdk.Integration, error) {
@@ -387,8 +389,6 @@ type MapToCmd struct {
 	Format string `arg:"" required:"" help:"Target format: gcp, or cedar"`
 	File   string `arg:"" type:"path" help:"A file containing IDQL policy to be mapped"`
 }
-
-var MapFormats = []string{"gcp", "cedar"}
 
 func (m *MapToCmd) AfterApply(_ *kong.Context) error {
 	if slices.Contains(MapFormats, strings.ToLower(m.Format)) {

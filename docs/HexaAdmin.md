@@ -1,8 +1,8 @@
 <div style="text-align: right; float: left"><img src="hexa-boomer.png" title="Boomer" width=75 alt="Hexa-Admin"/></div>
 
-# Hexa Administration Tool
+# Hexa Console Tool
 
-The Hexa administration tool uses the Hexa SDK to provision access policy to administrative APIs such as Amazon Verified Permissions, and Google Cloud Bind.
+The Hexa console tool uses the Hexa SDK to provision access policy to administrative APIs such as Amazon Verified Permissions, and Google Cloud Bind.
 
 ## Adding an Integration
 
@@ -213,7 +213,7 @@ Help is accessible at any time, using the `help` command. For more details, ente
 To redirect output for any command to a file, use the `-o` option. If you would like the output to be appended to an existing file,
 use the `-a` option.
 
-Hexa Admin maintains a configuration file in order to save previously retrieved integrations and policy administration points.
+Hexa console maintains a configuration file in order to save previously retrieved integrations and policy administration points.
 By default, the path is `.hexa/config.json`. This can be overriden by setting the environment variable `$HEXA_HOME`.
 
 Hexa can also accept redirected input in order to script a series of commands. For example:
