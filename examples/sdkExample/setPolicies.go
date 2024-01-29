@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicysupport"
@@ -29,4 +30,9 @@ func main() {
 	hexaPolicies, err := hexapolicysupport.ParsePolicyFile("idqlinput.json")
 
 	status, err := integration.SetPolicyInfo("<alias>", hexaPolicies)
+	if err != nil {
+		fmt.Println("Error getting policy: " + err.Error())
+		panic(-1)
+	}
+	fmt.Println("Request completed with http status " + strconv.Itoa(status))
 }

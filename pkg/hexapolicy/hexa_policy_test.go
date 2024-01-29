@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hexa-org/policy-mapper/hexaIdql/pkg/hexapolicy"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -140,8 +139,8 @@ func TestConditionInfo_Equals(t *testing.T) {
 }
 
 func TestPolicies_AddPolicies(t *testing.T) {
-	var policies hexapolicy.Policies
-	var policy1, policy2 hexapolicy.PolicyInfo
+	var policies Policies
+	var policy1, policy2 PolicyInfo
 	err := json.Unmarshal([]byte(testPolicy1), &policy1)
 	assert.NoError(t, err, "Should be no parsing error")
 	err = json.Unmarshal([]byte(testPolicy2), &policy2)
@@ -151,7 +150,7 @@ func TestPolicies_AddPolicies(t *testing.T) {
 	assert.Len(t, policies.Policies, 1, "Should be 1 policy")
 	policies.AddPolicy(policy2)
 
-	var policies2 hexapolicy.Policies
+	var policies2 Policies
 	policies2.AddPolicies(policies)
 	assert.Len(t, policies2.Policies, 2, "Should be 2 policies")
 }
@@ -443,7 +442,9 @@ func TestReconcilePolicies(t *testing.T) {
 	pid2 := "def"
 
 	policiesWithIds.Policies[0].Meta.PolicyId = &pid
+	policiesWithIds.Policies[0].CalculateEtag()
 	policiesWithIds.Policies[1].Meta.PolicyId = &pid2
+	policiesWithIds.Policies[1].CalculateEtag()
 
 	policiesIdSame.Policies[0].Meta.PolicyId = &pid
 	policiesIdSame.Policies[1].Meta.PolicyId = &pid2
@@ -651,7 +652,7 @@ func TestReconcilePolicies(t *testing.T) {
 				},
 				{
 					Type:          ChangeTypeDelete,
-					Hash:          policies.Policies[1].CalculateEtag(),
+					Hash:          policies.Policies[1].Meta.Etag,
 					PolicyExist:   &[]PolicyInfo{policies.Policies[1]},
 					PolicyCompare: nil,
 				},

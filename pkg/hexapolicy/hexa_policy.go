@@ -71,9 +71,10 @@ func (p *PolicyInfo) String() string {
 CalculateEtag calculates an ETAG hash value for the policy which includes the Subject, Actions, Object, and Conditions objects only
 */
 func (p *PolicyInfo) CalculateEtag() string {
-	subjectBytes, _ := json.Marshal(p.Subject)
-	actionBytes, _ := json.Marshal(p.Actions)
-	objectBytes, _ := json.Marshal(p.Object)
+	pderef := *p // this was causing a pointer interaction - so deref
+	subjectBytes, _ := json.Marshal(pderef.Subject)
+	actionBytes, _ := json.Marshal(pderef.Actions)
+	objectBytes, _ := json.Marshal(pderef.Object)
 	conditionBytes := make([]byte, 0)
 	if p.Condition != nil {
 		conditionBytes, _ = json.Marshal(p.Condition)

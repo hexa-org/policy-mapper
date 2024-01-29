@@ -10,8 +10,8 @@ import (
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/providers/aws/avpProvider"
 	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"
-	"github.com/hexa-org/policy-mapper/providers/googlecloud"
 	"github.com/hexa-org/policy-mapper/providers/test"
+	"github.com/hexa-org/policy-mapper/providers/v2providerwrapper"
 )
 
 const (
@@ -95,9 +95,10 @@ func (i *Integration) open() error {
 				return err
 		*/
 
-	case ProviderTypeGcp:
-		i.provider = &googlecloud.GoogleProvider{}
-		return nil
+	case ProviderTypeGcp, ProviderTypeCognito:
+		var err error
+		i.provider, err = v2providerwrapper.NewV2ProviderWrapper(provType, *i.Opts.Info)
+		return err
 
 	case ProviderTypeMock:
 		i.provider = &test.MockProvider{

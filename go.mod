@@ -23,7 +23,6 @@ require (
 	github.com/go-playground/validator/v10 v10.17.0
 	github.com/google/cel-go v0.19.0
 	github.com/google/uuid v1.5.0
-	github.com/hexa-org/policy-mapper/hexaIdql v0.6.0-beta.1
 	github.com/hhsnopek/etag v0.0.0-20171206181245-aea95f647346
 	github.com/microsoftgraph/msgraph-sdk-go v1.31.0
 	github.com/stretchr/testify v1.8.4
@@ -84,6 +83,7 @@ require (
 	github.com/microsoftgraph/msgraph-sdk-go-core v1.0.1 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/std-uritemplate/std-uritemplate/go v0.0.50 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/stretchr/objx v0.5.1 // indirect
