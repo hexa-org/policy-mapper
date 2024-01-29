@@ -105,7 +105,7 @@ func (rar ResourceActionRoles) ToIDQL() hexapolicy.PolicyInfo {
 		actionInfos = append(actionInfos, hexapolicy.ActionInfo{ActionUri: ActionUriPrefix + act})
 	}
 	return hexapolicy.PolicyInfo{
-		Meta:    hexapolicy.MetaInfo{Version: "0.5"},
+		Meta:    hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
 		Actions: actionInfos,
 		Subject: hexapolicy.SubjectInfo{Members: rar.Members()},
 		Object:  hexapolicy.ObjectInfo{ResourceID: rar.Resource()},

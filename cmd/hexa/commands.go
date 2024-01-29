@@ -117,7 +117,7 @@ type AddAvpIntegrationCmd struct {
 	Region *string `short:"r" help:"The Amazon data center (e.g. us-west-1)"`
 	Keyid  *string `short:"k" help:"Amazon Access Key ID"`
 	Secret *string `short:"s" help:"Secret access key"`
-	File   []byte  `short:"f" xor:"Keyid" required:"" type:"filecontent" help:"File containing the amazon credential information"`
+	File   []byte  `short:"f" xor:"Keyid" required:"" type:"filecontent" help:"File containing the Amazon credential information"`
 }
 
 func (a *AddAvpIntegrationCmd) Help() string {
@@ -130,7 +130,7 @@ func (a *AddAvpIntegrationCmd) Help() string {
 
 Or, use the parameters --region, --keyid, and --secret to specify the equivalent on the command line.
 
-Once the AVP integration is added, it is availble for future use with the supplied alias name.
+Once the AVP integration is added, it is available for future use with the supplied alias name.
 `
 }
 
@@ -188,9 +188,163 @@ func (a *AddAvpIntegrationCmd) Run(cli *CLI) error {
 	return err
 }
 
+type AddCognitoIntegrationCmd struct {
+	Alias  string  `arg:"" optional:"" help:"A new local alias that will be used to refer to the integration in subsequent operations. Defaults to an auto-generated alias"`
+	Region *string `short:"r" help:"The Amazon data center (e.g. us-west-1)"`
+	Keyid  *string `short:"k" help:"Amazon Access Key ID"`
+	Secret *string `short:"s" help:"Secret access key"`
+	File   []byte  `short:"f" xor:"Keyid" required:"" type:"filecontent" help:"File containing the Amazon credential information"`
+}
+
+func (a *AddCognitoIntegrationCmd) Help() string {
+	return `To add an Amazon Cognito integration specify either a file (--file) that contains AWS credentials looks like:
+{
+  "accessKeyID": "aws-access-key-id",
+  "secretAccessKey": "aws-secret-access-key",
+  "region": "aws-region"
+}
+
+Or, use the parameters --region, --keyid, and --secret to specify the equivalent on the command line.
+
+Once the Cognito integration is added, it is available for future use with the supplied alias name.
+`
+}
+
+func (a *AddCognitoIntegrationCmd) AfterApply(_ *kong.Context) error {
+	if a.File == nil {
+		if a.Secret == nil || a.Keyid == nil || a.Region == nil {
+			return errors.New("must provide all of --keyid, --secret, and --region, or --file")
+		}
+	} else {
+		if len(a.File) == 0 {
+			return errors.New("file was empty or not found")
+		}
+		if a.Secret != nil || a.Keyid != nil || a.Region != nil {
+			return errors.New("must provide all of --keyid, --secret, and --region, or --file")
+		}
+	}
+
+	return nil
+}
+
+func (a *AddCognitoIntegrationCmd) Run(cli *CLI) error {
+	alias := a.Alias
+	if alias == "" {
+		alias = generateAliasOfSize(3)
+
+	}
+
+	if cli.Data.GetIntegration(alias) != nil {
+		errMsg := fmt.Sprintf("Alias \"%s\" exists", alias)
+		if !ConfirmProceed(errMsg + ", overwrite Y[n]") {
+			return errors.New(errMsg)
+		}
+	}
+	keyStr := a.File
+
+	if len(keyStr) == 0 {
+		keyStr = []byte(fmt.Sprintf(`{
+  "accessKeyID": "%s",
+  "secretAccessKey": "%s",
+  "region": "%s"
+}`, *a.Keyid, *a.Secret, *a.Region))
+	}
+	info := policyprovider.IntegrationInfo{
+		Name: sdk.ProviderTypeCognito,
+		Key:  []byte(keyStr),
+	}
+
+	integration, err := openIntegration(alias, info)
+	if err != nil {
+		return err
+	}
+
+	cli.Data.Integrations[alias] = integration
+	err = cli.Data.Save(&cli.Globals)
+	return err
+}
+
+type AddAzureIntegrationCmd struct {
+	Alias    string  `arg:"" optional:"" help:"A new local alias that will be used to refer to the integration in subsequent operations. Defaults to an auto-generated alias"`
+	Tenant   *string `short:"r" help:"The Azure Tenant id"`
+	Clientid *string `short:"c" help:"The Azure Service Principal Client Id (aka appId)"`
+	Secret   *string `short:"s" help:"The Azure registration secret"`
+	File     []byte  `short:"f" xor:"Keyid" required:"" type:"filecontent" help:"File containing the Azure credential information"`
+}
+
+func (a *AddAzureIntegrationCmd) Help() string {
+	return `To add an Azure integration specify either a file (--file) that integration information that looks like:
+{
+  "appId": "azure-app-id",
+  "secret": "azure-app-registration-secret",
+  "tenant": "azure-tenant"
+}
+
+Or, use the parameters --tenant, --appid and --secret to specify the equivalent on the command line.
+
+Once the Azure integration is added, it is available for future use with the supplied alias name.
+`
+}
+
+func (a *AddAzureIntegrationCmd) AfterApply(_ *kong.Context) error {
+	if a.File == nil {
+		if a.Secret == nil || a.Tenant == nil || a.Clientid == nil {
+			return errors.New("must provide all of --tenant, --secret, and --appid, or --file")
+		}
+	} else {
+		if len(a.File) == 0 {
+			return errors.New("file was empty or not found")
+		}
+		if a.Secret != nil || a.Tenant != nil || a.Clientid != nil {
+			return errors.New("must provide all of --tenant, --secret, and --appid, or --file")
+		}
+	}
+
+	return nil
+}
+
+func (a *AddAzureIntegrationCmd) Run(cli *CLI) error {
+	alias := a.Alias
+	if alias == "" {
+		alias = generateAliasOfSize(3)
+
+	}
+
+	if cli.Data.GetIntegration(alias) != nil {
+		errMsg := fmt.Sprintf("Alias \"%s\" exists", alias)
+		if !ConfirmProceed(errMsg + ", overwrite Y[n]") {
+			return errors.New(errMsg)
+		}
+	}
+	keyStr := a.File
+
+	if len(keyStr) == 0 {
+		keyStr = []byte(fmt.Sprintf(`{
+  "appId": "%s",
+  "secret": "%s",
+  "tenant": "%s"
+}`, *a.Clientid, *a.Secret, *a.Tenant))
+	}
+	info := policyprovider.IntegrationInfo{
+		Name: sdk.ProviderTypeAzure,
+		Key:  []byte(keyStr),
+	}
+
+	integration, err := openIntegration(alias, info)
+	if err != nil {
+		return err
+	}
+
+	cli.Data.Integrations[alias] = integration
+	err = cli.Data.Save(&cli.Globals)
+	return err
+}
+
 type AddCmd struct {
-	Avp AddAvpIntegrationCmd `cmd:"" aliases:"cedar" help:"Add an Amazon Verified Permissions integration"`
-	Gcp AddGcpIntegrationCmd `cmd:"" help:"Add a Google Cloud GCP integration"`
+	Avp     AddAvpIntegrationCmd     `cmd:"" aliases:"cedar" help:"Add an Amazon Verified Permissions integration"`
+	Gcp     AddGcpIntegrationCmd     `cmd:"" help:"Add a Google Cloud GCP integration"`
+	Azure   AddAzureIntegrationCmd   `cmd:"" help:"Add an Azure RBAC integration"`
+	Cognito AddCognitoIntegrationCmd `cmd:"" help:"Add an Amazon Cognito RBAC integration"`
 }
 
 type GetPolicyApplicationsCmd struct {

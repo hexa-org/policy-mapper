@@ -2,6 +2,7 @@ package v2providerwrapper
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/hexa-org/policy-mapper/api/idp"
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
@@ -46,8 +47,28 @@ func (p ProviderWrapper) DiscoverApplications(_ policyprovider.IntegrationInfo) 
 	return apps, nil
 }
 
+func (p ProviderWrapper) GetApplication(appInfo policyprovider.ApplicationInfo) (idp.AppInfo, error) {
+	// This is being done because Cognito does not support GetApplication
+	idpApps, err := p.appInfoService.GetApplications()
+	if err != nil {
+		return nil, err
+	}
+
+	// Had to use get applications because cognito does not support get application
+	var idpApp idp.AppInfo
+	for _, app := range idpApps {
+		if app.Id() == appInfo.ObjectID {
+			idpApp = app
+		}
+	}
+	if idpApp == nil {
+		return nil, errors.New(fmt.Sprintf("application id %s not found", appInfo.ObjectID))
+	}
+	return idpApp, nil
+}
+
 func (p ProviderWrapper) GetPolicyInfo(_ policyprovider.IntegrationInfo, appInfo policyprovider.ApplicationInfo) ([]hexapolicy.PolicyInfo, error) {
-	idpApp, err := p.appInfoService.GetApplication(appInfo.ObjectID)
+	idpApp, err := p.GetApplication(appInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +77,7 @@ func (p ProviderWrapper) GetPolicyInfo(_ policyprovider.IntegrationInfo, appInfo
 }
 
 func (p ProviderWrapper) SetPolicyInfo(_ policyprovider.IntegrationInfo, appInfo policyprovider.ApplicationInfo, infos []hexapolicy.PolicyInfo) (status int, foundErr error) {
-	idpApp, err := p.appInfoService.GetApplication(appInfo.ObjectID)
+	idpApp, err := p.GetApplication(appInfo)
 	if err != nil {
 		return 400, err
 	}
@@ -76,9 +97,9 @@ func NewV2ProviderWrapper(name string, info policyprovider.IntegrationInfo) (pol
 		membersDef := cognitoProvider.NewAttributeDefinition("Members", "string", false, false)
 		tableDef := cognitoProvider.NewTableDefinition(resAttrDef, actionsAttrDef, membersDef)
 		policyStore := cognitoProvider.NewDynamicItemStore(cognitoProvider.AwsPolicyStoreTableName, info.Key, tableDef)
-		idp := cognitoProvider.NewCognitoIdp(info.Key)
+		idpApp := cognitoProvider.NewCognitoIdp(info.Key)
 
-		appInfoSvc, err := idp.Provider()
+		appInfoSvc, err := idpApp.Provider()
 		if err != nil {
 			return nil, err
 		}
@@ -95,8 +116,8 @@ func NewV2ProviderWrapper(name string, info policyprovider.IntegrationInfo) (pol
 			service:        rarprovider.NewProviderService[rar.DynamicResourceActionRolesMapper](appInfoSvc, backendService),
 		}, nil
 	case ProviderTypeAzure:
-		idp := azureV2provider.NewApimAppProvider(info.Key)
-		appInfoSvc, err := idp.Provider()
+		idpApp := azureV2provider.NewApimAppProvider(info.Key)
+		appInfoSvc, err := idpApp.Provider()
 		if err != nil {
 			return nil, err
 		}
