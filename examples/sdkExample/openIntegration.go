@@ -36,4 +36,7 @@ func main() {
 		fmt.Println(string(jsonBytes))
 	}
 
+	getPolicies(integration)
+
+	setPolicies(integration)
 }

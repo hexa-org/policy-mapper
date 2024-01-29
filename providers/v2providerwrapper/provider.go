@@ -7,12 +7,10 @@ import (
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
 	"github.com/hexa-org/policy-mapper/models/rbac/policystore"
 	"github.com/hexa-org/policy-mapper/models/rbac/rar"
-	"github.com/hexa-org/policy-mapper/providers/aws/cognitoProvider"
-	"github.com/hexa-org/policy-mapper/providers/azure/azureV2provider"
-	"github.com/hexa-org/policy-mapper/sdk"
-
 	"github.com/hexa-org/policy-mapper/models/rbac/rarprovider"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
+	"github.com/hexa-org/policy-mapper/providers/aws/cognitoProvider"
+	"github.com/hexa-org/policy-mapper/providers/azure/azureV2provider"
 )
 
 type ProviderWrapper struct {
@@ -20,6 +18,11 @@ type ProviderWrapper struct {
 	appInfoService idp.AppInfoSvc
 	service        rarprovider.ProviderService
 }
+
+const (
+	ProviderTypeCognito string = "cognito"
+	ProviderTypeAzure   string = "azure"
+)
 
 func (p ProviderWrapper) Name() string {
 	return p.name
@@ -67,7 +70,7 @@ func (p ProviderWrapper) SetPolicyInfo(_ policyprovider.IntegrationInfo, appInfo
 
 func NewV2ProviderWrapper(name string, info policyprovider.IntegrationInfo) (policyprovider.Provider, error) {
 	switch name {
-	case sdk.ProviderTypeCognito:
+	case ProviderTypeCognito:
 		resAttrDef := cognitoProvider.NewAttributeDefinition("Resource", "string", true, false)
 		actionsAttrDef := cognitoProvider.NewAttributeDefinition("Action", "string", false, true)
 		membersDef := cognitoProvider.NewAttributeDefinition("Members", "string", false, false)
@@ -91,7 +94,7 @@ func NewV2ProviderWrapper(name string, info policyprovider.IntegrationInfo) (pol
 			appInfoService: appInfoSvc,
 			service:        rarprovider.NewProviderService[rar.DynamicResourceActionRolesMapper](appInfoSvc, backendService),
 		}, nil
-	case sdk.ProviderTypeAzure:
+	case ProviderTypeAzure:
 		idp := azureV2provider.NewApimAppProvider(info.Key)
 		appInfoSvc, err := idp.Provider()
 		if err != nil {

@@ -10,6 +10,7 @@ import (
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/providers/aws/avpProvider"
 	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"
+	"github.com/hexa-org/policy-mapper/providers/googlecloud"
 	"github.com/hexa-org/policy-mapper/providers/test"
 	"github.com/hexa-org/policy-mapper/providers/v2providerwrapper"
 )
@@ -18,8 +19,8 @@ const (
 	ProviderTypeAvp     string = avpProvider.ProviderTypeAvp
 	ProviderTypeGcp     string = "google_cloud"
 	ProviderTypeMock    string = test.ProviderTypeMock
-	ProviderTypeCognito string = "cognito"
-	ProviderTypeAzure   string = "azure"
+	ProviderTypeCognito string = v2providerwrapper.ProviderTypeCognito
+	ProviderTypeAzure   string = v2providerwrapper.ProviderTypeAzure
 	EnvTestProvider     string = "HEXA_TEST_PROVIDER" // EnvTestProvider overrides whatever provider is requested and uses the specified provider instead (by name)
 )
 
@@ -88,14 +89,13 @@ func (i *Integration) open() error {
 		i.provider = &avpProvider.AmazonAvpProvider{AwsClientOpts: opts}
 
 		return nil
-		/*
-			case ProviderTypeCognito, ProviderTypeAzure:
-				var err error
-				i.provider, err = v2providerwrapper.NewV2ProviderWrapper(provType, i.Opts.Info)
-				return err
-		*/
 
-	case ProviderTypeGcp, ProviderTypeCognito:
+	case ProviderTypeGcp:
+		i.provider = &googlecloud.GoogleProvider{}
+
+		return nil
+
+	case ProviderTypeAzure, ProviderTypeCognito:
 		var err error
 		i.provider, err = v2providerwrapper.NewV2ProviderWrapper(provType, *i.Opts.Info)
 		return err
