@@ -133,21 +133,23 @@ func (suite *testSuite) Test0_ConfigInit() {
 	assert.NoError(suite.T(), err, "Check no error on load")
 }
 
-func (suite *testSuite) Test1_AddIntegration() {
+func (suite *testSuite) Test1_AddIntegrations() {
 	testLog.Println("Test 0 - Testing Add Integration")
 
+	testLog.Println("  ...AVP")
+	// Test Add AVP
 	cmd := "add avp test --region=us-west-1 --keyid=1234 --secret=5678"
 
 	res, err := suite.executeCommand(cmd, 1)
 	assert.NoError(suite.T(), err, "Check no error after add avp")
 	testLog.Println(string(res))
 
-	cmd2 := "add avp test2 --file=./test/testcred.json"
+	cmd2 := "add avp test2 --file=./test/aws_test.json"
 	res2, err := suite.executeCommand(cmd2, 1)
 	assert.NoError(suite.T(), err, "Check no error after add avp --file")
 	testLog.Println(string(res2))
 
-	keybytes, err := os.ReadFile("./test/testcred.json")
+	keybytes, err := os.ReadFile("./test/aws_test.json")
 	assert.NoError(suite.T(), err)
 	integration1 := suite.pd.cli.Data.GetIntegration("test")
 	integration2 := suite.pd.cli.Data.GetIntegration("test")
@@ -156,19 +158,50 @@ func (suite *testSuite) Test1_AddIntegration() {
 	assert.Equal(suite.T(), policyprovider.PROVIDER_TYPE_AVP, integration2.Opts.Info.Name, "Type is avp")
 	assert.Equal(suite.T(), keybytes, integration2.Opts.Info.Key, "Keybytes matches for integration 2")
 
+	// Test GCP
+	testLog.Println("  ...GCP")
 	cmd3 := "add gcp testgcp --file=./test/gcp_test.json"
 	res3, err := suite.executeCommand(cmd3, 1)
 	assert.NoError(suite.T(), err, "Check no error after add gcp --file")
 	testLog.Println(string(res3))
 
+	testLog.Println("  ...Cognito")
+	cmd4 := "add cognito test4 --region=us-west-1 --keyid=1234 --secret=5678"
+
+	res4, err := suite.executeCommand(cmd4, 1)
+	assert.NoError(suite.T(), err, "Check no error after add cognito")
+	testLog.Println(string(res4))
+
+	cmd5 := "add cognito test5 --file=./test/aws_test.json"
+	res5, err := suite.executeCommand(cmd5, 1)
+	assert.NoError(suite.T(), err, "Check no error after add cognito --file")
+	testLog.Println(string(res5))
+
+	testLog.Println("  ...Azure")
+	cmd6 := "add azure test6 --tenant=abc --clientid=1234 --secret=not4u2no"
+
+	res6, err := suite.executeCommand(cmd6, 1)
+	assert.NoError(suite.T(), err, "Check no error after add azure")
+	testLog.Println(string(res6))
+
+	cmd7 := "add azure test5 --file=./test/azure_test.json"
+	res7, err := suite.executeCommand(cmd7, 1)
+	assert.NoError(suite.T(), err, "Check no error after add cognito --file")
+	testLog.Println(string(res7))
+
+	testLog.Println("  ...Negative Tests")
 	// Negative tests
-	cmds := []string{
-		"add avp test3 --keyid=123",
-		"add avp test4 --file=./test/testcred.json --keyid=123",
-		"add avp test5 --file=notvalid.txt",
-		"add gcp test6 --file=notvalid.txt",
+	negTests := []string{
+		"add avp testa --keyid=123",
+		"add avp testb --file=./test/aws_test.json --keyid=123",
+		"add avp testc --file=notvalid.txt",
+		"add gcp testd --file=notvalid.txt",
+		"add cognito teste --file=notvalid.txt",
+		"add cognito testf --keyid=123",
+		"add azure testg --file=notvalid.txt",
+		"add azure testh --tenant=123",
 	}
-	for _, testCmd := range cmds {
+	for _, testCmd := range negTests {
 		result, err := suite.executeCommand(testCmd, 1)
 		assert.Error(suite.T(), err)
 		if len(result) > 0 {
