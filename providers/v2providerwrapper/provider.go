@@ -18,6 +18,7 @@ type ProviderWrapper struct {
 	name           string
 	appInfoService idp.AppInfoSvc
 	service        rarprovider.ProviderService
+	appServices    map[string]rarprovider.ProviderService
 }
 
 const (
@@ -67,12 +68,21 @@ func (p ProviderWrapper) GetApplication(appInfo policyprovider.ApplicationInfo) 
 	return idpApp, nil
 }
 
+func (p ProviderWrapper) getService(appInfo policyprovider.ApplicationInfo) rarprovider.ProviderService {
+	if p.service != nil {
+		return p.service
+	}
+
+	return p.appServices[appInfo.ObjectID]
+}
+
 func (p ProviderWrapper) GetPolicyInfo(_ policyprovider.IntegrationInfo, appInfo policyprovider.ApplicationInfo) ([]hexapolicy.PolicyInfo, error) {
 	idpApp, err := p.GetApplication(appInfo)
 	if err != nil {
 		return nil, err
 	}
-	pInfos, err := p.service.GetPolicyInfo(idpApp)
+	service := p.getService(appInfo)
+	pInfos, err := service.GetPolicyInfo(idpApp)
 	return pInfos, err
 }
 
@@ -82,7 +92,8 @@ func (p ProviderWrapper) SetPolicyInfo(_ policyprovider.IntegrationInfo, appInfo
 		return 400, err
 	}
 
-	err = p.service.SetPolicyInfo(idpApp, infos)
+	service := p.getService(appInfo)
+	err = service.SetPolicyInfo(idpApp, infos)
 	if err != nil {
 		return 400, err
 	}
@@ -121,16 +132,28 @@ func NewV2ProviderWrapper(name string, info policyprovider.IntegrationInfo) (pol
 		if err != nil {
 			return nil, err
 		}
-		policyStoreSvc, err := azureV2provider.NewEmptyPolicyStore().Provider()
+		apps, err := appInfoSvc.GetApplications()
 		if err != nil {
 			return nil, err
 		}
+		appMap := make(map[string]rarprovider.ProviderService, len(apps))
 
-		service := rarprovider.NewProviderService[rar.DynamicResourceActionRolesMapper](appInfoSvc, policyStoreSvc)
+		for _, app := range apps {
+			id := app.Id()
+			appName := app.Name()
+			policyStoreSvc := azureV2provider.NewApimPolicyProvider(info.Key, id, appName)
+			appProvider, err := policyStoreSvc.Provider()
+			if err != nil {
+				return nil, err
+			}
+			service := rarprovider.NewProviderService[rar.DynamicResourceActionRolesMapper](appInfoSvc, appProvider)
+			appMap[id] = service
+		}
+
 		return &ProviderWrapper{
 			name:           name,
 			appInfoService: appInfoSvc,
-			service:        service,
+			appServices:    appMap,
 		}, nil
 	default:
 	}
