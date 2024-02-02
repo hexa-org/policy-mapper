@@ -35,8 +35,7 @@ type testSuite struct {
 
 func (suite *testSuite) initializeParser() error {
 	var err error
-	dir, _ := os.MkdirTemp(os.TempDir(), "hexaTest-*")
-	suite.testDir = dir
+	// dir, _ := os.MkdirTemp(suite.T().TempDir(), "hexaTest-*")
 
 	cli := &CLI{}
 
@@ -107,6 +106,8 @@ func TestHexaAdmin(t *testing.T) {
 	// Override sdk to use Mock Provider
 	_ = os.Setenv(sdk.EnvTestProvider, sdk.ProviderTypeMock)
 
+	dir := t.TempDir()
+	s.testDir = dir
 	err := s.initializeParser()
 	assert.NoError(t, err, "Check parser initialized")
 
