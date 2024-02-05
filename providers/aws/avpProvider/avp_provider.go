@@ -13,6 +13,7 @@ import (
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/providers/aws/avpProvider/avpClient"
 	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"
+	"github.com/hexa-org/policy-mapper/sdk"
 )
 
 const (
@@ -57,6 +58,28 @@ func MapAvpTemplate(item *verifiedpermissions.GetPolicyTemplateOutput) hexapolic
 type AmazonAvpProvider struct {
 	AwsClientOpts awscommon.AWSClientOptions
 	cedarMapper   *awsCedar.CedarPolicyMapper
+}
+
+func NewAvpProvider(options sdk.Options) policyprovider.Provider {
+	opts := awscommon.AWSClientOptions{DisableRetry: true}
+	if options.ProviderOpts != nil {
+		switch v := options.ProviderOpts.(type) {
+		case awscommon.AWSClientOptions:
+			opts = v
+		default:
+		}
+	}
+	var mapper *awsCedar.CedarPolicyMapper
+	if options.AttributeMap != nil {
+		mapper = awsCedar.New(options.AttributeMap)
+	} else {
+		mapper = awsCedar.New(map[string]string{})
+	}
+
+	return &AmazonAvpProvider{
+		AwsClientOpts: opts,
+		cedarMapper:   mapper,
+	}
 }
 
 func (a *AmazonAvpProvider) Name() string {

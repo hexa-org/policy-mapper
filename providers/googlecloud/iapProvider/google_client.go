@@ -1,4 +1,4 @@
-package googlecloud
+package iapProvider
 
 import (
 	"bytes"

@@ -1,4 +1,4 @@
-package googlecloud_test
+package iapProvider_test
 
 var appEngineAppsJSON = []byte(`{
   "name": "apps/hexa-demo",

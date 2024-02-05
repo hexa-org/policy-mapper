@@ -1,4 +1,4 @@
-package googlecloud
+package iapProvider
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
 	"github.com/hexa-org/policy-mapper/models/formats/gcpBind"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
+	"github.com/hexa-org/policy-mapper/sdk"
 
 	"google.golang.org/api/option"
 	"google.golang.org/api/transport/http"
@@ -25,6 +26,20 @@ type GoogleProvider struct {
 func (g *GoogleProvider) initMapper() {
 	if g.gcpMapper == nil {
 		g.gcpMapper = gcpBind.New(map[string]string{})
+	}
+}
+
+func NewGoogleProvider(options sdk.Options) policyprovider.Provider {
+
+	var mapper *gcpBind.GooglePolicyMapper
+	if options.AttributeMap != nil {
+		mapper = gcpBind.New(options.AttributeMap)
+	} else {
+		mapper = gcpBind.New(map[string]string{})
+	}
+
+	return &GoogleProvider{
+		gcpMapper: mapper,
 	}
 }
 

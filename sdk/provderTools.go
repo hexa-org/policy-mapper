@@ -9,8 +9,7 @@ import (
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/providers/aws/avpProvider"
-	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"
-	"github.com/hexa-org/policy-mapper/providers/googlecloud"
+	"github.com/hexa-org/policy-mapper/providers/googlecloud/iapProvider"
 	"github.com/hexa-org/policy-mapper/providers/test"
 	"github.com/hexa-org/policy-mapper/providers/v2providerwrapper"
 )
@@ -78,20 +77,13 @@ func (i *Integration) open() error {
 	}
 	switch provType {
 	case ProviderTypeAvp:
-		opts := awscommon.AWSClientOptions{DisableRetry: true}
-		if i.Opts.ProviderOpts != nil {
-			switch v := i.Opts.ProviderOpts.(type) {
-			case awscommon.AWSClientOptions:
-				opts = v
-			default:
-			}
-		}
-		i.provider = &avpProvider.AmazonAvpProvider{AwsClientOpts: opts}
+
+		i.provider = avpProvider.NewAvpProvider(i.Opts)
 
 		return nil
 
 	case ProviderTypeGcp:
-		i.provider = &googlecloud.GoogleProvider{}
+		i.provider = iapProvider.NewGoogleProvider(i.Opts)
 
 		return nil
 
