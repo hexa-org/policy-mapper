@@ -10,8 +10,6 @@ import (
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
 	"github.com/hexa-org/policy-mapper/models/formats/gcpBind"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
-	"github.com/hexa-org/policy-mapper/sdk"
-
 	"google.golang.org/api/option"
 	"google.golang.org/api/transport/http"
 
@@ -20,26 +18,12 @@ import (
 
 type GoogleProvider struct {
 	HttpClientOverride HTTPClient
-	gcpMapper          *gcpBind.GooglePolicyMapper
+	GcpMapper          *gcpBind.GooglePolicyMapper
 }
 
 func (g *GoogleProvider) initMapper() {
-	if g.gcpMapper == nil {
-		g.gcpMapper = gcpBind.New(map[string]string{})
-	}
-}
-
-func NewGoogleProvider(options sdk.Options) policyprovider.Provider {
-
-	var mapper *gcpBind.GooglePolicyMapper
-	if options.AttributeMap != nil {
-		mapper = gcpBind.New(options.AttributeMap)
-	} else {
-		mapper = gcpBind.New(map[string]string{})
-	}
-
-	return &GoogleProvider{
-		gcpMapper: mapper,
+	if g.GcpMapper == nil {
+		g.GcpMapper = gcpBind.New(map[string]string{})
 	}
 }
 
@@ -98,7 +82,7 @@ func (g *GoogleProvider) GetPolicyInfo(integration policyprovider.IntegrationInf
 
 	result := make([]hexapolicy.PolicyInfo, len(bindings))
 	for i, binding := range bindings {
-		result[i], err = g.gcpMapper.MapBindingToPolicy(app.ObjectID, binding)
+		result[i], err = g.GcpMapper.MapBindingToPolicy(app.ObjectID, binding)
 		if err != nil {
 			return infos, err
 		}
@@ -129,7 +113,7 @@ func (g *GoogleProvider) SetPolicyInfo(integration policyprovider.IntegrationInf
 	googleClient := GoogleClient{client, foundCredentials.ProjectId}
 	for _, policyInfo := range policyInfos {
 
-		binding, err := g.gcpMapper.MapPolicyToBinding(policyInfo)
+		binding, err := g.GcpMapper.MapPolicyToBinding(policyInfo)
 		if err != nil {
 			return 500, err
 		}

@@ -7,8 +7,11 @@ import (
 	"os"
 
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
+	"github.com/hexa-org/policy-mapper/models/formats/awsCedar"
+	"github.com/hexa-org/policy-mapper/models/formats/gcpBind"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/providers/aws/avpProvider"
+	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"
 	"github.com/hexa-org/policy-mapper/providers/googlecloud/iapProvider"
 	"github.com/hexa-org/policy-mapper/providers/test"
 	"github.com/hexa-org/policy-mapper/providers/v2providerwrapper"
@@ -78,12 +81,12 @@ func (i *Integration) open() error {
 	switch provType {
 	case ProviderTypeAvp:
 
-		i.provider = avpProvider.NewAvpProvider(i.Opts)
+		i.provider = NewAvpProvider(i.Opts)
 
 		return nil
 
 	case ProviderTypeGcp:
-		i.provider = iapProvider.NewGoogleProvider(i.Opts)
+		i.provider = NewGoogleProvider(i.Opts)
 
 		return nil
 
@@ -245,5 +248,41 @@ func (i *Integration) ReconcilePolicy(papAlias string, comparePolicies []hexapol
 			return []hexapolicy.PolicyDif{}, err
 		}
 		return existPolicies.ReconcilePolicies(comparePolicies, diffsOnly), nil
+	}
+}
+
+func NewAvpProvider(options Options) policyprovider.Provider {
+	opts := awscommon.AWSClientOptions{DisableRetry: true}
+	if options.ProviderOpts != nil {
+		switch v := options.ProviderOpts.(type) {
+		case awscommon.AWSClientOptions:
+			opts = v
+		default:
+		}
+	}
+	var mapper *awsCedar.CedarPolicyMapper
+	if options.AttributeMap != nil {
+		mapper = awsCedar.New(options.AttributeMap)
+	} else {
+		mapper = awsCedar.New(map[string]string{})
+	}
+
+	return &avpProvider.AmazonAvpProvider{
+		AwsClientOpts: opts,
+		CedarMapper:   mapper,
+	}
+}
+
+func NewGoogleProvider(options Options) policyprovider.Provider {
+
+	var mapper *gcpBind.GooglePolicyMapper
+	if options.AttributeMap != nil {
+		mapper = gcpBind.New(options.AttributeMap)
+	} else {
+		mapper = gcpBind.New(map[string]string{})
+	}
+
+	return &iapProvider.GoogleProvider{
+		GcpMapper: mapper,
 	}
 }
