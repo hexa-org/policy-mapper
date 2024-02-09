@@ -139,19 +139,19 @@ Policies retrieved for shK:
       },
       "Actions": [
         {
-          "ActionUri": "cedar:hexa_avp::Action::\"ReadAccount\""
+          "ActionUri": "cedar:hexa_avp::Action::ReadAccount"
         },
         {
-          "ActionUri": "cedar:hexa_avp::Action::\"Transfer\""
+          "ActionUri": "cedar:hexa_avp::Action::Transfer"
         },
         {
-          "ActionUri": "cedar:hexa_avp::Action::\"Deposit\""
+          "ActionUri": "cedar:hexa_avp::Action::Deposit"
         },
         {
-          "ActionUri": "cedar:hexa_avp::Action::\"Withdrawl\""
+          "ActionUri": "cedar:hexa_avp::Action::Withdrawl"
         },
         {
-          "ActionUri": "cedar:hexa_avp::Action::\"UpdateAccount\""
+          "ActionUri": "cedar:hexa_avp::Action::UpdateAccount"
         }
       ],
       "Object": {
@@ -187,7 +187,7 @@ Policies retrieved for shK:
       },
       "Actions": [
         {
-          "ActionUri": "cedar:hexa_avp::Action::\"ReadAccount\""
+          "ActionUri": "cedar:hexa_avp::Action::ReadAccount"
         }
       ],
       "Object": {
@@ -286,16 +286,16 @@ Ignoring AVP policyid UaN2xdjgv1Dhdpuoa3ebRU. Template updates not currently sup
  },
  "Actions": [
   {
-   "ActionUri": "cedar:hexa_avp::Action::\"ReadAccount\""
+   "ActionUri": "cedar:hexa_avp::Action::ReadAccount"
   },
   {
-   "ActionUri": "cedar:hexa_avp::Action::\"Transfer\""
+   "ActionUri": "cedar:hexa_avp::Action::Transfer"
   },
   {
-   "ActionUri": "cedar:hexa_avp::Action::\"Deposit\""
+   "ActionUri": "cedar:hexa_avp::Action::Deposit"
   },
   {
-   "ActionUri": "cedar:hexa_avp::Action::\"Withdrawl\""
+   "ActionUri": "cedar:hexa_avp::Action::Withdrawl"
   }
  ],
  "Object": {
@@ -332,7 +332,7 @@ Ignoring AVP policyid UaN2xdjgv1Dhdpuoa3ebRU. Template updates not currently sup
  },
  "Actions": [
   {
-   "ActionUri": "cedar:hexa_avp::Action::\"ReadAccount\""
+   "ActionUri": "cedar:hexa_avp::Action::ReadAccount"
   }
  ],
  "Object": {
@@ -404,7 +404,7 @@ or an attribute "policies" which is assigned an array of policies. For example:
       },
       "Actions": [
         {
-          "ActionUri": "cedar:Action::\"view\""
+          "ActionUri": "cedar:Action::view"
         }
       ],
       "Subject": {
@@ -413,7 +413,7 @@ or an attribute "policies" which is assigned an array of policies. For example:
         ]
       },
       "Object": {
-        "resource_id": "cedar:Photo::\"VacationPhoto94.jpg\""
+        "resource_id": "cedar:Photo::VacationPhoto94.jpg"
       }
     }
   ]

@@ -6,7 +6,7 @@
       },
       "Actions": [
         {
-          "ActionUri": "cedar:Action::\"view\""
+          "ActionUri": "cedar:Action::view"
         }
       ],
       "Subject": {

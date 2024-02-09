@@ -43,7 +43,7 @@ when { resource in "Account:stacey" };
 ```json
 [
   {
-    "resource_id": "cedar:Photo::\"VacationPhoto94.jpg\"",
+    "resource_id": "cedar:Photo::VacationPhoto94.jpg",
     "bindings": [
       {
         "members": [
@@ -91,19 +91,19 @@ resource.tag == "private" };
       },
       "Actions": [
         {
-          "ActionUri": "cedar:Action::\"view\""
+          "ActionUri": "cedar:Action::view"
         },
         {
-          "ActionUri": "cedar:Action::\"comment\""
+          "ActionUri": "cedar:Action::comment"
         }
       ],
       "Subject": {
         "Members": [
-          "User:\"bob\""
+          "User:bob"
         ]
       },
       "Object": {
-        "resource_id": "cedar:Photo::\"trip\""
+        "resource_id": "cedar:Photo::trip"
       },
       "Condition": {
         "Rule": "not(resource.tag eq \"private\")",

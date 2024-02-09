@@ -6,12 +6,12 @@
       },
       "Actions": [
         {
-          "ActionUri": "cedar:Action::\"view\""
+          "ActionUri": "cedar:Action::view"
         }
       ],
       "Subject": {
         "Members": [
-          "User:\"stacey\""
+          "User:stacey"
         ]
       },
       "Object": {
@@ -74,16 +74,16 @@
       },
       "Actions": [
         {
-          "ActionUri": "cedar:Action::\"view\""
+          "ActionUri": "cedar:Action::view"
         }
       ],
       "Subject": {
         "Members": [
-          "User:\"alice\""
+          "User:alice"
         ]
       },
       "Object": {
-        "resource_id": "cedar:Photo::\"VacationPhoto94.jpg\""
+        "resource_id": "cedar:Photo::VacationPhoto94.jpg"
       }
     }
 
