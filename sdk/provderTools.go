@@ -78,17 +78,18 @@ func (i *Integration) open() error {
 		fmt.Println("Overriding " + provType + " with " + testOverride)
 		provType = testOverride
 	}
+	var err error
 	switch provType {
 	case ProviderTypeAvp:
 
-		i.provider = NewAvpProvider(i.Opts)
+		i.provider, err = NewAvpProvider(i.Opts)
 
-		return nil
+		return err
 
 	case ProviderTypeGcp:
-		i.provider = NewGoogleProvider(i.Opts)
+		i.provider, err = NewGoogleProvider(i.Opts)
 
-		return nil
+		return err
 
 	case ProviderTypeAzure, ProviderTypeCognito:
 		var err error
@@ -251,13 +252,29 @@ func (i *Integration) ReconcilePolicy(papAlias string, comparePolicies []hexapol
 	}
 }
 
-func NewAvpProvider(options Options) policyprovider.Provider {
+func NewAvpProvider(options Options) (policyprovider.Provider, error) {
 	opts := awscommon.AWSClientOptions{DisableRetry: true}
+	if options.HTTPClient != nil {
+		switch client := options.HTTPClient.(type) {
+		case awscommon.AWSHttpClient:
+			opts.HTTPClient = client
+		default:
+			return nil, errors.New("HTTPClient type supported, use WithHttpClient(awscommon.AWSHttpClient)")
+		}
+
+	}
 	if options.ProviderOpts != nil {
 		switch v := options.ProviderOpts.(type) {
 		case awscommon.AWSClientOptions:
-			opts = v
+			if opts.HTTPClient != nil {
+				override := opts.HTTPClient
+				opts = v
+				opts.HTTPClient = override
+			} else {
+				opts = v
+			}
 		default:
+			fmt.Println("Warning, unexpected ProviderOpts (use awscommon.AWSClientOptions)")
 		}
 	}
 	var mapper *awsCedar.CedarPolicyMapper
@@ -270,11 +287,26 @@ func NewAvpProvider(options Options) policyprovider.Provider {
 	return &avpProvider.AmazonAvpProvider{
 		AwsClientOpts: opts,
 		CedarMapper:   mapper,
-	}
+	}, nil
 }
 
-func NewGoogleProvider(options Options) policyprovider.Provider {
+func NewGoogleProvider(options Options) (policyprovider.Provider, error) {
 
+	if options.ProviderOpts != nil {
+		return nil, errors.New("provider options not currently supported for iapProvider")
+	}
+
+	var httpClient iapProvider.HTTPClient
+	if options.HTTPClient != nil {
+		switch client := options.HTTPClient.(type) {
+		case iapProvider.HTTPClient:
+
+			httpClient = client
+		default:
+			return nil, errors.New("HTTPClient type supported, use WithHttpClient(awscommon.AWSHttpClient)")
+		}
+
+	}
 	var mapper *gcpBind.GooglePolicyMapper
 	if options.AttributeMap != nil {
 		mapper = gcpBind.New(options.AttributeMap)
@@ -283,6 +315,7 @@ func NewGoogleProvider(options Options) policyprovider.Provider {
 	}
 
 	return &iapProvider.GoogleProvider{
-		GcpMapper: mapper,
-	}
+		HttpClientOverride: httpClient,
+		GcpMapper:          mapper,
+	}, nil
 }
