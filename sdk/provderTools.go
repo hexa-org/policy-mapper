@@ -11,19 +11,22 @@ import (
 	"github.com/hexa-org/policy-mapper/models/formats/gcpBind"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/providers/aws/avpProvider"
+	"github.com/hexa-org/policy-mapper/providers/aws/awsapigwProvider"
 	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"
+	"github.com/hexa-org/policy-mapper/providers/aws/cognitoProvider"
 	"github.com/hexa-org/policy-mapper/providers/googlecloud/iapProvider"
 	"github.com/hexa-org/policy-mapper/providers/test"
 	"github.com/hexa-org/policy-mapper/providers/v2providerwrapper"
 )
 
 const (
-	ProviderTypeAvp     string = avpProvider.ProviderTypeAvp
-	ProviderTypeGcp     string = "google_cloud"
-	ProviderTypeMock    string = test.ProviderTypeMock
-	ProviderTypeCognito string = v2providerwrapper.ProviderTypeCognito
-	ProviderTypeAzure   string = v2providerwrapper.ProviderTypeAzure
-	EnvTestProvider     string = "HEXA_TEST_PROVIDER" // EnvTestProvider overrides whatever provider is requested and uses the specified provider instead (by name)
+	ProviderTypeAvp      string = avpProvider.ProviderTypeAvp
+	ProviderTypeGcp      string = "google_cloud"
+	ProviderTypeMock     string = test.ProviderTypeMock
+	ProviderTypeCognito  string = cognitoProvider.ProviderTypeAwsCognito
+	ProviderTypeAwsApiGW string = awsapigwProvider.ProviderTypeAwsApiGW
+	ProviderTypeAzure    string = v2providerwrapper.ProviderTypeAzure
+	EnvTestProvider      string = "HEXA_TEST_PROVIDER" // EnvTestProvider overrides whatever provider is requested and uses the specified provider instead (by name)
 )
 
 type Integration struct {
@@ -81,17 +84,22 @@ func (i *Integration) open() error {
 	var err error
 	switch provType {
 	case ProviderTypeAvp:
-
 		i.provider, err = NewAvpProvider(i.Opts)
+		return err
 
+	case ProviderTypeCognito:
+		i.provider, err = NewCognitoProvider(i.Opts)
+		return err
+
+	case ProviderTypeAwsApiGW:
+		i.provider, err = NewAwsApiGWProvider(i.Opts)
 		return err
 
 	case ProviderTypeGcp:
 		i.provider, err = NewGoogleProvider(i.Opts)
-
 		return err
 
-	case ProviderTypeAzure, ProviderTypeCognito:
+	case ProviderTypeAzure:
 		var err error
 		i.provider, err = v2providerwrapper.NewV2ProviderWrapper(provType, *i.Opts.Info)
 		return err
@@ -250,6 +258,54 @@ func (i *Integration) ReconcilePolicy(papAlias string, comparePolicies []hexapol
 		}
 		return existPolicies.ReconcilePolicies(comparePolicies, diffsOnly), nil
 	}
+}
+
+func NewAwsApiGWProvider(options Options) (policyprovider.Provider, error) {
+	var ret *awsapigwProvider.AwsApiGatewayProvider
+	if options.ProviderOpts != nil {
+		switch v := options.ProviderOpts.(type) {
+		case awsapigwProvider.AwsApiGatewayProviderOpt:
+			ret = awsapigwProvider.NewAwsApiGatewayProvider(v)
+
+		default:
+			fmt.Println("Warning, unexpected ProviderOpts (use awscommon.AWSClientOptions)")
+		}
+	}
+	if ret == nil {
+		ret = awsapigwProvider.NewAwsApiGatewayProvider(nil)
+	}
+	return ret, nil
+}
+
+func NewCognitoProvider(options Options) (policyprovider.Provider, error) {
+	opts := awscommon.AWSClientOptions{DisableRetry: true}
+	if options.HTTPClient != nil {
+		switch client := options.HTTPClient.(type) {
+		case awscommon.AWSHttpClient:
+			opts.HTTPClient = client
+		default:
+			return nil, errors.New("HTTPClient type supported, use WithHttpClient(awscommon.AWSHttpClient)")
+		}
+
+	}
+	if options.ProviderOpts != nil {
+		switch v := options.ProviderOpts.(type) {
+		case awscommon.AWSClientOptions:
+			if opts.HTTPClient != nil {
+				override := opts.HTTPClient
+				opts = v
+				opts.HTTPClient = override
+			} else {
+				opts = v
+			}
+		default:
+			fmt.Println("Warning, unexpected ProviderOpts (use awscommon.AWSClientOptions)")
+		}
+	}
+
+	return &cognitoProvider.CognitoProvider{
+		AwsClientOpts: opts,
+	}, nil
 }
 
 func NewAvpProvider(options Options) (policyprovider.Provider, error) {
