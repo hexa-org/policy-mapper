@@ -11,8 +11,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
+	"github.com/hexa-org/policy-mapper/pkg/workflowsupport"
 	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"
-	"github.com/hexa-org/policy-mapper/providers/aws/workflowsupport"
 )
 
 type CognitoClient interface {

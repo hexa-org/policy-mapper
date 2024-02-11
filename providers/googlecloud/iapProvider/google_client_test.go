@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/hexa-org/policy-mapper/models/formats/gcpBind"
+	"github.com/hexa-org/policy-mapper/models/rar/testsupport"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
-	"github.com/hexa-org/policy-mapper/pkg/testsupport"
+
 	"github.com/hexa-org/policy-mapper/providers/googlecloud/iapProvider"
 	"github.com/stretchr/testify/assert"
 )

@@ -11,12 +11,13 @@ import (
 	"github.com/hexa-org/policy-mapper/models/formats/gcpBind"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/providers/aws/avpProvider"
+	"github.com/hexa-org/policy-mapper/providers/azure/azureProvider"
+
 	"github.com/hexa-org/policy-mapper/providers/aws/awsapigwProvider"
 	"github.com/hexa-org/policy-mapper/providers/aws/awscommon"
 	"github.com/hexa-org/policy-mapper/providers/aws/cognitoProvider"
 	"github.com/hexa-org/policy-mapper/providers/googlecloud/iapProvider"
 	"github.com/hexa-org/policy-mapper/providers/test"
-	"github.com/hexa-org/policy-mapper/providers/v2providerwrapper"
 )
 
 const (
@@ -25,7 +26,7 @@ const (
 	ProviderTypeMock     string = test.ProviderTypeMock
 	ProviderTypeCognito  string = cognitoProvider.ProviderTypeAwsCognito
 	ProviderTypeAwsApiGW string = awsapigwProvider.ProviderTypeAwsApiGW
-	ProviderTypeAzure    string = v2providerwrapper.ProviderTypeAzure
+	ProviderTypeAzure    string = azureProvider.ProviderTypeAzure
 	EnvTestProvider      string = "HEXA_TEST_PROVIDER" // EnvTestProvider overrides whatever provider is requested and uses the specified provider instead (by name)
 )
 
@@ -100,8 +101,7 @@ func (i *Integration) open() error {
 		return err
 
 	case ProviderTypeAzure:
-		var err error
-		i.provider, err = v2providerwrapper.NewV2ProviderWrapper(provType, *i.Opts.Info)
+		i.provider, err = NewAzureProvider(i.Opts)
 		return err
 
 	case ProviderTypeMock:
@@ -258,6 +258,23 @@ func (i *Integration) ReconcilePolicy(papAlias string, comparePolicies []hexapol
 		}
 		return existPolicies.ReconcilePolicies(comparePolicies, diffsOnly), nil
 	}
+}
+
+func NewAzureProvider(options Options) (policyprovider.Provider, error) {
+	var ret *azureProvider.AzureProvider
+	if options.ProviderOpts != nil {
+		switch v := options.ProviderOpts.(type) {
+		case azureProvider.ProviderOpt:
+			ret = azureProvider.NewAzureProvider(v)
+
+		default:
+			fmt.Println("Warning, unexpected ProviderOpts (use awscommon.AWSClientOptions)")
+		}
+	}
+	if ret == nil {
+		ret = azureProvider.NewAzureProvider(nil)
+	}
+	return ret, nil
 }
 
 func NewAwsApiGWProvider(options Options) (policyprovider.Provider, error) {

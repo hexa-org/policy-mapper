@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hexa-org/policy-mapper/pkg/testsupport"
+	"github.com/hexa-org/policy-mapper/models/rar/testsupport"
 	"github.com/hexa-org/policy-mapper/providers/openpolicyagent"
 	"github.com/hexa-org/policy-mapper/providers/openpolicyagent/compressionsupport"
 
