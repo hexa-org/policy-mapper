@@ -3,6 +3,7 @@ package openpolicyagent
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -14,8 +15,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/hexa-org/policy-mapper/providers/openpolicyagent/compressionsupport"
-
-	"gopkg.in/square/go-jose.v2/json"
+	// "gopkg.in/square/go-jose.v2/json"
 )
 
 type GithubHTTPClient interface {

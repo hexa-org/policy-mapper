@@ -28,7 +28,6 @@ require (
 	golang.org/x/exp v0.0.0-20240205201215-2c58cdc269a3
 	google.golang.org/api v0.163.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240205150955-31a09d347014
-	gopkg.in/square/go-jose.v2 v2.6.0
 )
 
 require (
