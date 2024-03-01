@@ -1,0 +1,14 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: helloworld-ingress-us
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "us-${GCP_PROJECT_NAME}-static-ip"
+    networking.gke.io/managed-certificates: "${GCP_PROJECT_NAME}-certificate"
+    kubernetes.io/ingress.class: "gce"
+spec:
+  defaultBackend:
+    service:
+      name: hexa-helloworld
+      port:
+        number: 8080

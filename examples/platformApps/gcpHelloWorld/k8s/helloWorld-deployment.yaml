@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hexa-helloworld
+spec:
+  selector:
+    matchLabels:
+      app: hexa-helloworld
+      tier: frontend
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: hexa-helloworld
+        tier: frontend
+    spec:
+      containers:
+        - name: hexa-helloworld
+          image: gcr.io/${GCP_PROJECT_ID}/${GCP_PROJECT_NAME}:v1
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          env:
+            - name: PORT
+              value: "8080"
+          ports:
+            - containerPort: 8080
