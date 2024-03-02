@@ -6,7 +6,7 @@
       },
       "actions": [
         {
-          "action_uri": "http:GET:/"
+          "actionUri": "http:GET:/"
         }
       ],
       "subject": {
@@ -87,6 +87,24 @@
       },
       "object": {
         "resource_id": "aResourceId"
+      }
+    },
+    {
+      "meta": {
+        "version": "0.6"
+      },
+      "subject": {
+        "members": [
+          "user:gerry@strata.io"
+        ]
+      },
+      "actions": [
+        {
+          "actionUri": "gcp:roles/iap.httpsResourceAccessor"
+        }
+      ],
+      "object": {
+        "resource_id": "754290878449499554"
       }
     }
   ]

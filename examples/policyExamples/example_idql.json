@@ -2,7 +2,7 @@
   "policies": [
     {
       "meta": {"version": "0.6"},
-      "actions": [{"action_uri": "http:GET:/"}],
+      "actions": [{"actionUri": "http:GET:/"}],
       "subject": {
         "members": [
           "allusers", "allauthenticated"
@@ -18,7 +18,7 @@
     },
     {
       "meta": {"version": "0.6"},
-      "actions": [{"action_uri": "http:GET:/sales"}, {"action_uri": "http:GET:/marketing"}],
+      "actions": [{"actionUri": "http:GET:/sales"}, {"actionUri": "http:GET:/marketing"}],
       "subject": {
         "members": [
           "allauthenticated",
@@ -32,7 +32,7 @@
     },
     {
       "meta": {"version": "0.6"},
-      "actions": [{"action_uri": "http:GET:/accounting"}, {"action_uri": "http:POST:/accounting"}],
+      "actions": [{"actionUri": "http:GET:/accounting"}, {"actionUri": "http:POST:/accounting"}],
       "subject": {
         "members": [
           "accounting@hexaindustries.io"
@@ -48,7 +48,7 @@
     },
     {
       "meta": {"version": "0.6"},
-      "actions": [{"action_uri": "http:GET:/humanresources"}],
+      "actions": [{"actionUri": "http:GET:/humanresources"}],
       "subject": {
         "members": [
           "humanresources@hexaindustries.io"

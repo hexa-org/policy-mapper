@@ -6,7 +6,7 @@
       },
       "actions": [
         {
-          "action_uri": "http:GET:/"
+          "actionUri": "http:GET:/"
         }
       ],
       "subject": {
@@ -29,10 +29,10 @@
       },
       "actions": [
         {
-          "action_uri": "http:GET:/sales"
+          "actionUri": "http:GET:/sales"
         },
         {
-          "action_uri": "http:GET:/marketing"
+          "actionUri": "http:GET:/marketing"
         }
       ],
       "subject": {
@@ -52,10 +52,10 @@
       },
       "actions": [
         {
-          "action_uri": "http:GET:/accounting"
+          "actionUri": "http:GET:/accounting"
         },
         {
-          "action_uri": "http:POST:/accounting"
+          "actionUri": "http:POST:/accounting"
         }
       ],
       "subject": {
@@ -77,7 +77,7 @@
       },
       "actions": [
         {
-          "action_uri": "http:GET:/humanresources"
+          "actionUri": "http:GET:/humanresources"
         }
       ],
       "subject": {
