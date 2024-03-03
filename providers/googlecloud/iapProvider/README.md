@@ -18,43 +18,48 @@ support for conversion of Google Condition Expression Language into IDQL's SCIM 
 
 ## Policy Support Notes
 
-Support includes support for both conversion of IDQL to and from [Google Bind Policy](https://cloud.google.com/iam/docs/policies) format.
-This GoLang implementation includes an AST parser Bind Policy and Google Conditional Expression Language.
+Support includes support for both conversion of IDQL to and from [Google Bind Policy](https://cloud.google.com/iam/docs/policies) format. For information on policies supported see
+[Managing Access to IAP-Secured Resources](https://cloud.google.com/iap/docs/managing-access#roles).
+
+This provider includes IDQL to Bind Policy transformation and Google Conditional Expression Language to IDQL conditions using an AST translator and configurable attribute name mapper.
 
 The following is an example Bind policy:
 ```json
  {
-  "resource_id": "aResourceId3",
+  "resource_id": "hexa-411616",
   "bindings": [
     {
-      "condition": {
-        "expression": "req.ip.startsWith(\"127\") \u0026\u0026 req.method == \"POST\""
-      },
       "members": [
-        "accounting@hexaindustries.io"
-      ]
+        "user:gerry@strata.io",
+        "user:independentidentity@gmail.com"
+      ],
+      "role": "roles/iap.httpsResourceAccessor"
     }
   ]
 }
+
 ```
 
 The equivalent IDQL Policy is as follows:
 
 ```json
 {
-  "meta": {"version": "0.6"},
-  "actions": [{"action_uri": "http:GET:/accounting"}, {"action_uri": "http:POST:/accounting"}],
+  "meta": {
+    "version": "0.6"
+  },
   "subject": {
     "members": [
-      "accounting@hexaindustries.io"
+      "user:gerry@strata.io",
+      "user:independentidentity@gmail.com"
     ]
   },
-  "condition": {
-    "rule": "req.ip sw 127 and req.method eq POST",
-    "action": "allow"
-  },
+  "actions": [
+    {
+      "actionUri": "gcp:roles/iap.httpsResourceAccessor"
+    }
+  ],
   "object": {
-    "resource_id": "aResourceId3"
+    "resource_id": "hexa-411616"
   }
 }
 ```
