@@ -58,7 +58,7 @@ func (c *cognitoClient) ListUserPools() (apps []policyprovider.ApplicationInfo, 
 			apps = append(apps, policyprovider.ApplicationInfo{
 				ObjectID:    *rs.UserPoolId,
 				Name:        *rs.Name,
-				Description: "Cognito",
+				Description: fmt.Sprintf("Resource: %s, UserPool: %s", *rs.Name, *p.Name),
 				Service:     *rs.Identifier,
 			})
 		}

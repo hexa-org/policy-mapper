@@ -60,7 +60,7 @@ func TestListUserPools_Success(t *testing.T) {
 	assert.Equal(t, awstestsupport.TestUserPoolId, pools[0].ObjectID)
 	assert.Equal(t, awstestsupport.TestResourceServerName, pools[0].Name)
 	assert.Equal(t, awstestsupport.TestResourceServerIdentifier, pools[0].Service)
-	assert.Equal(t, "Cognito", pools[0].Description)
+	assert.Equal(t, "Resource: some-resource-server-name, UserPool: some-user-pool-name", pools[0].Description)
 	assert.True(t, mockHttpClient.VerifyCalled())
 
 }

@@ -52,7 +52,10 @@ func (a *CognitoProvider) GetPolicyInfo(info policyprovider.IntegrationInfo, app
 			return nil, err
 		}
 		policies = append(policies, hexapolicy.PolicyInfo{
-			Meta:    hexapolicy.MetaInfo{Version: "0.5"},
+			Meta: hexapolicy.MetaInfo{
+				Version:      hexapolicy.IdqlVersion,
+				ProviderType: ProviderTypeAwsCognito,
+			},
 			Actions: []hexapolicy.ActionInfo{{groupName}},
 			Subject: hexapolicy.SubjectInfo{Members: members},
 			Object: hexapolicy.ObjectInfo{

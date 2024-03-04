@@ -139,13 +139,13 @@ func (suite *testSuite) Test1_AddIntegrations() {
 
 	testLog.Println("  ...AVP")
 	// Test Add AVP
-	cmd := "add avp test --region=us-west-1 --keyid=1234 --secret=5678"
+	cmd := "add aws avp test --region=us-west-1 --keyid=1234 --secret=5678"
 
 	res, err := suite.executeCommand(cmd, 1)
 	assert.NoError(suite.T(), err, "Check no error after add avp")
 	testLog.Println(string(res))
 
-	cmd2 := "add avp test2 --file=./test/aws_test.json"
+	cmd2 := "add aws avp test2 --file=./test/aws_test.json"
 	res2, err := suite.executeCommand(cmd2, 1)
 	assert.NoError(suite.T(), err, "Check no error after add avp --file")
 	testLog.Println(string(res2))
@@ -167,16 +167,11 @@ func (suite *testSuite) Test1_AddIntegrations() {
 	testLog.Println(string(res3))
 
 	testLog.Println("  ...Cognito")
-	cmd4 := "add cognito test4 --region=us-west-1 --keyid=1234 --secret=5678"
+	cmd4 := "add aws cognito test4 --region=us-west-1 --keyid=1234 --secret=5678"
 
 	res4, err := suite.executeCommand(cmd4, 1)
 	assert.NoError(suite.T(), err, "Check no error after add cognito")
 	testLog.Println(string(res4))
-
-	cmd5 := "add cognito test5 --file=./test/aws_test.json"
-	res5, err := suite.executeCommand(cmd5, 1)
-	assert.NoError(suite.T(), err, "Check no error after add cognito --file")
-	testLog.Println(string(res5))
 
 	testLog.Println("  ...Azure")
 	cmd6 := "add azure test6 --tenant=abc --clientid=1234 --secret=not4u2no"
@@ -193,12 +188,12 @@ func (suite *testSuite) Test1_AddIntegrations() {
 	testLog.Println("  ...Negative Tests")
 	// Negative tests
 	negTests := []string{
-		"add avp testa --keyid=123",
-		"add avp testb --file=./test/aws_test.json --keyid=123",
-		"add avp testc --file=notvalid.txt",
+		"add aws avp testa --keyid=123",
+		"add aws avp testb --file=./test/aws_test.json --keyid=123",
+		"add aws avp testc --file=notvalid.txt",
 		"add gcp testd --file=notvalid.txt",
-		"add cognito teste --file=notvalid.txt",
-		"add cognito testf --keyid=123",
+		"add aws cognito teste --file=notvalid.txt",
+		"add aws cognito testf --keyid=123",
 		"add azure testg --file=notvalid.txt",
 		"add azure testh --tenant=123",
 	}

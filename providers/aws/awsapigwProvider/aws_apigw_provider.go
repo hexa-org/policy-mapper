@@ -38,8 +38,12 @@ func WithPolicyStoreSvcOverride(policyStoreSvcOverride dynamodbpolicy.PolicyStor
 }
 func NewAwsApiGatewayProvider(opts ...AwsApiGatewayProviderOpt) *AwsApiGatewayProvider {
 	provider := &AwsApiGatewayProvider{}
-	for _, opt := range opts {
-		opt(provider)
+	if opts != nil {
+		for _, opt := range opts {
+			if opt != nil {
+				opt(provider)
+			}
+		}
 	}
 	return provider
 }

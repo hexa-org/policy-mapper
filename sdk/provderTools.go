@@ -289,7 +289,7 @@ func NewAwsApiGWProvider(options Options) (policyprovider.Provider, error) {
 		}
 	}
 	if ret == nil {
-		ret = awsapigwProvider.NewAwsApiGatewayProvider(nil)
+		ret = awsapigwProvider.NewAwsApiGatewayProvider()
 	}
 	return ret, nil
 }

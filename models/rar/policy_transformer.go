@@ -20,7 +20,7 @@ func BuildPolicies(resourceActionRolesList []ResourceActionRoles) []hexapolicy.P
 		roles := one.Roles
 		slices.Sort(roles)
 		policies = append(policies, hexapolicy.PolicyInfo{
-			Meta:    hexapolicy.MetaInfo{Version: "0.5"},
+			Meta:    hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion, ProviderType: "RARmodel"},
 			Actions: []hexapolicy.ActionInfo{{ActionUriPrefix + httpMethod}},
 			Subject: hexapolicy.SubjectInfo{Members: roles},
 			Object:  hexapolicy.ObjectInfo{ResourceID: one.Resource},
