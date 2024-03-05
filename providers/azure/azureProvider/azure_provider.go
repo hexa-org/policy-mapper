@@ -29,8 +29,12 @@ func WithAzureClient(clientOverride azad.AzureClient) func(provider *AzureProvid
 
 func NewAzureProvider(opts ...ProviderOpt) *AzureProvider {
 	provider := &AzureProvider{client: azad.NewAzureClient(&http.Client{})}
-	for _, opt := range opts {
-		opt(provider)
+	if opts != nil {
+		for _, opt := range opts {
+			if opt != nil {
+				opt(provider)
+			}
+		}
 	}
 	return provider
 }
