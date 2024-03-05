@@ -1,6 +1,7 @@
 package awsapigwProvider
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -55,7 +56,7 @@ func (a *AwsApiGatewayProvider) Name() string {
 func (a *AwsApiGatewayProvider) DiscoverApplications(integrationInfo policyprovider.IntegrationInfo) (apps []policyprovider.ApplicationInfo, err error) {
 	log.Info("AwsApiGatewayProvider.DiscoverApplications", "info.Name", integrationInfo.Name, "a.Name", a.Name())
 	if !strings.EqualFold(integrationInfo.Name, a.Name()) {
-		return []policyprovider.ApplicationInfo{}, err
+		return []policyprovider.ApplicationInfo{}, errors.New("integration instance name and credential name do not match")
 	}
 	service, err := a.getProviderService(integrationInfo.Key)
 	if err != nil {
