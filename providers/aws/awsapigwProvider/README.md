@@ -4,8 +4,9 @@
 
 The API Gateway Provider is a virtual RBAC provider that combines Cognito User Pools and a custom Dynao DB to build RBAC relationships to create equivalent IDQL policy. 
 
-This provider is currently **experimental** and depends on undocumented configuration to run. Please contact gerry@strata.io for more information.
+This provider is currently **experimental** and depends on undocumented configuration to run. Please contact gerry@strata.io for more information. 
 
+See: Tutorial: B[uild a CRUD API with Lambda and DynamoDB](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-dynamo-db.html).
 
 | Feature           | Description                                                                                                | Platform Support               | Provider Support |
 |-------------------|------------------------------------------------------------------------------------------------------------|--------------------------------|------------------|
