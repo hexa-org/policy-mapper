@@ -31,6 +31,7 @@ type CLI struct {
 	Globals
 
 	Add       AddCmd       `cmd:"" help:"Add a new integration"`
+	Delete    DeleteCmd    `cmd:"" help:"Delete an integration or policy application point from local configuration"`
 	Get       GetCmd       `cmd:"" help:"Retrieve or update information and display"`
 	Map       MapCmd       `cmd:"" help:"Convert syntactical policies to and from IDQL"`
 	Reconcile ReconcileCmd `cmd:"" help:"Reconcile compares a source set of policies another source (file or alias) of policies to determine differences."`

@@ -43,6 +43,20 @@ func (c *ConfigData) GetApplicationInfo(applicationAlias string) (*sdk.Integrati
 	return nil, nil
 }
 
+func (c *ConfigData) RemoveApplication(alias string) {
+	integration, app := c.GetApplicationInfo(alias)
+	if app != nil {
+		delete(integration.Apps, alias)
+	}
+}
+
+func (c *ConfigData) RemoveIntegration(alias string) {
+	_, exist := c.Integrations[alias]
+	if exist {
+		delete(c.Integrations, alias)
+	}
+}
+
 func (c *ConfigData) checkConfigPath(g *Globals) error {
 	configPath := g.Config
 	if configPath == "" {

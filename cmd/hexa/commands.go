@@ -54,9 +54,14 @@ func openIntegration(alias string, info policyprovider.IntegrationInfo) (*sdk.In
 	return integration, nil
 }
 
+func getFile(path string) []byte {
+	fileBytes, _ := os.ReadFile(path)
+	return fileBytes
+}
+
 type AddGcpIntegrationCmd struct {
 	Alias string `arg:"" optional:"" help:"A new local alias that will be used to refer to the integration in subsequent operations. Defaults to an auto-generated alias"`
-	File  []byte `short:"f" xor:"Keyid" required:"" type:"filecontent" help:"A GCP service account credentials file"`
+	File  string `short:"f" aliases:"File,FILE" xor:"Keyid" required:"" type:"existingfile" help:"A GCP service account credentials file"`
 }
 
 func (a *AddGcpIntegrationCmd) Help() string {
@@ -91,8 +96,7 @@ func (a *AddGcpIntegrationCmd) Run(cli *CLI) error {
 			return errors.New(errMsg)
 		}
 	}
-	keyStr := a.File
-
+	keyStr := getFile(a.File)
 	if len(keyStr) == 0 {
 		return errors.New("invalid or empty Google integration file")
 	}
@@ -118,7 +122,7 @@ type AddAwsIntegrationCmd struct {
 	Region *string `short:"r" help:"The Amazon data center (e.g. us-west-1)"`
 	Keyid  *string `short:"k" help:"Amazon Access Key ID"`
 	Secret *string `short:"s" help:"Secret access key"`
-	File   []byte  `short:"f" xor:"Keyid" required:"" type:"filecontent" help:"File containing the Amazon credential information"`
+	File   string  `short:"f" aliases:"File,FILE" xor:"Keyid" required:"" type:"existingfile" help:"File containing the Amazon credential information"`
 }
 
 func (a *AddAwsIntegrationCmd) Help() string {
@@ -137,14 +141,11 @@ Once the AWS integration is added, it is available for future use with the suppl
 }
 
 func (a *AddAwsIntegrationCmd) AfterApply(_ *kong.Context) error {
-	if a.File == nil {
+	if a.File == "" {
 		if a.Secret == nil || a.Keyid == nil || a.Region == nil {
 			return errors.New("must provide all of --keyid, --secret, and --region, or --file")
 		}
 	} else {
-		if len(a.File) == 0 {
-			return errors.New("file was empty or not found")
-		}
 		if a.Secret != nil || a.Keyid != nil || a.Region != nil {
 			return errors.New("must provide all of --keyid, --secret, and --region, or --file")
 		}
@@ -171,9 +172,10 @@ func (a *AddAwsIntegrationCmd) Run(cli *CLI) error {
 			return errors.New(errMsg)
 		}
 	}
-	keyStr := a.File
-
-	if len(keyStr) == 0 {
+	var keyStr []byte
+	if a.File != "" {
+		keyStr = getFile(a.File)
+	} else {
 		keyStr = []byte(fmt.Sprintf(`{
   "accessKeyID": "%s",
   "secretAccessKey": "%s",
@@ -193,7 +195,7 @@ func (a *AddAwsIntegrationCmd) Run(cli *CLI) error {
 
 	info := policyprovider.IntegrationInfo{
 		Name: provType,
-		Key:  []byte(keyStr),
+		Key:  keyStr,
 	}
 
 	integration, err := openIntegration(alias, info)
@@ -211,7 +213,7 @@ type AddAzureIntegrationCmd struct {
 	Tenant   *string `short:"r" help:"The Azure Tenant id"`
 	Clientid *string `short:"c" help:"The Azure Service Principal Client Id (aka appId)"`
 	Secret   *string `short:"s" help:"The Azure registration secret"`
-	File     []byte  `short:"f" xor:"Keyid" required:"" type:"filecontent" help:"File containing the Azure credential information"`
+	File     string  `short:"f" aliases:"File,FILE" xor:"Keyid" required:"" type:"existingfile" help:"File containing the Azure credential information"`
 }
 
 func (a *AddAzureIntegrationCmd) Help() string {
@@ -229,14 +231,11 @@ Once the Azure integration is added, it is available for future use with the sup
 }
 
 func (a *AddAzureIntegrationCmd) AfterApply(_ *kong.Context) error {
-	if a.File == nil {
+	if a.File == "" {
 		if a.Secret == nil || a.Tenant == nil || a.Clientid == nil {
 			return errors.New("must provide all of --tenant, --secret, and --appid, or --file")
 		}
 	} else {
-		if len(a.File) == 0 {
-			return errors.New("file was empty or not found")
-		}
 		if a.Secret != nil || a.Tenant != nil || a.Clientid != nil {
 			return errors.New("must provide all of --tenant, --secret, and --appid, or --file")
 		}
@@ -258,18 +257,21 @@ func (a *AddAzureIntegrationCmd) Run(cli *CLI) error {
 			return errors.New(errMsg)
 		}
 	}
-	keyStr := a.File
 
-	if len(keyStr) == 0 {
+	var keyStr []byte
+	if a.File == "" {
 		keyStr = []byte(fmt.Sprintf(`{
   "appId": "%s",
   "secret": "%s",
   "tenant": "%s"
 }`, *a.Clientid, *a.Secret, *a.Tenant))
+	} else {
+		keyStr = getFile(a.File)
 	}
+
 	info := policyprovider.IntegrationInfo{
 		Name: sdk.ProviderTypeAzure,
-		Key:  []byte(keyStr),
+		Key:  keyStr,
 	}
 
 	integration, err := openIntegration(alias, info)
@@ -283,9 +285,9 @@ func (a *AddAzureIntegrationCmd) Run(cli *CLI) error {
 }
 
 type AddCmd struct {
-	Aws   AddAwsIntegrationCmd   `cmd:"" help:"Add AWS Api Gateway, Cognito, or AVP integration"`
-	Gcp   AddGcpIntegrationCmd   `cmd:"" help:"Add a Google Cloud GCP integration"`
-	Azure AddAzureIntegrationCmd `cmd:"" help:"Add an Azure RBAC integration"`
+	Aws   AddAwsIntegrationCmd   `cmd:"" aliases:"AWS,amazon" help:"Add AWS Api Gateway, Cognito, or AVP integration"`
+	Gcp   AddGcpIntegrationCmd   `cmd:"" aliases:"Google,google" help:"Add a Google Cloud GCP integration"`
+	Azure AddAzureIntegrationCmd `cmd:"" aliases:"ms,MS,Microsoft" help:"Add an Azure RBAC integration"`
 }
 
 type GetPolicyApplicationsCmd struct {
@@ -341,7 +343,7 @@ func (a *GetPoliciesCmd) Run(cli *CLI) error {
 }
 
 type GetCmd struct {
-	Paps     GetPolicyApplicationsCmd `cmd:"" aliases:"apps" help:"Retrieve or discover policy application points from the specified integration alias"`
+	Paps     GetPolicyApplicationsCmd `cmd:"" aliases:"apps,PAPS" help:"Retrieve or discover policy application points from the specified integration alias"`
 	Policies GetPoliciesCmd           `cmd:"" aliases:"pol" help:"Get and map policies from a PAP."`
 }
 
@@ -653,6 +655,37 @@ func ConfirmProceed(msg string) bool {
 		return true
 	}
 	return false
+}
+
+type DeleteIntegrationCmd struct {
+	Alias string `arg:"" required:"" help:"An alias for an integration to be deleted from local configuration"`
+}
+
+func (d DeleteIntegrationCmd) Run(cli *CLI) error {
+	integration := cli.Data.GetIntegration(d.Alias)
+	if integration == nil {
+		return errors.New(fmt.Sprintf("integration %s not found", d.Alias))
+	}
+	cli.Data.RemoveIntegration(d.Alias)
+	return cli.Data.Save(&cli.Globals)
+}
+
+type DeletePapCmd struct {
+	Alias string `arg:"" required:"" help:"An alias for a policy application (PAP) to be deleted from local configuration"`
+}
+
+func (d DeletePapCmd) Run(cli *CLI) error {
+	_, app := cli.Data.GetApplicationInfo(d.Alias)
+	if app == nil {
+		return errors.New(fmt.Sprintf("policy application %s not found", d.Alias))
+	}
+	cli.Data.RemoveApplication(d.Alias)
+	return cli.Data.Save(&cli.Globals)
+}
+
+type DeleteCmd struct {
+	Integration DeleteIntegrationCmd `cmd:"" aliases:"i,int" help:"Delete an integration from local configuration"`
+	Pap         DeletePapCmd         `cmd:"" aliases:"app,PAP" help:"Delete an application from local configuration"`
 }
 
 type ExitCmd struct {
