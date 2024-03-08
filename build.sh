@@ -21,9 +21,10 @@ go build ./...
 doTest
 echo "  installing..."
 go install ./...
+printf "Start Hexa console by using the 'hexa' command.\nIf the command is not found, check that the go/bin directory is in your PATH.\n"
 exit
 
-// This section is for when policy-models is multi-module - not currently used
+# This section is for when policy-models is multi-module - not currently used
 
 echo "Building 5 sub-modules in workspace..."
 
