@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"slices"
 
 	"log"
 	"os"
@@ -40,19 +41,6 @@ type CLI struct {
 	Exit      ExitCmd      `cmd:"" help:"Exit Hexa console"`
 	Help      HelpCmd      `cmd:"" help:"Show help on a command"`
 }
-
-/*
-Add      AddCmd      `cmd:"" help:"Define a new server to be managed"`
-Create   CreateCmd   `cmd:"" help:"Create an issuer KEY, or STREAM"`
-Delete   DeleteCmd   `cmd:"" help:"Delete a stream"`
-Select   SelectCmd   `cmd:"" help:"Select a defined server or stream/server to perform operations against"`
-Get      GetCmd      `cmd:"" help:"Get information from SSF servers"`
-Generate GenerateCmd `cmd:"" help:"Generate an event for testing"`
-Poll     PollCmd     `cmd:"" help:"Activate a polling client stream with a server identified by <alias>."`
-Set      SetCmd      `cmd:"" help:"Set configuration items on server"`
-Show     ShowCmd     `cmd:"" help:"Show locally configured information"`
-
-*/
 
 type OutputWriter struct {
 	output  *os.File
@@ -146,9 +134,10 @@ func initParser(cli *CLI) (*ParserData, error) {
 	cli.Data = ConfigData{
 		Integrations: map[string]*sdk.Integration{},
 	}
+
 	parser, err := kong.New(cli,
 		kong.Name("hexa"),
-		kong.Description("Hexa IDQL Orchestrator administration tool"),
+		kong.Description("Hexa Policy Console"),
 		kong.ConfigureHelp(kong.HelpOptions{
 			Compact:      true,
 			Summary:      true,
@@ -162,12 +151,26 @@ func initParser(cli *CLI) (*ParserData, error) {
 		kong.Bind(&cli.Globals),
 		kong.Exit(func(int) {}),
 	)
+
 	td := ParserData{
 		parser: parser,
 		cli:    cli,
 	}
 
 	return &td, err
+}
+
+var keywords = []string{"add", "aws", "cognito", "apigw", "avp", "gcp", "azure", "integration", "int", "pap", "app", "policies", "map", "to", "from", "reconcile", "set", "show", "exit", "help"}
+
+// lowercaseKeywords helps make console appear case insensitive
+func lowercaseKeywords(args []string) []string {
+	for i, v := range args {
+		argLower := strings.ToLower(v)
+		if slices.Contains(keywords, argLower) {
+			args[i] = argLower
+		}
+	}
+	return args
 }
 
 func main() {
@@ -239,6 +242,9 @@ func main() {
 			_ = console.SaveHistory(line)
 			args = strings.Split(line, " ")
 		}
+
+		fmt.Println("Args:", args)
+		args = lowercaseKeywords(args)
 
 		var ctx *kong.Context
 		ctx, err = td.parser.Parse(args)
