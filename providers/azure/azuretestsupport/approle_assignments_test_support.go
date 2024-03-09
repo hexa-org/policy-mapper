@@ -81,9 +81,7 @@ func AssignmentsForDelete(assignments []azad.AzureAppRoleAssignment) []azad.Azur
 }
 
 func MakePolicies(assignments []azad.AzureAppRoleAssignment) []hexapolicy.PolicyInfo {
-	policyMapper := microsoftazure.NewAzurePolicyMapper(AzureServicePrincipals(),
-		assignments,
-		policytestsupport.MakePrincipalEmailMap())
+	policyMapper := microsoftazure.NewAzurePolicyMapper(AzureServicePrincipals(), assignments, policytestsupport.MakePrincipalEmailMap())
 
 	return policyMapper.ToIDQL()
 }

@@ -29,14 +29,14 @@ func NewAzurePolicyMapper(sps azad.AzureServicePrincipals, existingAssignments [
 func (azm *AzurePolicyMapper) ToIDQL() []hexapolicy.PolicyInfo {
 	policies := make([]hexapolicy.PolicyInfo, 0)
 	for appRoleId, appRole := range azm.roleIdToAppRole {
-		pol := azm.appRoleAssignmentToIDQL(azm.existingRoleIdToAras[appRoleId], appRole.Value)
+		pol := azm.appRoleAssignmentToIDQL(azm.existingRoleIdToAras[appRoleId], appRole)
 		policies = append(policies, pol)
 	}
 	return policies
 
 }
 
-func (azm *AzurePolicyMapper) appRoleAssignmentToIDQL(assignments []azad.AzureAppRoleAssignment, action string) hexapolicy.PolicyInfo {
+func (azm *AzurePolicyMapper) appRoleAssignmentToIDQL(assignments []azad.AzureAppRoleAssignment, role azad.AzureAppRole) hexapolicy.PolicyInfo {
 
 	members := make([]string, 0)
 	for _, oneAssignment := range assignments {
@@ -47,9 +47,25 @@ func (azm *AzurePolicyMapper) appRoleAssignmentToIDQL(assignments []azad.AzureAp
 
 	}
 
+	sourceData := make(map[string]interface{}, 2)
+	if role.IsEnabled {
+		sourceData["enabled"] = "true"
+	} else {
+		sourceData["enabled"] = "false"
+	}
+
+	sourceData["membertypes"] = role.AllowedMemberTypes
+
 	return hexapolicy.PolicyInfo{
-		Meta:    hexapolicy.MetaInfo{Version: "0.5"},
-		Actions: []hexapolicy.ActionInfo{{action}},
+		Meta: hexapolicy.MetaInfo{
+			Version:      hexapolicy.IdqlVersion,
+			PolicyId:     &role.ID,
+			Description:  role.Description,
+			PapId:        &azm.objectId,
+			ProviderType: ProviderTypeAzure,
+			SourceData:   sourceData,
+		},
+		Actions: []hexapolicy.ActionInfo{{role.Value}},
 		Subject: hexapolicy.SubjectInfo{Members: members},
 		Object:  hexapolicy.ObjectInfo{ResourceID: azm.objectId},
 	}
