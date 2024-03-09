@@ -160,7 +160,7 @@ func initParser(cli *CLI) (*ParserData, error) {
 	return &td, err
 }
 
-var keywords = []string{"add", "aws", "cognito", "apigw", "avp", "gcp", "azure", "integration", "int", "pap", "app", "policies", "map", "to", "from", "reconcile", "set", "show", "exit", "help"}
+var keywords = []string{"add", "aws", "cognito", "apigw", "avp", "gcp", "azure", "integration", "int", "paps", "app", "applications", "policies", "map", "to", "from", "reconcile", "set", "show", "exit", "help", "--file="}
 
 // lowercaseKeywords helps make console appear case insensitive
 func lowercaseKeywords(args []string) []string {
@@ -169,8 +169,29 @@ func lowercaseKeywords(args []string) []string {
 		if slices.Contains(keywords, argLower) {
 			args[i] = argLower
 		}
+		mi := strings.Index(args[i], "--file=")
+		if mi == 0 {
+			args[i] = strings.ReplaceAll(args[i], "\\ ", " ")
+		}
 	}
 	return args
+}
+
+// breakIntoArgs separates the command by spaces while respecting quotes
+func breakIntoArgs(command string) []string {
+	lr := ' '
+	res := strings.FieldsFunc(command, func(r rune) bool {
+		if r == ' ' && lr == '\\' {
+			lr = r
+			return false
+		}
+		lr = r
+		if r == ' ' {
+			return true
+		}
+		return false
+	})
+	return res
 }
 
 func main() {
@@ -240,10 +261,10 @@ func main() {
 			}
 			//line = line[0 : len(line)-1]
 			_ = console.SaveHistory(line)
-			args = strings.Split(line, " ")
+			args = breakIntoArgs(line)
 		}
 
-		fmt.Println("Args:", args)
+		// fmt.Println("Args:", args)
 		args = lowercaseKeywords(args)
 
 		var ctx *kong.Context

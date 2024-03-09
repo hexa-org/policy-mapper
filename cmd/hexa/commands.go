@@ -61,7 +61,7 @@ func getFile(path string) []byte {
 
 type AddGcpIntegrationCmd struct {
 	Alias string `arg:"" optional:"" help:"A new local alias that will be used to refer to the integration in subsequent operations. Defaults to an auto-generated alias"`
-	File  string `short:"f" aliases:"File,FILE" xor:"Keyid" required:"" type:"existingfile" help:"A GCP service account credentials file"`
+	File  string `short:"f" xor:"Keyid" required:"" type:"existingfile" help:"A GCP service account credentials file"`
 }
 
 func (a *AddGcpIntegrationCmd) Help() string {
@@ -122,7 +122,7 @@ type AddAwsIntegrationCmd struct {
 	Region *string `short:"r" help:"The Amazon data center (e.g. us-west-1)"`
 	Keyid  *string `short:"k" help:"Amazon Access Key ID"`
 	Secret *string `short:"s" help:"Secret access key"`
-	File   string  `short:"f" aliases:"File,FILE" xor:"Keyid" required:"" type:"existingfile" help:"File containing the Amazon credential information"`
+	File   string  `short:"f" xor:"Keyid" required:"" type:"existingfile" help:"File containing the Amazon credential information"`
 }
 
 func (a *AddAwsIntegrationCmd) Help() string {
@@ -213,7 +213,7 @@ type AddAzureIntegrationCmd struct {
 	Tenant   *string `short:"r" help:"The Azure Tenant id"`
 	Clientid *string `short:"c" help:"The Azure Service Principal Client Id (aka appId)"`
 	Secret   *string `short:"s" help:"The Azure registration secret"`
-	File     string  `short:"f" aliases:"File,FILE" xor:"Keyid" required:"" type:"existingfile" help:"File containing the Azure credential information"`
+	File     string  `short:"f" xor:"Keyid" required:"" type:"existingfile" help:"File containing the Azure credential information"`
 }
 
 func (a *AddAzureIntegrationCmd) Help() string {
@@ -285,9 +285,9 @@ func (a *AddAzureIntegrationCmd) Run(cli *CLI) error {
 }
 
 type AddCmd struct {
-	Aws   AddAwsIntegrationCmd   `cmd:"" aliases:"AWS,amazon" help:"Add AWS Api Gateway, Cognito, or AVP integration"`
-	Gcp   AddGcpIntegrationCmd   `cmd:"" aliases:"Google,google" help:"Add a Google Cloud GCP integration"`
-	Azure AddAzureIntegrationCmd `cmd:"" aliases:"ms,MS,Microsoft" help:"Add an Azure RBAC integration"`
+	Aws   AddAwsIntegrationCmd   `cmd:"" aliases:"amazon" help:"Add AWS Api Gateway, Cognito, or AVP integration"`
+	Gcp   AddGcpIntegrationCmd   `cmd:"" aliases:"google" help:"Add a Google Cloud GCP integration"`
+	Azure AddAzureIntegrationCmd `cmd:"" aliases:"ms,microsoft" help:"Add an Azure RBAC integration"`
 }
 
 type GetPolicyApplicationsCmd struct {
@@ -343,7 +343,7 @@ func (a *GetPoliciesCmd) Run(cli *CLI) error {
 }
 
 type GetCmd struct {
-	Paps     GetPolicyApplicationsCmd `cmd:"" aliases:"apps,PAPS" help:"Retrieve or discover policy application points from the specified integration alias"`
+	Paps     GetPolicyApplicationsCmd `cmd:"" aliases:"apps,applications" help:"Retrieve or discover policy application points from the specified integration alias"`
 	Policies GetPoliciesCmd           `cmd:"" aliases:"pol" help:"Get and map policies from a PAP."`
 }
 
