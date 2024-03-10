@@ -13,7 +13,7 @@ matches(policy) {
     matchesPrincipal(policy.subject)
 }
 matchesAction(action) {
-    input.method == action.action_uri
+    input.method == action.actionUri
 }
 matchesPrincipal(subject) {
     "allusers" in subject.members

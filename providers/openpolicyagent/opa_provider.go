@@ -26,6 +26,8 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+const ProviderTypeOpa string = "opa"
+
 type BundleClient interface {
 	GetDataFromBundle(path string) ([]byte, error)
 	PostBundle(bundle []byte) (int, error)
@@ -58,33 +60,6 @@ func (o *OpaProvider) DiscoverApplications(info policyprovider.IntegrationInfo) 
 	return apps, nil
 }
 
-type Policies struct {
-	Policies []Policy `json:"policies"`
-}
-
-type Policy struct {
-	Meta    Meta     `json:"meta"`
-	Actions []Action `json:"actions"`
-	Subject Subject  `json:"subject"`
-	Object  Object   `json:"object"`
-}
-
-type Meta struct {
-	Version string `json:"version"`
-}
-
-type Action struct {
-	ActionUri string `json:"action_uri"`
-}
-
-type Subject struct {
-	Members []string `json:"members"`
-}
-
-type Object struct {
-	ResourceID string `json:"resource_id"`
-}
-
 func (o *OpaProvider) GetPolicyInfo(integration policyprovider.IntegrationInfo, appInfo policyprovider.ApplicationInfo) ([]hexapolicy.PolicyInfo, error) {
 	key := integration.Key
 	client, err := o.ConfigureClient(key)
@@ -100,7 +75,7 @@ func (o *OpaProvider) GetPolicyInfo(integration policyprovider.IntegrationInfo, 
 		return nil, err
 	}
 
-	var policies Policies
+	var policies hexapolicy.Policies
 	unmarshalErr := json.Unmarshal(data, &policies)
 	if unmarshalErr != nil {
 		return nil, unmarshalErr
@@ -144,24 +119,24 @@ func (o *OpaProvider) SetPolicyInfo(integration policyprovider.IntegrationInfo, 
 		return http.StatusInternalServerError, fmt.Errorf("invalid client: %w", err)
 	}
 
-	var policies []Policy
+	var policies []hexapolicy.PolicyInfo
 	for _, p := range policyInfos {
-		var actions []Action
+		var actions []hexapolicy.ActionInfo
 		for _, a := range p.Actions {
-			actions = append(actions, Action{a.ActionUri})
+			actions = append(actions, hexapolicy.ActionInfo{ActionUri: a.ActionUri})
 		}
-		policies = append(policies, Policy{
-			Meta:    Meta{Version: p.Meta.Version},
+		policies = append(policies, hexapolicy.PolicyInfo{
+			Meta:    hexapolicy.MetaInfo{Version: p.Meta.Version},
 			Actions: actions,
-			Subject: Subject{
-				p.Subject.Members,
+			Subject: hexapolicy.SubjectInfo{
+				Members: p.Subject.Members,
 			},
-			Object: Object{
+			Object: hexapolicy.ObjectInfo{
 				ResourceID: appInfo.ObjectID, // todo - for now, ensures the correct resource identifier
 			},
 		})
 	}
-	data, marshalErr := json.Marshal(Policies{policies})
+	data, marshalErr := json.Marshal(hexapolicy.Policies{Policies: policies})
 	if marshalErr != nil {
 		log.Printf("open-policy-agent, unable to create data file. %s\n", marshalErr)
 		return http.StatusInternalServerError, marshalErr
@@ -194,6 +169,7 @@ func (o *OpaProvider) MakeDefaultBundle(data []byte) (bytes.Buffer, error) {
 	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/.manifest"), manifest, 0644)
 	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/data.json"), data, 0644)
 	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/policy.rego"), rego, 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/hexaPolicyV2.rego"), rego, 0644)
 
 	tar, _ := compressionsupport.TarFromPath(filepath.Join(tempDir, "/bundles"))
 	var buffer bytes.Buffer

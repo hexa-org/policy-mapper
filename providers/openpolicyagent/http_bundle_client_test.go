@@ -1,28 +1,28 @@
 package openpolicyagent_test
 
 import (
-	"bytes"
-	"errors"
-	"fmt"
+    "bytes"
+    "errors"
+    "fmt"
 
-	"math/rand"
-	"os"
-	"path/filepath"
-	"runtime"
-	"testing"
-	"time"
+    "math/rand"
+    "os"
+    "path/filepath"
+    "runtime"
+    "testing"
+    "time"
 
-	"github.com/hexa-org/policy-mapper/models/rar/testsupport"
-	"github.com/hexa-org/policy-mapper/providers/openpolicyagent"
-	"github.com/hexa-org/policy-mapper/providers/openpolicyagent/compressionsupport"
-	"github.com/stretchr/testify/assert"
+    "github.com/hexa-org/policy-mapper/models/rar/testsupport"
+    "github.com/hexa-org/policy-mapper/providers/openpolicyagent"
+    "github.com/hexa-org/policy-mapper/providers/openpolicyagent/compressionsupport"
+    "github.com/stretchr/testify/assert"
 )
 
 const expectedBundleData = `{
   "policies": [
     {
       "meta": {"version": "0.5"},
-      "actions": [{"action_uri": "http:GET:/"}],
+      "actions": [{"actionUri": "http:GET:/"}],
       "subject": {
         "members": [
           "allusers", "allauthenticated"
@@ -34,7 +34,7 @@ const expectedBundleData = `{
     },
     {
       "meta": {"version": "0.5"},
-      "actions": [{"action_uri": "http:GET:/sales"}, {"action_uri": "http:GET:/marketing"}],
+      "actions": [{"actionUri": "http:GET:/sales"}, {"actionUri": "http:GET:/marketing"}],
       "subject": {
         "members": [
           "allauthenticated",
@@ -48,7 +48,7 @@ const expectedBundleData = `{
     },
     {
       "meta": {"version": "0.5"},
-      "actions": [{"action_uri": "http:GET:/accounting"}, {"action_uri": "http:POST:/accounting"}],
+      "actions": [{"actionUri": "http:GET:/accounting"}, {"actionUri": "http:POST:/accounting"}],
       "subject": {
         "members": [
           "accounting@hexaindustries.io"
@@ -60,7 +60,7 @@ const expectedBundleData = `{
     },
     {
       "meta": {"version": "0.5"},
-      "actions": [{"action_uri": "http:GET:/humanresources"}],
+      "actions": [{"actionUri": "http:GET:/humanresources"}],
       "subject": {
         "members": [
           "humanresources@hexaindustries.io"
@@ -74,56 +74,56 @@ const expectedBundleData = `{
 }`
 
 func TestHTTPBundleClient_GetExpressionFromBundle(t *testing.T) {
-	_, file, _, _ := runtime.Caller(0)
-	join := filepath.Join(file, "../resources/bundles")
-	tar, _ := compressionsupport.TarFromPath(join)
-	var buffer bytes.Buffer
-	_ = compressionsupport.Gzip(&buffer, tar)
-	random := rand.New(rand.NewSource(time.Now().UnixNano()))
-	path := filepath.Join(t.TempDir(), fmt.Sprintf("test-bundles/.bundle-%d", random.Uint64()))
+    _, file, _, _ := runtime.Caller(0)
+    join := filepath.Join(file, "../resources/bundles")
+    tar, _ := compressionsupport.TarFromPath(join)
+    var buffer bytes.Buffer
+    _ = compressionsupport.Gzip(&buffer, tar)
+    random := rand.New(rand.NewSource(time.Now().UnixNano()))
+    path := filepath.Join(t.TempDir(), fmt.Sprintf("test-bundles/.bundle-%d", random.Uint64()))
 
-	m := testsupport.NewMockHTTPClient()
-	m.ResponseBody["someURL"] = buffer.Bytes()
-	client := openpolicyagent.HTTPBundleClient{BundleServerURL: "someURL", HttpClient: m}
+    m := testsupport.NewMockHTTPClient()
+    m.ResponseBody["someURL"] = buffer.Bytes()
+    client := openpolicyagent.HTTPBundleClient{BundleServerURL: "someURL", HttpClient: m}
 
-	data, err := client.GetDataFromBundle(path)
+    data, err := client.GetDataFromBundle(path)
 
-	assert.NoError(t, err)
-	assert.Equal(t, expectedBundleData, string(data))
+    assert.NoError(t, err)
+    assert.Equal(t, expectedBundleData, string(data))
 }
 
 func TestHTTPBundleClient_GetExpressionFromBundle_withBadTar(t *testing.T) {
-	_, file, _, _ := runtime.Caller(0)
-	join := filepath.Join(file, "../resources/bundles")
-	tar, _ := compressionsupport.TarFromPath(join)
-	var buffer bytes.Buffer
-	_ = compressionsupport.Gzip(&buffer, tar)
+    _, file, _, _ := runtime.Caller(0)
+    join := filepath.Join(file, "../resources/bundles")
+    tar, _ := compressionsupport.TarFromPath(join)
+    var buffer bytes.Buffer
+    _ = compressionsupport.Gzip(&buffer, tar)
 
-	m := testsupport.NewMockHTTPClient()
-	m.ResponseBody["someURL"] = buffer.Bytes()
-	client := openpolicyagent.HTTPBundleClient{BundleServerURL: "someURL", HttpClient: m}
+    m := testsupport.NewMockHTTPClient()
+    m.ResponseBody["someURL"] = buffer.Bytes()
+    client := openpolicyagent.HTTPBundleClient{BundleServerURL: "someURL", HttpClient: m}
 
-	_, err := client.GetDataFromBundle("/badPath")
+    _, err := client.GetDataFromBundle("/badPath")
 
-	assert.Contains(t, err.Error(), "unable to untar to path")
+    assert.Contains(t, err.Error(), "unable to untar to path")
 }
 
 func TestHTTPBundleClient_GetExpressionFromBundle_withBadRequest(t *testing.T) {
-	m := testsupport.NewMockHTTPClient()
-	m.Err = errors.New("oops")
-	client := openpolicyagent.HTTPBundleClient{BundleServerURL: "someURL", HttpClient: m}
+    m := testsupport.NewMockHTTPClient()
+    m.Err = errors.New("oops")
+    client := openpolicyagent.HTTPBundleClient{BundleServerURL: "someURL", HttpClient: m}
 
-	_, err := client.GetDataFromBundle(os.TempDir())
+    _, err := client.GetDataFromBundle(os.TempDir())
 
-	assert.EqualError(t, err, "oops")
+    assert.EqualError(t, err, "oops")
 }
 
 func TestHTTPBundleClient_GetExpressionFromBundle_withBadGzip(t *testing.T) {
-	m := testsupport.NewMockHTTPClient()
-	m.ResponseBody["someURL"] = []byte("bad gzip")
-	client := openpolicyagent.HTTPBundleClient{BundleServerURL: "someURL", HttpClient: m}
+    m := testsupport.NewMockHTTPClient()
+    m.ResponseBody["someURL"] = []byte("bad gzip")
+    client := openpolicyagent.HTTPBundleClient{BundleServerURL: "someURL", HttpClient: m}
 
-	_, err := client.GetDataFromBundle("")
+    _, err := client.GetDataFromBundle("")
 
-	assert.Contains(t, err.Error(), "unable to ungzip")
+    assert.Contains(t, err.Error(), "unable to ungzip")
 }
