@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/verifiedpermissions"
 	"github.com/aws/aws-sdk-go-v2/service/verifiedpermissions/types"
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
+	"github.com/hexa-org/policy-mapper/models/formats/awsCedar"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 	"github.com/hexa-org/policy-mapper/providers/aws/avpProvider"
 	"github.com/hexa-org/policy-mapper/providers/aws/avpProvider/avpClient"
@@ -58,10 +59,10 @@ func initializeOnlineTests() error {
 `, cred.AccessKeyID, cred.SecretAccessKey, cfg.Region)
 
 	info := policyprovider.IntegrationInfo{Name: "avp", Key: []byte(str)}
-	avpProvider := avpProvider.AmazonAvpProvider{AwsClientOpts: awscommon.AWSClientOptions{DisableRetry: true}}
+	provider := avpProvider.AmazonAvpProvider{AwsClientOpts: awscommon.AWSClientOptions{DisableRetry: true}}
 
 	testData = TestInfo{
-		Provider: avpProvider,
+		Provider: provider,
 		Info:     info,
 	}
 
@@ -153,10 +154,12 @@ func TestAvp_1_ListStores(t *testing.T) {
 	mockClient := avpTestSupport.NewMockVerifiedPermissionsHTTPClient()
 	mockClient.MockListStores()
 
-	p := avpProvider.AmazonAvpProvider{AwsClientOpts: awscommon.AWSClientOptions{
-		HTTPClient:   mockClient,
-		DisableRetry: true,
-	}}
+	p := avpProvider.AmazonAvpProvider{
+		AwsClientOpts: awscommon.AWSClientOptions{
+			HTTPClient:   mockClient,
+			DisableRetry: true,
+		},
+		CedarMapper: awsCedar.New(map[string]string{})}
 
 	info := avpTestSupport.IntegrationInfo()
 	apps, err := p.DiscoverApplications(info)
@@ -176,10 +179,12 @@ func TestAvp_1_ListStores(t *testing.T) {
 func TestAvp_2_GetPolicies(t *testing.T) {
 	mockClient := avpTestSupport.NewMockVerifiedPermissionsHTTPClient()
 
-	p := avpProvider.AmazonAvpProvider{AwsClientOpts: awscommon.AWSClientOptions{
-		HTTPClient:   mockClient,
-		DisableRetry: true,
-	}}
+	p := avpProvider.AmazonAvpProvider{
+		AwsClientOpts: awscommon.AWSClientOptions{
+			HTTPClient:   mockClient,
+			DisableRetry: true,
+		},
+		CedarMapper: awsCedar.New(map[string]string{})}
 
 	mockClient.MockListStores()
 	info := avpTestSupport.IntegrationInfo()
@@ -200,10 +205,12 @@ func TestAvp_2_GetPolicies(t *testing.T) {
 func TestAvp_3_Reconcile(t *testing.T) {
 	mockClient := avpTestSupport.NewMockVerifiedPermissionsHTTPClient()
 
-	p := avpProvider.AmazonAvpProvider{AwsClientOpts: awscommon.AWSClientOptions{
-		HTTPClient:   mockClient,
-		DisableRetry: true,
-	}}
+	p := avpProvider.AmazonAvpProvider{
+		AwsClientOpts: awscommon.AWSClientOptions{
+			HTTPClient:   mockClient,
+			DisableRetry: true,
+		},
+		CedarMapper: awsCedar.New(map[string]string{})}
 
 	mockClient.MockListStores()
 	info := avpTestSupport.IntegrationInfo()
@@ -292,10 +299,12 @@ func TestAvp_3_Reconcile(t *testing.T) {
 func TestAvp_4_SetPolicies(t *testing.T) {
 	mockClient := avpTestSupport.NewMockVerifiedPermissionsHTTPClient()
 
-	p := avpProvider.AmazonAvpProvider{AwsClientOpts: awscommon.AWSClientOptions{
-		HTTPClient:   mockClient,
-		DisableRetry: true,
-	}}
+	p := avpProvider.AmazonAvpProvider{
+		AwsClientOpts: awscommon.AWSClientOptions{
+			HTTPClient:   mockClient,
+			DisableRetry: true,
+		},
+		CedarMapper: awsCedar.New(map[string]string{})}
 
 	mockClient.MockListStores()
 	info := avpTestSupport.IntegrationInfo()

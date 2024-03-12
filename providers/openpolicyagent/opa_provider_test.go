@@ -1,67 +1,67 @@
 package openpolicyagent_test
 
 import (
-    "bytes"
-    "encoding/base64"
-    "encoding/json"
-    "encoding/pem"
-    "errors"
-    "fmt"
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	"encoding/pem"
+	"errors"
+	"fmt"
 
-    "github.com/hexa-org/policy-mapper/api/policyprovider"
-    "github.com/hexa-org/policy-mapper/pkg/hexapolicy"
+	"github.com/hexa-org/policy-mapper/api/policyprovider"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 
-    "github.com/hexa-org/policy-mapper/providers/openpolicyagent"
-    "github.com/hexa-org/policy-mapper/providers/openpolicyagent/compressionsupport"
-    openpolicyagenttest "github.com/hexa-org/policy-mapper/providers/openpolicyagent/test"
+	"github.com/hexa-org/policy-mapper/providers/openpolicyagent"
+	"github.com/hexa-org/policy-mapper/providers/openpolicyagent/compressionsupport"
+	openpolicyagenttest "github.com/hexa-org/policy-mapper/providers/openpolicyagent/test"
 
-    "math/rand"
-    "net/http"
-    "net/http/httptest"
-    "os"
-    "path/filepath"
-    "runtime"
-    "testing"
-    "time"
+	"math/rand"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"runtime"
+	"testing"
+	"time"
 
-    "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDiscoverApplications(t *testing.T) {
-    type expected struct {
-        ProjectID string
-        ObjectID  string
-    }
+	type expected struct {
+		ProjectID string
+		ObjectID  string
+	}
 
-    tests := []struct {
-        name     string
-        key      []byte
-        expected struct {
-            ProjectID string
-            ObjectID  string
-        }
-    }{
-        {
-            name: "with project id",
-            key: []byte(`
+	tests := []struct {
+		name     string
+		key      []byte
+		expected struct {
+			ProjectID string
+			ObjectID  string
+		}
+	}{
+		{
+			name: "with project id",
+			key: []byte(`
               {
                 "bundle_url": "aBigUrl",
                 "project_id": "some opa project"
               }`),
 
-            expected: expected{ProjectID: "some opa project", ObjectID: base64.StdEncoding.EncodeToString([]byte("aBigUrl"))},
-        },
-        {
-            name: "without project id",
-            key: []byte(`
+			expected: expected{ProjectID: "some opa project", ObjectID: base64.StdEncoding.EncodeToString([]byte("aBigUrl"))},
+		},
+		{
+			name: "without project id",
+			key: []byte(`
               {
                 "bundle_url": "aBigUrl"
               }`),
-            expected: expected{ProjectID: "package authz", ObjectID: base64.StdEncoding.EncodeToString([]byte("aBigUrl"))},
-        },
-        {
-            name: "gcp bundle storage project",
-            key: []byte(`
+			expected: expected{ProjectID: "package authz", ObjectID: base64.StdEncoding.EncodeToString([]byte("aBigUrl"))},
+		},
+		{
+			name: "gcp bundle storage project",
+			key: []byte(`
 {
   "project_id": "some gcp project",
   "gcp": {
@@ -73,11 +73,11 @@ func TestDiscoverApplications(t *testing.T) {
   }
 }
 `),
-            expected: expected{ProjectID: "some gcp project", ObjectID: "opa-bundles"},
-        },
-        {
-            name: "aws bundle storage project",
-            key: []byte(`
+			expected: expected{ProjectID: "some gcp project", ObjectID: "opa-bundles"},
+		},
+		{
+			name: "aws bundle storage project",
+			key: []byte(`
 {
   "project_id": "some aws project",
   "aws": {
@@ -89,11 +89,11 @@ func TestDiscoverApplications(t *testing.T) {
   }
 }
 `),
-            expected: expected{ProjectID: "some aws project", ObjectID: "opa-bundles"},
-        },
-        {
-            name: "github bundle storage project",
-            key: []byte(`
+			expected: expected{ProjectID: "some aws project", ObjectID: "opa-bundles"},
+		},
+		{
+			name: "github bundle storage project",
+			key: []byte(`
 {
   "project_id": "some github project",
   "github": {
@@ -106,53 +106,53 @@ func TestDiscoverApplications(t *testing.T) {
   }
 }
 `),
-            expected: expected{ProjectID: "some github project", ObjectID: "opa-bundles"},
-        },
-    }
+			expected: expected{ProjectID: "some github project", ObjectID: "opa-bundles"},
+		},
+	}
 
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            p := openpolicyagent.OpaProvider{}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := openpolicyagent.OpaProvider{}
 
-            applications, err := p.DiscoverApplications(policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: tt.key})
+			applications, err := p.DiscoverApplications(policyprovider.IntegrationInfo{Name: openpolicyagent.ProviderTypeOpa, Key: tt.key})
 
-            assert.NoError(t, err)
-            assert.Equal(t, 1, len(applications))
-            assert.Equal(t, tt.expected.ProjectID, applications[0].Name)
-            assert.Equal(t, tt.expected.ObjectID, applications[0].ObjectID)
-            assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)
-            assert.Equal(t, "Hexa OPA", applications[0].Service)
-        })
-    }
+			assert.NoError(t, err)
+			assert.Equal(t, 1, len(applications))
+			assert.Equal(t, tt.expected.ProjectID, applications[0].Name)
+			assert.Equal(t, tt.expected.ObjectID, applications[0].ObjectID)
+			assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)
+			assert.Equal(t, "Hexa OPA", applications[0].Service)
+		})
+	}
 }
 
 func TestDiscoverApplications_Error(t *testing.T) {
-    p := openpolicyagent.OpaProvider{}
+	p := openpolicyagent.OpaProvider{}
 
-    applications, err := p.DiscoverApplications(policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: []byte("bad key")})
+	applications, err := p.DiscoverApplications(policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: []byte("bad key")})
 
-    assert.Empty(t, applications)
-    assert.Error(t, err)
+	assert.Empty(t, applications)
+	assert.Error(t, err)
 }
 
 func TestOpaProvider_EnsureClientIsAvailable(t *testing.T) {
-    tests := []struct {
-        name           string
-        key            []byte
-        expectedClient any
-    }{
-        {
-            name: "http bundle client",
-            key: []byte(`
+	tests := []struct {
+		name           string
+		key            []byte
+		expectedClient any
+	}{
+		{
+			name: "http bundle client",
+			key: []byte(`
 {
   "bundle_url": "aBigUrl"
 }
 `),
-            expectedClient: &openpolicyagent.HTTPBundleClient{},
-        },
-        {
-            name: "gcp bundle client",
-            key: []byte(`
+			expectedClient: &openpolicyagent.HTTPBundleClient{},
+		},
+		{
+			name: "gcp bundle client",
+			key: []byte(`
 {
   "bundle_url": "aBigUrl",
   "gcp": {
@@ -164,11 +164,11 @@ func TestOpaProvider_EnsureClientIsAvailable(t *testing.T) {
   }
 }
 `),
-            expectedClient: &openpolicyagent.GCPBundleClient{},
-        },
-        {
-            name: "aws bundle client",
-            key: []byte(`
+			expectedClient: &openpolicyagent.GCPBundleClient{},
+		},
+		{
+			name: "aws bundle client",
+			key: []byte(`
 {
   "aws": {
     "bucket_name": "opa-bundles",
@@ -179,11 +179,11 @@ func TestOpaProvider_EnsureClientIsAvailable(t *testing.T) {
   }
 }
 `),
-            expectedClient: &openpolicyagent.AWSBundleClient{},
-        },
-        {
-            name: "github bundle client",
-            key: []byte(`
+			expectedClient: &openpolicyagent.AWSBundleClient{},
+		},
+		{
+			name: "github bundle client",
+			key: []byte(`
 {
   "project_id": "some github project",
   "github": {
@@ -196,35 +196,35 @@ func TestOpaProvider_EnsureClientIsAvailable(t *testing.T) {
   }
 }
 `),
-            expectedClient: &openpolicyagent.GithubBundleClient{},
-        },
-    }
+			expectedClient: &openpolicyagent.GithubBundleClient{},
+		},
+	}
 
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            _, file, _, _ := runtime.Caller(0)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, file, _, _ := runtime.Caller(0)
 
-            resourcesDirectory := filepath.Join(file, "../resources")
-            p := openpolicyagent.OpaProvider{ResourcesDirectory: resourcesDirectory}
+			resourcesDirectory := filepath.Join(file, "../resources")
+			p := openpolicyagent.OpaProvider{ResourcesDirectory: resourcesDirectory}
 
-            client, err := p.ConfigureClient(tt.key)
+			client, err := p.ConfigureClient(tt.key)
 
-            assert.NoError(t, err)
-            assert.NotNil(t, client)
-            assert.IsType(t, tt.expectedClient, client)
-        })
-    }
+			assert.NoError(t, err)
+			assert.NotNil(t, client)
+			assert.IsType(t, tt.expectedClient, client)
+		})
+	}
 }
 
 func TestOpaProvider_EnsureClientIsAvailable_Error(t *testing.T) {
-    key := []byte("bad key")
-    p := openpolicyagent.OpaProvider{}
+	key := []byte("bad key")
+	p := openpolicyagent.OpaProvider{}
 
-    _, err := p.ConfigureClient(key)
+	_, err := p.ConfigureClient(key)
 
-    assert.Contains(t, err.Error(), "invalid integration key")
+	assert.Contains(t, err.Error(), "invalid integration key")
 
-    key = []byte(`
+	key = []byte(`
 {
   "bundle_url": "bundleURL",
   "gcp": {"key": {"bad":"key"}},
@@ -232,183 +232,183 @@ func TestOpaProvider_EnsureClientIsAvailable_Error(t *testing.T) {
   "github": {"key": {"bad":"key"}}
 }
 `)
-    p = openpolicyagent.OpaProvider{}
-    _, err = p.ConfigureClient(key)
+	p = openpolicyagent.OpaProvider{}
+	_, err = p.ConfigureClient(key)
 
-    assert.Contains(t, err.Error(), "unable to create GCS storage client")
+	assert.Contains(t, err.Error(), "unable to create GCS storage client")
 }
 
 func TestGetPolicyInfo(t *testing.T) {
-    key := []byte(`{"bundle_url": "aBigUrl"}`)
-    _, file, _, _ := runtime.Caller(0)
-    join := filepath.Join(file, "../resources/bundles/bundle/data.json")
-    data, _ := os.ReadFile(join)
-    m := &openpolicyagenttest.MockBundleClient{GetResponse: data}
+	key := []byte(`{"bundle_url": "aBigUrl"}`)
+	_, file, _, _ := runtime.Caller(0)
+	join := filepath.Join(file, "../resources/bundles/bundle/data.json")
+	data, _ := os.ReadFile(join)
+	m := &openpolicyagenttest.MockBundleClient{GetResponse: data}
 
-    resourcesDirectory := filepath.Join(file, "../resources")
-    p := openpolicyagent.OpaProvider{
-        BundleClientOverride: m,
-        ResourcesDirectory:   resourcesDirectory,
-    }
+	resourcesDirectory := filepath.Join(file, "../resources")
+	p := openpolicyagent.OpaProvider{
+		BundleClientOverride: m,
+		ResourcesDirectory:   resourcesDirectory,
+	}
 
-    policies, _ := p.GetPolicyInfo(policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key}, policyprovider.ApplicationInfo{})
+	policies, _ := p.GetPolicyInfo(policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key}, policyprovider.ApplicationInfo{})
 
-    assert.Equal(t, 4, len(policies))
+	assert.Equal(t, 4, len(policies))
 }
 
 func TestGetPolicyInfo_withBadKey(t *testing.T) {
-    p := openpolicyagent.OpaProvider{
-        BundleClientOverride: &openpolicyagenttest.MockBundleClient{},
-    }
+	p := openpolicyagent.OpaProvider{
+		BundleClientOverride: &openpolicyagenttest.MockBundleClient{},
+	}
 
-    _, err := p.GetPolicyInfo(
-        policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: []byte("bad key")},
-        policyprovider.ApplicationInfo{},
-    )
+	_, err := p.GetPolicyInfo(
+		policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: []byte("bad key")},
+		policyprovider.ApplicationInfo{},
+	)
 
-    assert.Contains(t, err.Error(), "invalid client")
+	assert.Contains(t, err.Error(), "invalid client")
 }
 
 func TestGetPolicyInfo_withBadRequest(t *testing.T) {
-    key := []byte(`
+	key := []byte(`
 {
   "bundle_url": "aBigUrl"
 }
 `)
-    mockClient := &openpolicyagenttest.MockBundleClient{
-        GetErr: errors.New("oops"),
-    }
-    p := openpolicyagent.OpaProvider{BundleClientOverride: mockClient}
+	mockClient := &openpolicyagenttest.MockBundleClient{
+		GetErr: errors.New("oops"),
+	}
+	p := openpolicyagent.OpaProvider{BundleClientOverride: mockClient}
 
-    _, err := p.GetPolicyInfo(policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key}, policyprovider.ApplicationInfo{})
+	_, err := p.GetPolicyInfo(policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key}, policyprovider.ApplicationInfo{})
 
-    assert.Error(t, err)
+	assert.Error(t, err)
 }
 
 func TestSetPolicyInfo(t *testing.T) {
-    key := []byte(`
+	key := []byte(`
 {
   "bundle_url": "aBigUrl"
 }
 `)
-    mockClient := &openpolicyagenttest.MockBundleClient{PostStatusCode: http.StatusCreated}
-    _, file, _, _ := runtime.Caller(0)
-    p := openpolicyagent.OpaProvider{BundleClientOverride: mockClient, ResourcesDirectory: filepath.Join(file, "../resources")}
+	mockClient := &openpolicyagenttest.MockBundleClient{PostStatusCode: http.StatusCreated}
+	_, file, _, _ := runtime.Caller(0)
+	p := openpolicyagent.OpaProvider{BundleClientOverride: mockClient, ResourcesDirectory: filepath.Join(file, "../resources")}
 
-    status, err := p.SetPolicyInfo(
-        policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key},
-        policyprovider.ApplicationInfo{ObjectID: "anotherResourceId"},
-        []hexapolicy.PolicyInfo{
-            {Meta: hexapolicy.MetaInfo{Version: "0.5"}, Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subject: hexapolicy.SubjectInfo{Members: []string{"allusers"}}, Object: hexapolicy.ObjectInfo{
-                ResourceID: "aResourceId",
-            }},
-        },
-    )
+	status, err := p.SetPolicyInfo(
+		policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key},
+		policyprovider.ApplicationInfo{ObjectID: "anotherResourceId"},
+		[]hexapolicy.PolicyInfo{
+			{Meta: hexapolicy.MetaInfo{Version: "0.5"}, Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subject: hexapolicy.SubjectInfo{Members: []string{"allusers"}}, Object: hexapolicy.ObjectInfo{
+				ResourceID: "aResourceId",
+			}},
+		},
+	)
 
-    assert.Equal(t, http.StatusCreated, status)
-    assert.NoError(t, err)
+	assert.Equal(t, http.StatusCreated, status)
+	assert.NoError(t, err)
 
-    gzip, _ := compressionsupport.UnGzip(bytes.NewReader(mockClient.ArgPostBundle))
+	gzip, _ := compressionsupport.UnGzip(bytes.NewReader(mockClient.ArgPostBundle))
 
-    random := rand.New(rand.NewSource(time.Now().UnixNano()))
-    path := filepath.Join(file, fmt.Sprintf("../resources/bundles/.bundle-%d", random.Uint64()))
-    defer os.RemoveAll(path)
-    _ = compressionsupport.UnTarToPath(bytes.NewReader(gzip), path)
-    readFile, _ := os.ReadFile(path + "/bundle/data.json")
-    assert.JSONEq(t, `{"policies":[{"meta":{"version":"0.5"},"actions":[{"actionUri":"http:GET"}],"subject":{"members":["allusers"]},"object":{"resource_id":"anotherResourceId"}}]}`, string(readFile))
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
+	path := filepath.Join(file, fmt.Sprintf("../resources/bundles/.bundle-%d", random.Uint64()))
+	defer os.RemoveAll(path)
+	_ = compressionsupport.UnTarToPath(bytes.NewReader(gzip), path)
+	readFile, _ := os.ReadFile(path + "/bundle/data.json")
+	assert.JSONEq(t, `{"policies":[{"meta":{"version":"0.5"},"actions":[{"actionUri":"http:GET"}],"subject":{"members":["allusers"]},"object":{"resource_id":"anotherResourceId"}}]}`, string(readFile))
 }
 
 func TestSetPolicyInfo_withInvalidArguments(t *testing.T) {
-    key := []byte(`
+	key := []byte(`
 {
   "bundle_url": "aBigUrl"
 }
 `)
-    client := &openpolicyagenttest.MockBundleClient{}
-    _, file, _, _ := runtime.Caller(0)
-    p := openpolicyagent.OpaProvider{BundleClientOverride: client, ResourcesDirectory: filepath.Join(file, "../resources")}
+	client := &openpolicyagenttest.MockBundleClient{}
+	_, file, _, _ := runtime.Caller(0)
+	p := openpolicyagent.OpaProvider{BundleClientOverride: client, ResourcesDirectory: filepath.Join(file, "../resources")}
 
-    status, err := p.SetPolicyInfo(
-        policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key},
-        policyprovider.ApplicationInfo{},
-        []hexapolicy.PolicyInfo{},
-    )
+	status, err := p.SetPolicyInfo(
+		policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key},
+		policyprovider.ApplicationInfo{},
+		[]hexapolicy.PolicyInfo{},
+	)
 
-    assert.Equal(t, 500, status)
-    assert.Contains(t, err.Error(), "invalid app info")
+	assert.Equal(t, 500, status)
+	assert.Contains(t, err.Error(), "invalid app info")
 
-    status, err = p.SetPolicyInfo(
-        policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key},
-        policyprovider.ApplicationInfo{ObjectID: "aResourceId"},
-        []hexapolicy.PolicyInfo{
-            {
-                Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subject: hexapolicy.SubjectInfo{Members: []string{"allusers"}}, Object: hexapolicy.ObjectInfo{
-                ResourceID: "aResourceId",
-            }},
-        },
-    )
+	status, err = p.SetPolicyInfo(
+		policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key},
+		policyprovider.ApplicationInfo{ObjectID: "aResourceId"},
+		[]hexapolicy.PolicyInfo{
+			{
+				Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subject: hexapolicy.SubjectInfo{Members: []string{"allusers"}}, Object: hexapolicy.ObjectInfo{
+					ResourceID: "aResourceId",
+				}},
+		},
+	)
 
-    assert.Equal(t, 500, status)
-    assert.Contains(t, err.Error(), "invalid policy info")
+	assert.Equal(t, 500, status)
+	assert.Contains(t, err.Error(), "invalid policy info")
 
-    key = []byte(`{
+	key = []byte(`{
   "bundle_url": "aBigUrl",
   "gcp": {"key": {}}
 }`)
-    status, err = p.SetPolicyInfo(
-        policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key},
-        policyprovider.ApplicationInfo{ObjectID: "anObjectID"},
-        []hexapolicy.PolicyInfo{},
-    )
+	status, err = p.SetPolicyInfo(
+		policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key},
+		policyprovider.ApplicationInfo{ObjectID: "anObjectID"},
+		[]hexapolicy.PolicyInfo{},
+	)
 
-    assert.Equal(t, 500, status)
-    assert.Contains(t, err.Error(), "invalid client")
+	assert.Equal(t, 500, status)
+	assert.Contains(t, err.Error(), "invalid client")
 }
 
 func TestSetPolicyInfo_WithHTTPSBundleServer(t *testing.T) {
-    mockCalled := false
-    bundleServer := httptest.NewTLSServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-        assert.Equal(t, "/bundles", r.URL.Path)
-        mockCalled = true
-        rw.WriteHeader(http.StatusCreated)
-    }))
-    caCert := pem.EncodeToMemory(&pem.Block{
-        Type:  "CERTIFICATE",
-        Bytes: bundleServer.Certificate().Raw,
-    })
+	mockCalled := false
+	bundleServer := httptest.NewTLSServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/bundles", r.URL.Path)
+		mockCalled = true
+		rw.WriteHeader(http.StatusCreated)
+	}))
+	caCert := pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: bundleServer.Certificate().Raw,
+	})
 
-    integration := struct {
-        BundleURL string `json:"bundle_url"`
-        CACert    string `json:"ca_cert"`
-    }{
-        BundleURL: bundleServer.URL,
-        CACert:    string(caCert),
-    }
-    key, err := json.Marshal(integration)
-    assert.NoError(t, err)
+	integration := struct {
+		BundleURL string `json:"bundle_url"`
+		CACert    string `json:"ca_cert"`
+	}{
+		BundleURL: bundleServer.URL,
+		CACert:    string(caCert),
+	}
+	key, err := json.Marshal(integration)
+	assert.NoError(t, err)
 
-    _, file, _, _ := runtime.Caller(0)
-    p := openpolicyagent.OpaProvider{ResourcesDirectory: filepath.Join(file, "../resources")}
-    status, err := p.SetPolicyInfo(
-        policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key},
-        policyprovider.ApplicationInfo{ObjectID: "aResourceId"},
-        []hexapolicy.PolicyInfo{
-            {Meta: hexapolicy.MetaInfo{Version: "0.5"}, Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subject: hexapolicy.SubjectInfo{Members: []string{"allusers"}}, Object: hexapolicy.ObjectInfo{
-                ResourceID: "aResourceId",
-            }},
-        },
-    )
-    assert.Equal(t, http.StatusCreated, status)
-    assert.NoError(t, err)
-    assert.True(t, mockCalled)
+	_, file, _, _ := runtime.Caller(0)
+	p := openpolicyagent.OpaProvider{ResourcesDirectory: filepath.Join(file, "../resources")}
+	status, err := p.SetPolicyInfo(
+		policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key},
+		policyprovider.ApplicationInfo{ObjectID: "aResourceId"},
+		[]hexapolicy.PolicyInfo{
+			{Meta: hexapolicy.MetaInfo{Version: "0.5"}, Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subject: hexapolicy.SubjectInfo{Members: []string{"allusers"}}, Object: hexapolicy.ObjectInfo{
+				ResourceID: "aResourceId",
+			}},
+		},
+	)
+	assert.Equal(t, http.StatusCreated, status)
+	assert.NoError(t, err)
+	assert.True(t, mockCalled)
 }
 
 func TestMakeDefaultBundle(t *testing.T) {
-    client := &openpolicyagent.HTTPBundleClient{}
-    _, file, _, _ := runtime.Caller(0)
-    p := openpolicyagent.OpaProvider{BundleClientOverride: client, ResourcesDirectory: filepath.Join(file, "../resources")}
+	client := &openpolicyagent.HTTPBundleClient{}
+	_, file, _, _ := runtime.Caller(0)
+	p := openpolicyagent.OpaProvider{BundleClientOverride: client, ResourcesDirectory: filepath.Join(file, "../resources")}
 
-    data := []byte(`{
+	data := []byte(`{
   "policies": [
     {
       "version": "0.5",
@@ -425,21 +425,24 @@ func TestMakeDefaultBundle(t *testing.T) {
     }
   ]
 }`)
-    bundle, _ := p.MakeDefaultBundle(data)
+	bundle, _ := p.MakeDefaultBundle(data)
 
-    gzip, _ := compressionsupport.UnGzip(bytes.NewReader(bundle.Bytes()))
-    random := rand.New(rand.NewSource(time.Now().UnixNano()))
-    path := filepath.Join(os.TempDir(), fmt.Sprintf("/test-bundle-%d", random.Uint64()))
-    _ = compressionsupport.UnTarToPath(bytes.NewReader(gzip), path)
+	gzip, _ := compressionsupport.UnGzip(bytes.NewReader(bundle.Bytes()))
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
+	path := filepath.Join(os.TempDir(), fmt.Sprintf("/test-bundle-%d", random.Uint64()))
+	_ = compressionsupport.UnTarToPath(bytes.NewReader(gzip), path)
 
-    created, _ := os.ReadFile(filepath.Join(path, "/bundle/policy.rego"))
-    assert.Contains(t, string(created), "package authz")
+	created, _ := os.ReadFile(filepath.Join(path, "/bundle/policy.rego"))
+	assert.Contains(t, string(created), "package authz")
 
-    mcreated, _ := os.ReadFile(filepath.Join(path, "/bundle/.manifest"))
-    assert.Contains(t, string(mcreated), "{\"revision\":\"\",\"roots\":[\"\"]}")
+	policyv2, _ := os.ReadFile(filepath.Join(path, "/bundle/hexaPolicy.rego"))
+	assert.Contains(t, string(policyv2), "package hexaPolicy")
 
-    dcreated, _ := os.ReadFile(filepath.Join(path, "/bundle/data.json"))
-    assert.Equal(t, `{
+	mcreated, _ := os.ReadFile(filepath.Join(path, "/bundle/.manifest"))
+	assert.Contains(t, string(mcreated), "{\"revision\":\"\",\"roots\":[\"\"]}")
+
+	dcreated, _ := os.ReadFile(filepath.Join(path, "/bundle/data.json"))
+	assert.Equal(t, `{
   "policies": [
     {
       "version": "0.5",
@@ -456,5 +459,5 @@ func TestMakeDefaultBundle(t *testing.T) {
     }
   ]
 }`, string(dcreated))
-    _ = os.RemoveAll(path)
+	_ = os.RemoveAll(path)
 }

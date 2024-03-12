@@ -59,7 +59,7 @@ type AmazonAvpProvider struct {
 	CedarMapper   *awsCedar.CedarPolicyMapper
 }
 
-func (a *AmazonAvpProvider) Name() string {
+func (a AmazonAvpProvider) Name() string {
 	return ProviderTypeAvp
 }
 
@@ -69,7 +69,7 @@ func (a *AmazonAvpProvider) initCedarMapper() {
 	}
 }
 
-func (a *AmazonAvpProvider) getAvpClient(info policyprovider.IntegrationInfo) (avpClient.AvpClient, error) {
+func (a AmazonAvpProvider) getAvpClient(info policyprovider.IntegrationInfo) (avpClient.AvpClient, error) {
 	var err error
 	client, err := avpClient.NewAvpClient(info.Key, a.AwsClientOpts) // NewFromConfig(info.Key, a.AwsClientOpts)
 	if err != nil {
@@ -80,7 +80,7 @@ func (a *AmazonAvpProvider) getAvpClient(info policyprovider.IntegrationInfo) (a
 	return client, nil
 }
 
-func (a *AmazonAvpProvider) DiscoverApplications(info policyprovider.IntegrationInfo) ([]policyprovider.ApplicationInfo, error) {
+func (a AmazonAvpProvider) DiscoverApplications(info policyprovider.IntegrationInfo) ([]policyprovider.ApplicationInfo, error) {
 	if !strings.EqualFold(info.Name, a.Name()) {
 		return []policyprovider.ApplicationInfo{}, nil
 	}
@@ -93,7 +93,7 @@ func (a *AmazonAvpProvider) DiscoverApplications(info policyprovider.Integration
 	return client.ListStores()
 }
 
-func (a *AmazonAvpProvider) mapAvpPolicyToHexa(avpPolicy types.PolicyItem, client avpClient.AvpClient, applicationInfo policyprovider.ApplicationInfo) ([]hexapolicy.PolicyInfo, error) {
+func (a AmazonAvpProvider) mapAvpPolicyToHexa(avpPolicy types.PolicyItem, client avpClient.AvpClient, applicationInfo policyprovider.ApplicationInfo) ([]hexapolicy.PolicyInfo, error) {
 	hexaPols := make([]hexapolicy.PolicyInfo, 0)
 	policyType := avpPolicy.PolicyType
 
@@ -156,7 +156,7 @@ func (a *AmazonAvpProvider) mapAvpPolicyToHexa(avpPolicy types.PolicyItem, clien
 	return hexaPols, nil
 }
 
-func (a *AmazonAvpProvider) GetPolicyInfo(info policyprovider.IntegrationInfo, applicationInfo policyprovider.ApplicationInfo) ([]hexapolicy.PolicyInfo, error) {
+func (a AmazonAvpProvider) GetPolicyInfo(info policyprovider.IntegrationInfo, applicationInfo policyprovider.ApplicationInfo) ([]hexapolicy.PolicyInfo, error) {
 	client, err := a.getAvpClient(info)
 	if err != nil {
 		return nil, err
@@ -179,7 +179,7 @@ func (a *AmazonAvpProvider) GetPolicyInfo(info policyprovider.IntegrationInfo, a
 	return hexaPols, nil
 }
 
-func (a *AmazonAvpProvider) Reconcile(info policyprovider.IntegrationInfo, applicationInfo policyprovider.ApplicationInfo, compareHexaPolicies []hexapolicy.PolicyInfo, diffsOnly bool) ([]hexapolicy.PolicyDif, error) {
+func (a AmazonAvpProvider) Reconcile(info policyprovider.IntegrationInfo, applicationInfo policyprovider.ApplicationInfo, compareHexaPolicies []hexapolicy.PolicyInfo, diffsOnly bool) ([]hexapolicy.PolicyDif, error) {
 
 	// Get all existing policies to compare:
 	avpExistingPolicies, err := a.GetPolicyInfo(info, applicationInfo)
@@ -281,7 +281,7 @@ func (a *AmazonAvpProvider) Reconcile(info policyprovider.IntegrationInfo, appli
 	return res, nil
 }
 
-func (a *AmazonAvpProvider) SetPolicyInfo(info policyprovider.IntegrationInfo, applicationInfo policyprovider.ApplicationInfo, hexaPolicies []hexapolicy.PolicyInfo) (int, error) {
+func (a AmazonAvpProvider) SetPolicyInfo(info policyprovider.IntegrationInfo, applicationInfo policyprovider.ApplicationInfo, hexaPolicies []hexapolicy.PolicyInfo) (int, error) {
 	client, err := a.getAvpClient(info)
 	if err != nil {
 		return http.StatusInternalServerError, err
@@ -373,7 +373,7 @@ func (a *AmazonAvpProvider) SetPolicyInfo(info policyprovider.IntegrationInfo, a
 	return http.StatusOK, nil
 }
 
-func (a *AmazonAvpProvider) convertCedarStatement(hexaPolicy hexapolicy.PolicyInfo) (*string, error) {
+func (a AmazonAvpProvider) convertCedarStatement(hexaPolicy hexapolicy.PolicyInfo) (*string, error) {
 	cedarPolicies, err := a.CedarMapper.MapPolicyToCedar(hexaPolicy)
 	if err != nil {
 		return nil, err
@@ -388,7 +388,7 @@ func (a *AmazonAvpProvider) convertCedarStatement(hexaPolicy hexapolicy.PolicyIn
 	return &cedarDefinition, nil
 }
 
-func (a *AmazonAvpProvider) prepareCreatePolicy(hexaPolicy hexapolicy.PolicyInfo, app policyprovider.ApplicationInfo) (*verifiedpermissions.CreatePolicyInput, error) {
+func (a AmazonAvpProvider) prepareCreatePolicy(hexaPolicy hexapolicy.PolicyInfo, app policyprovider.ApplicationInfo) (*verifiedpermissions.CreatePolicyInput, error) {
 	cedarStatement, err := a.convertCedarStatement(hexaPolicy)
 	if err != nil {
 		return nil, err
@@ -411,7 +411,7 @@ func (a *AmazonAvpProvider) prepareCreatePolicy(hexaPolicy hexapolicy.PolicyInfo
 	return &createPolicyInput, nil
 }
 
-func (a *AmazonAvpProvider) preparePolicyUpdate(hexaPolicy hexapolicy.PolicyInfo, meta hexapolicy.MetaInfo) (*verifiedpermissions.UpdatePolicyInput, error) {
+func (a AmazonAvpProvider) preparePolicyUpdate(hexaPolicy hexapolicy.PolicyInfo, meta hexapolicy.MetaInfo) (*verifiedpermissions.UpdatePolicyInput, error) {
 	cedarStatement, err := a.convertCedarStatement(hexaPolicy)
 	if err != nil {
 		return nil, err
@@ -431,7 +431,7 @@ func (a *AmazonAvpProvider) preparePolicyUpdate(hexaPolicy hexapolicy.PolicyInfo
 	return &update, nil
 }
 
-func (a *AmazonAvpProvider) prepareDelete(avpMeta hexapolicy.MetaInfo) *verifiedpermissions.DeletePolicyInput {
+func (a AmazonAvpProvider) prepareDelete(avpMeta hexapolicy.MetaInfo) *verifiedpermissions.DeletePolicyInput {
 	policyType := avpMeta.SourceData[ParamPolicyType]
 	if policyType == string(types.PolicyTypeTemplateLinked) {
 		return nil // template deletions not currently supported

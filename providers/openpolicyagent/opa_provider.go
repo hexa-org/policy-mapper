@@ -39,7 +39,7 @@ type OpaProvider struct {
 }
 
 func (o *OpaProvider) Name() string {
-	return "open_policy_agent"
+	return ProviderTypeOpa
 }
 
 func (o *OpaProvider) DiscoverApplications(info policyprovider.IntegrationInfo) ([]policyprovider.ApplicationInfo, error) {
@@ -160,7 +160,7 @@ func (o *OpaProvider) MakeDefaultBundle(data []byte) (bytes.Buffer, error) {
 	join := filepath.Join(file, "../resources/bundles/bundle")
 	manifest, _ := os.ReadFile(filepath.Join(join, "/.manifest"))
 	rego, _ := os.ReadFile(filepath.Join(join, "/policy.rego"))
-
+	rego2, _ := os.ReadFile(filepath.Join(join, "/hexaPolicy.rego"))
 	// todo - ignoring errors for the moment while spiking
 
 	tempDir := os.TempDir()
@@ -169,7 +169,7 @@ func (o *OpaProvider) MakeDefaultBundle(data []byte) (bytes.Buffer, error) {
 	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/.manifest"), manifest, 0644)
 	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/data.json"), data, 0644)
 	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/policy.rego"), rego, 0644)
-	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/hexaPolicyV2.rego"), rego, 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/hexaPolicy.rego"), rego2, 0644)
 
 	tar, _ := compressionsupport.TarFromPath(filepath.Join(tempDir, "/bundles"))
 	var buffer bytes.Buffer
@@ -178,16 +178,16 @@ func (o *OpaProvider) MakeDefaultBundle(data []byte) (bytes.Buffer, error) {
 	return buffer, nil
 }
 
-type credentials struct {
+type Credentials struct {
 	ProjectID string             `json:"project_id,omitempty"`
 	BundleUrl string             `json:"bundle_url"`
 	CACert    string             `json:"ca_cert,omitempty"`
-	GCP       *gcpCredentials    `json:"gcp,omitempty"`
-	AWS       *awsCredentials    `json:"aws,omitempty"`
-	GITHUB    *githubCredentials `json:"github,omitempty"`
+	GCP       *GcpCredentials    `json:"gcp,omitempty"`
+	AWS       *AwsCredentials    `json:"aws,omitempty"`
+	GITHUB    *GithubCredentials `json:"github,omitempty"`
 }
 
-func (c credentials) objectID() string {
+func (c Credentials) objectID() string {
 	if c.GCP != nil {
 		return c.GCP.BucketName
 	}
@@ -203,26 +203,26 @@ func (c credentials) objectID() string {
 	return base64.StdEncoding.EncodeToString([]byte(c.BundleUrl))
 }
 
-type gcpCredentials struct {
+type GcpCredentials struct {
 	BucketName string          `json:"bucket_name,omitempty"`
 	ObjectName string          `json:"object_name,omitempty"`
 	Key        json.RawMessage `json:"key,omitempty"`
 }
 
-type awsCredentials gcpCredentials
+type AwsCredentials GcpCredentials
 
-type githubCredentials struct {
+type GithubCredentials struct {
 	Account    string          `json:"account,omitempty"`
 	Repo       string          `json:"repo,omitempty"`
 	BundlePath string          `json:"bundlePath,omitempty"`
 	Key        json.RawMessage `json:"key,omitempty"`
 }
 
-func (o *OpaProvider) credentials(key []byte) (credentials, error) {
-	var foundCredentials credentials
+func (o *OpaProvider) credentials(key []byte) (Credentials, error) {
+	var foundCredentials Credentials
 	err := json.NewDecoder(bytes.NewReader(key)).Decode(&foundCredentials)
 	if err != nil {
-		return credentials{}, fmt.Errorf("invalid integration key: %w", err)
+		return Credentials{}, fmt.Errorf("invalid integration key: %w", err)
 	}
 	if foundCredentials.ProjectID == "" {
 		foundCredentials.ProjectID = "package authz"

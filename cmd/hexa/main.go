@@ -177,7 +177,7 @@ func lowercaseKeywords(args []string) []string {
 	return args
 }
 
-// breakIntoArgs separates the command by spaces while respecting quotes
+// breakIntoArgs separates the command by spaces while preserving escaped space
 func breakIntoArgs(command string) []string {
 	lr := ' '
 	res := strings.FieldsFunc(command, func(r rune) bool {
@@ -186,10 +186,7 @@ func breakIntoArgs(command string) []string {
 			return false
 		}
 		lr = r
-		if r == ' ' {
-			return true
-		}
-		return false
+		return r == ' '
 	})
 	return res
 }

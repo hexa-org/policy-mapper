@@ -26,7 +26,7 @@ var MapFormats = []string{"gcp", "cedar"}
 var seperatorline = "==============================================================================="
 
 func openIntegration(alias string, info policyprovider.IntegrationInfo) (*sdk.Integration, error) {
-	integration, err := sdk.OpenIntegration(nil, sdk.WithIntegrationInfo(info))
+	integration, err := sdk.OpenIntegration(&info)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (a *AddGcpIntegrationCmd) Run(cli *CLI) error {
 	}
 
 	info := policyprovider.IntegrationInfo{
-		Name: sdk.ProviderTypeGcp,
+		Name: sdk.ProviderTypeGoogleCloudIAP,
 		Key:  keyStr,
 	}
 

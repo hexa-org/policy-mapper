@@ -16,6 +16,9 @@ import (
     "github.com/go-playground/validator/v10"
 )
 
+const ProviderTypeGoogleCloudIAP string = "gcp_iap"
+const ProviderTypeGoogleCloud string = "google_cloud"
+
 type GoogleProvider struct {
     HttpClientOverride HTTPClient
     GcpMapper          *gcpBind.GooglePolicyMapper
