@@ -20,7 +20,7 @@ func main() {
 		Key:  keybytes,
 	}
 
-	integration, err := sdk.OpenIntegration(&info)
+	integration, err := sdk.OpenIntegration(sdk.WithIntegrationInfo(info))
 	if err != nil {
 		fmt.Println("Error opening integration: " + err.Error())
 		panic(-1)

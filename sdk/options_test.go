@@ -28,7 +28,7 @@ func TestWithIntegrationInfo(t *testing.T) {
 }
 `),
 	}
-	integration, err := OpenIntegration(&info)
+	integration, err := OpenIntegration(WithIntegrationInfo(info))
 	assert.NoError(t, err, "No error on open OPA AWS integration")
 	assert.NotNil(t, integration, "Integration is defined")
 
@@ -43,8 +43,7 @@ func TestWithIntegrationInfo(t *testing.T) {
 
 func TestWithOpaAwsIntegration(t *testing.T) {
 	key := []byte(`{"region": "us-west-1"}`)
-	integration, err := OpenIntegration(nil,
-		WithOpaAwsIntegration("opa-bundles", "bundle.tar.gz", key))
+	integration, err := OpenIntegration(WithOpaAwsIntegration("opa-bundles", "bundle.tar.gz", key))
 	assert.NoError(t, err, "No error on open OPA AWS integration")
 	assert.NotNil(t, integration, "Integration is defined")
 
@@ -59,8 +58,8 @@ func TestWithOpaAwsIntegration(t *testing.T) {
 
 func TestWithOpaGcpIntegration(t *testing.T) {
 	key := []byte(`{"type": "service_account"}`)
-	integration, err := OpenIntegration(nil,
-		WithOpaGcpIntegration( "opa-bundles", "bundle.tar.gz", key))
+	integration, err := OpenIntegration(
+		WithOpaGcpIntegration("opa-bundles", "bundle.tar.gz", key))
 	assert.NoError(t, err, "No error on open OPA GCP integration")
 	assert.NotNil(t, integration, "Integration is defined")
 
@@ -75,8 +74,8 @@ func TestWithOpaGcpIntegration(t *testing.T) {
 
 func TestWithOpaGithubIntegration(t *testing.T) {
 	key := []byte(`{"accessToken": "some_github_access_token"}`)
-	integration, err := OpenIntegration(nil,
-		WithOpaGithubIntegration( "hexa-org", "opa-bundles", "bundle.tar.gz", key))
+	integration, err := OpenIntegration(
+		WithOpaGithubIntegration("hexa-org", "opa-bundles", "bundle.tar.gz", key))
 	assert.NoError(t, err, "No error on open OPA Github integration")
 	assert.NotNil(t, integration, "Integration is defined")
 
@@ -91,8 +90,8 @@ func TestWithOpaGithubIntegration(t *testing.T) {
 
 func TestWithOpaHttpIntegration(t *testing.T) {
 
-	integration, err := OpenIntegration(nil,
-		WithOpaHttpIntegration( "aBigUrl", ""))
+	integration, err := OpenIntegration(
+		WithOpaHttpIntegration("aBigUrl", ""))
 	assert.NoError(t, err, "No error on open OPA Http integration")
 	assert.NotNil(t, integration, "Integration is defined")
 
@@ -117,7 +116,7 @@ func TestWithAttributeMap(t *testing.T) {
 	nameMap["username"] = "account"
 	nameMap["a"] = "123"
 	info := avpTestSupport.IntegrationInfo()
-	integration, err := OpenIntegration(&info, WithProviderOptions(options), WithAttributeMap(nameMap))
+	integration, err := OpenIntegration(WithIntegrationInfo(info), WithProviderOptions(options), WithAttributeMap(nameMap))
 	assert.NoError(t, err, "Check no error opening mock provider")
 
 	switch prov := integration.provider.(type) {

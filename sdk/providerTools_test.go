@@ -37,7 +37,7 @@ func TestSdk(t *testing.T) {
 		DisableRetry: true,
 	}
 	info := avpTestSupport.IntegrationInfo()
-	integration, err := OpenIntegration(&info, WithProviderOptions(options))
+	integration, err := OpenIntegration(WithIntegrationInfo(info), WithProviderOptions(options))
 	assert.NoError(t, err, "Check no error opening mock provider")
 	s := testSuite{
 		Info:        info,

@@ -44,19 +44,19 @@ provider features. An IntegrationInfo struct consists of:
 
 - options - one or more configuration functions for configuring provider See: sdk.Options
 */
-func OpenIntegration(integrationInfo *policyprovider.IntegrationInfo, options ...func(*Options)) (*Integration, error) {
+func OpenIntegration(options ...func(*Options)) (*Integration, error) {
 
 	i := &Integration{
 		Opts: Options{},
 	}
 
-	if integrationInfo != nil {
-		i.Opts.Info = integrationInfo
-	}
 	for _, opt := range options {
 		opt(&i.Opts)
 	}
 
+	if i.Opts.Info == nil {
+		return nil, errors.New("insufficient integration information provided (missing Integration Info)")
+	}
 	err := i.open()
 
 	return i, err

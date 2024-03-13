@@ -25,8 +25,8 @@ var MapFormats = []string{"gcp", "cedar"}
 
 var seperatorline = "==============================================================================="
 
-func openIntegration(alias string, info policyprovider.IntegrationInfo) (*sdk.Integration, error) {
-	integration, err := sdk.OpenIntegration(&info)
+func openIntegration(alias string, options ...func(options *sdk.Options)) (*sdk.Integration, error) {
+	integration, err := sdk.OpenIntegration(options...)
 	if err != nil {
 		return nil, err
 	}
@@ -106,11 +106,140 @@ func (a *AddGcpIntegrationCmd) Run(cli *CLI) error {
 		Key:  keyStr,
 	}
 
-	integration, err := openIntegration(alias, info)
+	integration, err := openIntegration(alias, sdk.WithIntegrationInfo(info))
 	if err != nil {
 		return err
 	}
 	// printer.Print(appMap)
+	cli.Data.Integrations[alias] = integration
+	err = cli.Data.Save(&cli.Globals)
+	return err
+}
+
+type AddOpaIntegrationCmd struct {
+	Type       string `arg:"" required:"" help:"Type of OPA integration: aws, gcp, github, or http"`
+	Alias      string `arg:"" optional:"" help:"A new local alias that will be used to refer to the integration in subsequent operations. Defaults to an auto-generated alias"`
+	Account    string `help:"The account name for a Github project"`
+	Repo       string `help:"The repository name for a Github project"`
+	Path       string `help:"The path to the bundle in a Github project"`
+	Bucket     string `help:"The storage bucket name on AWS or GCP storage service"`
+	Object     string `help:"The storage object name on AWS or GCP storage service"`
+	Credential string `aliases:"key,secret" type:"existingfile" help:"A file containing the credential key or token used to access the bundle service or repo"`
+	Url        string `help:"The Http URL for the Bundle service"`
+	X509       string `aliases:"cacert" help:"For HTTP integration, X.509 public key to verify the server TLS certificate"`
+	File       string `short:"f" type:"existingfile" help:"File containing a JSON formatted OPA Integration"`
+}
+
+func (a *AddOpaIntegrationCmd) Help() string {
+	return `To add an OPA integration specify a type which is one of "aws", "gcp", "github" or "http", and integration information by
+specifying a file of the form:
+{
+  "github": {
+    "account": "hexa-org",
+    "repo": "opa-bundles",
+	"bundlePath": "bundle.tar.gz",
+	"key": {
+      "accessToken": "some_github_access_token"
+    }
+  }
+}
+
+or
+
+{
+  "aws|gcp": {
+    "bucket_name": "opa-bundles",
+    "object_name": "bundle.tar.gz",
+	"key": {
+      "region": "us-west-1"
+    }
+  }
+}
+
+Or, use the parameters in combinations as follows for:
+* "gcp", "aws":  specify a --bucket, --object, and --credential
+* "github":      specify --account, --repo, --path, and --credential
+* "http":        specify --url, and --x509 (optional)
+
+Once the integration is added, it is available for future use with the supplied alias name.
+`
+}
+
+func (a *AddOpaIntegrationCmd) AfterApply(_ *kong.Context) error {
+	switch a.Type {
+	case "aws", "gcp":
+		if a.Credential == "" {
+			return errors.New("missing client credential")
+		}
+		if a.Bucket == "" {
+			return errors.New("missing storage bucket name (--bucket)")
+		}
+		if a.Object == "" {
+			return errors.New("missing storage object name (--object)")
+		}
+		return nil
+	case "github":
+		if a.Credential == "" {
+			return errors.New("missing github credential")
+		}
+		if a.Account == "" {
+			return errors.New("missing --account parameter")
+		}
+		if a.Repo == "" {
+			return errors.New("missing --repo parameter")
+		}
+		if a.Path == "" {
+			return errors.New("missing --path parameter for bundle")
+		}
+		return nil
+
+	case "http":
+		if a.Url == "" {
+			return errors.New("missing --url for bundle location")
+		}
+		return nil
+	}
+	return errors.New("specify a type of 'aws', 'gcp', 'github', or 'http'")
+}
+
+func (a *AddOpaIntegrationCmd) Run(cli *CLI) error {
+	alias := a.Alias
+	if alias == "" {
+		alias = generateAliasOfSize(3)
+
+	}
+
+	var integration *sdk.Integration
+	var err error
+	if a.File != "" {
+		fileStr := getFile(a.File)
+		info := policyprovider.IntegrationInfo{
+			Name: sdk.ProviderTypeOpa,
+			Key:  fileStr,
+		}
+
+		integration, err = openIntegration(alias, sdk.WithIntegrationInfo(info))
+
+	} else {
+		var credBytes []byte
+		if a.Credential != "" {
+			credBytes = getFile(a.Credential)
+		}
+		switch a.Type {
+		case "aws":
+			integration, err = openIntegration(alias, nil, sdk.WithOpaAwsIntegration(a.Bucket, a.Object, credBytes))
+		case "gcp":
+			integration, err = openIntegration(alias, nil, sdk.WithOpaGcpIntegration(a.Bucket, a.Object, credBytes))
+		case "github":
+			integration, err = openIntegration(alias, nil, sdk.WithOpaGithubIntegration(a.Account, a.Repo, a.Path, credBytes))
+		case "http":
+			integration, err = openIntegration(alias, nil, sdk.WithOpaHttpIntegration(a.Url, a.X509))
+		}
+	}
+	if err != nil {
+		return err
+	}
+
 	cli.Data.Integrations[alias] = integration
 	err = cli.Data.Save(&cli.Globals)
 	return err
@@ -122,7 +251,7 @@ type AddAwsIntegrationCmd struct {
 	Region *string `short:"r" help:"The Amazon data center (e.g. us-west-1)"`
 	Keyid  *string `short:"k" help:"Amazon Access Key ID"`
 	Secret *string `short:"s" help:"Secret access key"`
-	File   string  `short:"f" xor:"Keyid" required:"" type:"existingfile" help:"File containing the Amazon credential information"`
+	File   string  `short:"f" xor:"Keyid" type:"existingfile" help:"File containing the Amazon credential information"`
 }
 
 func (a *AddAwsIntegrationCmd) Help() string {
@@ -198,7 +327,7 @@ func (a *AddAwsIntegrationCmd) Run(cli *CLI) error {
 		Key:  keyStr,
 	}
 
-	integration, err := openIntegration(alias, info)
+	integration, err := openIntegration(alias, sdk.WithIntegrationInfo(info))
 	if err != nil {
 		return err
 	}
@@ -274,7 +403,7 @@ func (a *AddAzureIntegrationCmd) Run(cli *CLI) error {
 		Key:  keyStr,
 	}
 
-	integration, err := openIntegration(alias, info)
+	integration, err := openIntegration(alias, sdk.WithIntegrationInfo(info))
 	if err != nil {
 		return err
 	}
@@ -288,6 +417,7 @@ type AddCmd struct {
 	Aws   AddAwsIntegrationCmd   `cmd:"" aliases:"amazon" help:"Add AWS Api Gateway, Cognito, or AVP integration"`
 	Gcp   AddGcpIntegrationCmd   `cmd:"" aliases:"google" help:"Add a Google Cloud GCP integration"`
 	Azure AddAzureIntegrationCmd `cmd:"" aliases:"ms,microsoft" help:"Add an Azure RBAC integration"`
+	Opa   AddOpaIntegrationCmd   `cmd:"" help:"Add an Open Policy Agent (OPA) integration"`
 }
 
 type GetPolicyApplicationsCmd struct {

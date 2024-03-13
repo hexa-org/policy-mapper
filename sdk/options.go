@@ -16,6 +16,14 @@ type Options struct {
 	ProviderOpts interface{} `json:"-"`
 }
 
+// WithIntegrationInfo provides a previously defined policyprovider.IntegrationInfo object to
+// configure an integration.
+func WithIntegrationInfo(info policyprovider.IntegrationInfo) func(*Options) {
+	return func(o *Options) {
+		o.Info = &info
+	}
+}
+
 // WithProviderOptions allows provider specific options to be passed through to the provider on initialization
 // For example, AWS AVP Provider supports #awscommon.AWSClientOptions
 func WithProviderOptions(options interface{}) func(*Options) {
