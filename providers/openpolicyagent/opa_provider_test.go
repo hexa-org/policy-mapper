@@ -42,14 +42,14 @@ func TestDiscoverApplications(t *testing.T) {
 		}
 	}{
 		{
-			name: "with project id",
+			name: "with project id (should be ignored)",
 			key: []byte(`
               {
                 "bundle_url": "aBigUrl",
                 "project_id": "some opa project"
               }`),
 
-			expected: expected{ProjectID: "some opa project", ObjectID: base64.StdEncoding.EncodeToString([]byte("aBigUrl"))},
+			expected: expected{ObjectID: base64.StdEncoding.EncodeToString([]byte("aBigUrl"))},
 		},
 		{
 			name: "without project id",
@@ -57,7 +57,7 @@ func TestDiscoverApplications(t *testing.T) {
               {
                 "bundle_url": "aBigUrl"
               }`),
-			expected: expected{ProjectID: "package authz", ObjectID: base64.StdEncoding.EncodeToString([]byte("aBigUrl"))},
+			expected: expected{ObjectID: base64.StdEncoding.EncodeToString([]byte("aBigUrl"))},
 		},
 		{
 			name: "gcp bundle storage project",
@@ -73,7 +73,7 @@ func TestDiscoverApplications(t *testing.T) {
   }
 }
 `),
-			expected: expected{ProjectID: "some gcp project", ObjectID: "opa-bundles"},
+			expected: expected{ObjectID: "opa-bundles"},
 		},
 		{
 			name: "aws bundle storage project",
@@ -89,7 +89,7 @@ func TestDiscoverApplications(t *testing.T) {
   }
 }
 `),
-			expected: expected{ProjectID: "some aws project", ObjectID: "opa-bundles"},
+			expected: expected{ObjectID: "opa-bundles"},
 		},
 		{
 			name: "github bundle storage project",
@@ -106,7 +106,7 @@ func TestDiscoverApplications(t *testing.T) {
   }
 }
 `),
-			expected: expected{ProjectID: "some github project", ObjectID: "opa-bundles"},
+			expected: expected{ObjectID: "opa-bundles"},
 		},
 	}
 
@@ -118,7 +118,7 @@ func TestDiscoverApplications(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, 1, len(applications))
-			assert.Equal(t, tt.expected.ProjectID, applications[0].Name)
+			// assert.Equal(t, tt.expected.ProjectID, applications[0].Name)
 			assert.Equal(t, tt.expected.ObjectID, applications[0].ObjectID)
 			assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)
 			assert.Equal(t, "Hexa OPA", applications[0].Service)

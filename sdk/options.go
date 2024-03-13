@@ -16,12 +16,6 @@ type Options struct {
 	ProviderOpts interface{} `json:"-"`
 }
 
-func WithHttpClient(client interface{}) func(*Options) {
-	return func(o *Options) {
-		o.HTTPClient = client
-	}
-}
-
 // WithProviderOptions allows provider specific options to be passed through to the provider on initialization
 // For example, AWS AVP Provider supports #awscommon.AWSClientOptions
 func WithProviderOptions(options interface{}) func(*Options) {
@@ -42,11 +36,10 @@ func WithAttributeMap(nameMap map[string]string) func(options *Options) {
 
 // WithOpaGcpIntegration is a convenience method to build up an integration to initialize the OPA provider with GCP as the
 // bucket repository. This method overrides information provided with the IntegrationInfo parameter of OpenIntegration
-func WithOpaGcpIntegration(projectId string, bucketName string, objectName string, credentialKey []byte) func(options *Options) {
+func WithOpaGcpIntegration(bucketName string, objectName string, credentialKey []byte) func(options *Options) {
 	return func(o *Options) {
 		gcpCredKey := json.RawMessage(credentialKey)
 		credential := openpolicyagent.Credentials{
-			ProjectID: projectId,
 
 			GCP: &openpolicyagent.GcpCredentials{
 				BucketName: bucketName,
@@ -65,12 +58,10 @@ func WithOpaGcpIntegration(projectId string, bucketName string, objectName strin
 
 // WithOpaAwsIntegration is a convenience method to build up an integration to initialize the OPA provider with AWS S3 as the
 // bucket repository. This method overrides information provided with the IntegrationInfo parameter of OpenIntegration
-func WithOpaAwsIntegration(projectId string, bucketName string, objectName string, credentialKey []byte) func(options *Options) {
+func WithOpaAwsIntegration(bucketName string, objectName string, credentialKey []byte) func(options *Options) {
 	return func(o *Options) {
 		credKey := json.RawMessage(credentialKey)
 		credential := openpolicyagent.Credentials{
-			ProjectID: projectId,
-
 			AWS: &openpolicyagent.AwsCredentials{
 				BucketName: bucketName,
 				ObjectName: objectName,
@@ -88,11 +79,9 @@ func WithOpaAwsIntegration(projectId string, bucketName string, objectName strin
 
 // WithOpaGithubIntegration is a convenience method to build up an integration to initialize the OPA provider with a Github repository as the
 // bucket repository. This method overrides information provided with the IntegrationInfo parameter of OpenIntegration
-func WithOpaGithubIntegration(projectId string, account string, repo string, bundlePath string, token []byte) func(options *Options) {
+func WithOpaGithubIntegration(account string, repo string, bundlePath string, token []byte) func(options *Options) {
 	return func(o *Options) {
 		credential := openpolicyagent.Credentials{
-			ProjectID: projectId,
-
 			GITHUB: &openpolicyagent.GithubCredentials{
 				Account:    account,
 				Repo:       repo,
@@ -112,10 +101,9 @@ func WithOpaGithubIntegration(projectId string, account string, repo string, bun
 // WithOpaHttpIntegration is a convenience method to build up an integration to initialize the OPA provider with an HTTP service as the
 // bucket repository. This method overrides information provided with the IntegrationInfo parameter of OpenIntegration
 // The HTTP service must support GET and POST (Form) to retrieve and replace OPA bundles.
-func WithOpaHttpIntegration(projectId string, bundleUrl string, caCert string) func(options *Options) {
+func WithOpaHttpIntegration(bundleUrl string, caCert string) func(options *Options) {
 	return func(o *Options) {
 		credential := openpolicyagent.Credentials{
-			ProjectID: projectId,
 			BundleUrl: bundleUrl,
 			CACert:    caCert,
 		}

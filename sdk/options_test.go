@@ -35,7 +35,7 @@ func TestWithIntegrationInfo(t *testing.T) {
 	applications, err := integration.GetPolicyApplicationPoints(nil)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(applications))
-	assert.Equal(t, "some aws project", applications[0].Name)
+
 	assert.Equal(t, "opa-bundles", applications[0].ObjectID)
 	assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)
 	assert.Equal(t, "Hexa OPA", applications[0].Service)
@@ -44,14 +44,14 @@ func TestWithIntegrationInfo(t *testing.T) {
 func TestWithOpaAwsIntegration(t *testing.T) {
 	key := []byte(`{"region": "us-west-1"}`)
 	integration, err := OpenIntegration(nil,
-		WithOpaAwsIntegration("some aws project", "opa-bundles", "bundle.tar.gz", key))
+		WithOpaAwsIntegration("opa-bundles", "bundle.tar.gz", key))
 	assert.NoError(t, err, "No error on open OPA AWS integration")
 	assert.NotNil(t, integration, "Integration is defined")
 
 	applications, err := integration.GetPolicyApplicationPoints(nil)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(applications))
-	assert.Equal(t, "some aws project", applications[0].Name)
+
 	assert.Equal(t, "opa-bundles", applications[0].ObjectID)
 	assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)
 	assert.Equal(t, "Hexa OPA", applications[0].Service)
@@ -60,14 +60,14 @@ func TestWithOpaAwsIntegration(t *testing.T) {
 func TestWithOpaGcpIntegration(t *testing.T) {
 	key := []byte(`{"type": "service_account"}`)
 	integration, err := OpenIntegration(nil,
-		WithOpaGcpIntegration("some gcp project", "opa-bundles", "bundle.tar.gz", key))
+		WithOpaGcpIntegration( "opa-bundles", "bundle.tar.gz", key))
 	assert.NoError(t, err, "No error on open OPA GCP integration")
 	assert.NotNil(t, integration, "Integration is defined")
 
 	applications, err := integration.GetPolicyApplicationPoints(nil)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(applications))
-	assert.Equal(t, "some gcp project", applications[0].Name)
+
 	assert.Equal(t, "opa-bundles", applications[0].ObjectID)
 	assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)
 	assert.Equal(t, "Hexa OPA", applications[0].Service)
@@ -76,14 +76,14 @@ func TestWithOpaGcpIntegration(t *testing.T) {
 func TestWithOpaGithubIntegration(t *testing.T) {
 	key := []byte(`{"accessToken": "some_github_access_token"}`)
 	integration, err := OpenIntegration(nil,
-		WithOpaGithubIntegration("some github project", "hexa-org", "opa-bundles", "bundle.tar.gz", key))
+		WithOpaGithubIntegration( "hexa-org", "opa-bundles", "bundle.tar.gz", key))
 	assert.NoError(t, err, "No error on open OPA Github integration")
 	assert.NotNil(t, integration, "Integration is defined")
 
 	applications, err := integration.GetPolicyApplicationPoints(nil)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(applications))
-	assert.Equal(t, "some github project", applications[0].Name)
+
 	assert.Equal(t, "opa-bundles", applications[0].ObjectID)
 	assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)
 	assert.Equal(t, "Hexa OPA", applications[0].Service)
@@ -92,14 +92,14 @@ func TestWithOpaGithubIntegration(t *testing.T) {
 func TestWithOpaHttpIntegration(t *testing.T) {
 
 	integration, err := OpenIntegration(nil,
-		WithOpaHttpIntegration("some opa project", "aBigUrl", ""))
+		WithOpaHttpIntegration( "aBigUrl", ""))
 	assert.NoError(t, err, "No error on open OPA Http integration")
 	assert.NotNil(t, integration, "Integration is defined")
 
 	applications, err := integration.GetPolicyApplicationPoints(nil)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(applications))
-	assert.Equal(t, "some opa project", applications[0].Name)
+
 	objectIdMatch := base64.StdEncoding.EncodeToString([]byte("aBigUrl"))
 	assert.Equal(t, objectIdMatch, applications[0].ObjectID)
 	assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)

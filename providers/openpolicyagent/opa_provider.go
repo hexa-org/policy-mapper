@@ -51,8 +51,8 @@ func (o *OpaProvider) DiscoverApplications(info policyprovider.IntegrationInfo) 
 	var apps []policyprovider.ApplicationInfo
 	if strings.EqualFold(info.Name, o.Name()) {
 		apps = append(apps, policyprovider.ApplicationInfo{
-			ObjectID:    c.objectID(),
-			Name:        c.ProjectID,
+			ObjectID: c.objectID(),
+			Name:       "Bucket "+c.objectID(),
 			Description: "Open Policy Agent bundle",
 			Service:     "Hexa OPA",
 		})
@@ -179,7 +179,7 @@ func (o *OpaProvider) MakeDefaultBundle(data []byte) (bytes.Buffer, error) {
 }
 
 type Credentials struct {
-	ProjectID string             `json:"project_id,omitempty"`
+	// ProjectID string             `json:"project_id,omitempty"`
 	BundleUrl string             `json:"bundle_url"`
 	CACert    string             `json:"ca_cert,omitempty"`
 	GCP       *GcpCredentials    `json:"gcp,omitempty"`
@@ -224,9 +224,9 @@ func (o *OpaProvider) credentials(key []byte) (Credentials, error) {
 	if err != nil {
 		return Credentials{}, fmt.Errorf("invalid integration key: %w", err)
 	}
-	if foundCredentials.ProjectID == "" {
-		foundCredentials.ProjectID = "package authz"
-	}
+	// if foundCredentials.ProjectID == "" {
+	// 	foundCredentials.ProjectID = "package authz"
+	// }
 	return foundCredentials, nil
 }
 
