@@ -1,0 +1,7 @@
+{
+  "bundles": {
+    "hexaPolicy": {
+      "resource": "%s/resources/bundles/bundle/"
+    }
+  }
+}

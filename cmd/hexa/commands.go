@@ -131,8 +131,9 @@ type AddOpaIntegrationCmd struct {
 }
 
 func (a *AddOpaIntegrationCmd) Help() string {
-	return `To add an OPA integration specify a type which is one of "aws", "gcp", "github" or "http", and integration information by
-specifying a file of the form:
+	return `To add an OPA integration specify an OPA type ("aws", "gcp", "github" or "http"), and the integration information by
+specifying a --file which is a JSON file of the form:
+
 {
   "github": {
     "account": "hexa-org",
@@ -154,6 +155,13 @@ or
       "region": "us-west-1"
     }
   }
+}
+
+or for HTTP:
+
+{ 
+  "bundle_url": "https://hexa-bundle-server",
+  "ca_cert": "<PEM_ENCODED_CA_PUBLIC_KEY"
 }
 
 Or, use the parameters in combinations as follows for:
@@ -212,10 +220,10 @@ func (a *AddOpaIntegrationCmd) Run(cli *CLI) error {
 	var integration *sdk.Integration
 	var err error
 	if a.File != "" {
-		fileStr := getFile(a.File)
+		keyFileBytes := getFile(a.File)
 		info := policyprovider.IntegrationInfo{
 			Name: sdk.ProviderTypeOpa,
-			Key:  fileStr,
+			Key:  keyFileBytes,
 		}
 
 		integration, err = openIntegration(alias, sdk.WithIntegrationInfo(info))

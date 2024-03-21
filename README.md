@@ -1,3 +1,5 @@
+![Hexa](https://hexaorchestration.org/wp-content/themes/hexa/img/logo.svg)
+
 # Hexa Policy Mapper Project
 
 The Hexa Policy-Mapper Project provides administrative tools and development libraries for provisioning and mapping 
@@ -78,14 +80,14 @@ For more details on how to map or provision policy in either console (shell) for
 
 Each provider in the `providers` directory structure has its own `README.md` that describes the provider and its capabilities and limitations.
 
-| Provider                                                                 | Folder                            | Description                                                                                                                           | Type                    | SDK | Hexa Console |
-|--------------------------------------------------------------------------|-----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|-------------------------|-----|--------------|
-| [AWS AVP](providers/aws/avpProvider/README.md)                           | providers/aws/avpProvider         | Mapping to/from Cedar Policy language with Get/Set/Reconcile using AVP API                                                            | ABAC/RBAC               | Yes | Yes          |
-| [AWS API Gateway](providers/aws/awsapigwProvider/README.md)              | providers/aws/awsapigwProvider    | Support for the Amazon API Gateway (**_experimental_**)                                                                               | RBAC                    | Yes | TBI          |
-| [AWS Cognito](providers/aws/cognitoProvider/README.md)                   | providers/aws/cognitoProvider     | Virtual policy support using Cognito Userpools and Groups                                                                             | RBAC                    | Yes | Yes          |
-| [Azure Provider](providers/azure/azureProvider/README.md)                | providers/azure/azureProvider     | Support for Azure Application Role Policy                                                                                             | RBAC                    | Yes | Yes          |
-| [Google Cloud IAP Provider](providers/googlecloud/iapProvider/README.md) | providers\googlecloud\iapProvider | Mapping to/from Google Bind policy and IAP support for Google App Engine and GKE                                                      | ABAC/RBAC               | Yes | Yes          |
-| Open Policy Agent                                                        | providers/openpolicyagent         | Integrates with [Hexa Policy-OPA](https://github.com/hexa-org/policy-opa) and interprets IDQL directly with conditions clause support | ABAC / IDQL Interpreter | TBI | Yes          |
+| Provider                                                                 | Folder                            | Description                                                                                                                           | Type             | Support     |
+|--------------------------------------------------------------------------|-----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|------------------|-------------|
+| [AWS AVP](providers/aws/avpProvider/README.md)                           | providers/aws/avpProvider         | Mapping to/from Cedar Policy language with Get/Set/Reconcile using AVP API                                                            | Syntactic Map    | SDK,Console |
+| [AWS API Gateway](providers/aws/awsapigwProvider/README.md)              | providers/aws/awsapigwProvider    | Support for the Amazon API Gateway (**_experimental_**)                                                                               | RBAC             | SDK,Console |
+| [AWS Cognito](providers/aws/cognitoProvider/README.md)                   | providers/aws/cognitoProvider     | Virtual policy support using Cognito Userpools and Groups                                                                             | RBAC             | SDK,Console |
+| [Azure Provider](providers/azure/azureProvider/README.md)                | providers/azure/azureProvider     | Support for Azure Application Role Policy                                                                                             | RBAC             | SDK,Console |
+| [Google Cloud IAP Provider](providers/googlecloud/iapProvider/README.md) | providers\googlecloud\iapProvider | Mapping to/from Google Bind policy and IAP support for Google App Engine and GKE                                                      | Syntactic Map    | SDK,Console |
+| [Open Policy Agent](providers/openpolicyagent/README.md)                 | providers/openpolicyagent         | Integrates with [Hexa Policy-OPA](https://github.com/hexa-org/policy-opa) and interprets IDQL directly with conditions clause support | IDQL Interpreter | SDK,Console |
 
 
 
