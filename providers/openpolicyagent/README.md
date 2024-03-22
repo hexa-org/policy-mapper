@@ -36,6 +36,11 @@ In the Hexa Console, adding an OPA integration takes the form:
 hexa add opa http myBundle --file=integration.json
 ```
 
+Or, parameters can be passed with flags (e.g. --url and --cafile)
+```shell
+hexa add opa http myBundle --url="https://hexa-bundle-server:8889" --cafile="./examples/opa-server/.certs/ca-cert.pem"
+```
+
 In the SDK, typically the same JSON file may be passed to the SDK as follows:
 ```go
 package main

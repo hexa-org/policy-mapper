@@ -51,7 +51,9 @@ func OpenIntegration(options ...func(*Options)) (*Integration, error) {
 	}
 
 	for _, opt := range options {
-		opt(&i.Opts)
+		if opt != nil { // in case an extra nil is found
+			opt(&i.Opts)
+		}
 	}
 
 	if i.Opts.Info == nil {

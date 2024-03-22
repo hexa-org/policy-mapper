@@ -2,6 +2,8 @@ package sdk
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/url"
 
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
 	"github.com/hexa-org/policy-mapper/providers/openpolicyagent"
@@ -110,9 +112,16 @@ func WithOpaGithubIntegration(account string, repo string, bundlePath string, to
 // bucket repository. This method overrides information provided with the IntegrationInfo parameter of OpenIntegration
 // The HTTP service must support GET and POST (Form) to retrieve and replace OPA bundles.
 func WithOpaHttpIntegration(bundleUrl string, caCert string) func(options *Options) {
+	bURL, err := url.Parse(bundleUrl)
+	targetUrl := bundleUrl
+	if err == nil && bURL.Path == "" {
+		bURL.Path = "/bundles/bundle.tar.gz"
+		fmt.Println(fmt.Sprintf("Defaulting bundle path to: %s", bURL.String()))
+		targetUrl = bURL.String()
+	}
 	return func(o *Options) {
 		credential := openpolicyagent.Credentials{
-			BundleUrl: bundleUrl,
+			BundleUrl: targetUrl,
 			CACert:    caCert,
 		}
 		key, _ := json.Marshal(&credential)

@@ -126,7 +126,7 @@ type AddOpaIntegrationCmd struct {
 	Object     string `help:"The storage object name on AWS or GCP storage service"`
 	Credential string `aliases:"key,secret" type:"existingfile" help:"A file containing the credential key or token used to access the bundle service or repo"`
 	Url        string `help:"The Http URL for the Bundle service"`
-	X509       string `aliases:"cacert" help:"For HTTP integration, X.509 public key to verify the server TLS certificate"`
+	Cafile     string `aliases:"cacert" type:"existingfile" help:"For HTTP integration, public key file (PEM) to verify the server TLS certificate"`
 	File       string `short:"f" type:"existingfile" help:"File containing a JSON formatted OPA Integration"`
 }
 
@@ -160,8 +160,8 @@ or
 or for HTTP:
 
 { 
-  "bundle_url": "https://hexa-bundle-server",
-  "ca_cert": "<PEM_ENCODED_CA_PUBLIC_KEY"
+  "bundle_url": "https://hexa-bundle-server:8889/bundles/bundle.tar.gz",
+  "ca_cert": "pem_encoded_key"
 }
 
 Or, use the parameters in combinations as follows for:
@@ -235,13 +235,14 @@ func (a *AddOpaIntegrationCmd) Run(cli *CLI) error {
 		}
 		switch a.Type {
 		case "aws":
-			integration, err = openIntegration(alias, nil, sdk.WithOpaAwsIntegration(a.Bucket, a.Object, credBytes))
+			integration, err = openIntegration(alias, sdk.WithOpaAwsIntegration(a.Bucket, a.Object, credBytes))
 		case "gcp":
-			integration, err = openIntegration(alias, nil, sdk.WithOpaGcpIntegration(a.Bucket, a.Object, credBytes))
+			integration, err = openIntegration(alias, sdk.WithOpaGcpIntegration(a.Bucket, a.Object, credBytes))
 		case "github":
-			integration, err = openIntegration(alias, nil, sdk.WithOpaGithubIntegration(a.Account, a.Repo, a.Path, credBytes))
+			integration, err = openIntegration(alias, sdk.WithOpaGithubIntegration(a.Account, a.Repo, a.Path, credBytes))
 		case "http":
-			integration, err = openIntegration(alias, nil, sdk.WithOpaHttpIntegration(a.Url, a.X509))
+			keyFileBytes := getFile(a.Cafile)
+			integration, err = openIntegration(alias, sdk.WithOpaHttpIntegration(a.Url, string(keyFileBytes)))
 		}
 	}
 	if err != nil {

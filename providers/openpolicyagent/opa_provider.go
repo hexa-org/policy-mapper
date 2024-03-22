@@ -6,7 +6,9 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
@@ -51,8 +53,8 @@ func (o *OpaProvider) DiscoverApplications(info policyprovider.IntegrationInfo) 
 	var apps []policyprovider.ApplicationInfo
 	if strings.EqualFold(info.Name, o.Name()) {
 		apps = append(apps, policyprovider.ApplicationInfo{
-			ObjectID: c.objectID(),
-			Name:       "Bucket "+c.objectID(),
+			ObjectID:    c.objectID(),
+			Name:        "Bucket " + c.objectID(),
 			Description: "Open Policy Agent bundle",
 			Service:     "Hexa OPA",
 		})
@@ -285,8 +287,16 @@ func (o *OpaProvider) ConfigureClient(key []byte) (BundleClient, error) {
 		return o.BundleClientOverride, nil
 	}
 
+	bundleUrl, err := url.Parse(creds.BundleUrl)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("error parsing bundleUrl: %s", err.Error()))
+	}
+	if bundleUrl.Path == "" {
+		fmt.Println("Defaulting bundle path to: bundles/bundle.tar.gz")
+		bundleUrl.Path = "/bundles/bundle.tar.gz"
+	}
 	return &HTTPBundleClient{
-		BundleServerURL: creds.BundleUrl,
+		BundleServerURL: bundleUrl.String(),
 		HttpClient:      client,
 	}, nil
 }

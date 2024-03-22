@@ -2,3 +2,5 @@
 .codeql
 .env*
 .DS_Store
+
+/examples/opa-server/.certs/

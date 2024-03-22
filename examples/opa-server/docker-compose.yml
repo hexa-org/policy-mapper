@@ -15,7 +15,7 @@ services:
       BUNDLE_DIR: "/home/resources/bundles"
     volumes:
       - "./bundleServer:/home/resources"
-      - "./.certs:/home/certs:ro"
+      - "./.certs:/home/certs"
 
   hexa-opa-agent:
     image: independentid/hexaopa:latest
