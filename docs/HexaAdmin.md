@@ -1,4 +1,4 @@
-<div style="text-align: right; float: left"><img src="hexa-boomer.png" title="Boomer" width=75 alt="Hexa-Admin"/></div>
+![Hexa](https://hexaorchestration.org/wp-content/themes/hexa/img/logo.svg)
 
 # Hexa Console Tool
 

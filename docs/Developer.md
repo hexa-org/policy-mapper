@@ -1,7 +1,12 @@
 
-<img src="hexa-boomer.png" title="Boomer" width=75 alt="Hexa-Admin" align="right"/>
+![Hexa](https://hexaorchestration.org/wp-content/themes/hexa/img/logo.svg)
 
-# Hexa Developer Documentation
+# Hexa SDK Developer Documentation
+
+This documentation describes how to use the Hexa Policy Mapper SDK to instantiate and use Hexa Providers to map and 
+provision IDQL to and from target platforms via "providers".
+
+For information on how to develop a new provider, see the [Writing A Hexa Provider](WritingAProvider.md) document.
 
 ## Provisioning
 
