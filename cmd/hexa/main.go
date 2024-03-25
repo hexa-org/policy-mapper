@@ -38,7 +38,7 @@ type CLI struct {
 	Reconcile ReconcileCmd `cmd:"" help:"Reconcile compares a source set of policies another source (file or alias) of policies to determine differences."`
 	Set       SetCmd       `cmd:"" help:"Set or update policies (e.g. set policies -file=idql.json)"`
 	Show      ShowCmd      `cmd:"" help:"Show locally stored information about integrations and applications"`
-	Exit      ExitCmd      `cmd:"" help:"Exit Hexa console"`
+	Exit      ExitCmd      `cmd:"" help:"Exit Hexa CLI"`
 	Help      HelpCmd      `cmd:"" help:"Show help on a command"`
 }
 

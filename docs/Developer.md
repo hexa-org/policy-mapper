@@ -26,9 +26,9 @@ and other information. For example, the Amazon integration key file looks like:
 ```
 
 <details>
-<summary>Hexa Console</summary>
+<summary>Hexa CLI</summary>
 
-To add an integration in the hexa console, use the `add` command.
+To add an integration in the Hexa CLI, use the `add` command.
 
 ```shell
 % hexa add <platform> --file=<integrationfile>
@@ -108,7 +108,7 @@ func main() {
 Hexa Get Policies invokes the provider to call to the policy application point to obtain the remote policy and translate it into IDQL.
 
 <details>
-<summary>Hexa Console</summary>
+<summary>Hexa CLI</summary>
 
 To retrieve policies from a PAP, use the `get policies` command. Optionally, use the --output flag to direct output to a file rather than the console.
 ```shell
@@ -254,9 +254,9 @@ Once an integration is defined, Hexa can set policies by taking input IDQL polic
 In some cases (e.g. Amazon AVP), the existing policies are matched (e.g. using meta information or comparison) and the necessary update operations are calculated as part of the update.
 
 <details>
-<summary>Hexa Console</summary>
+<summary>Hexa CLI</summary>
 
-The Hexa console `set policies` command is of the form
+The Hexa CLI `set policies` command is of the form
 ```shell
 set policies <alias|objectid> [-d] --file=<idqlpolicies.json>
 ```
@@ -457,9 +457,9 @@ Mapping functions support converting GCP Bind policy in JSON format to and from 
 conversion of GCP Common Expression Language (CEL) to IDQL conditions.
 
 <details>
-<summary>Hexa Console</summary>
+<summary>Hexa CLI</summary>
 
-To map files in the hexa console, use the `map to` or `map from` commands as follows:
+To map files in the Hexa CLI, use the `map to` or `map from` commands as follows:
 
 ```shell
 % hexa map to gcp input.idql gcpout.json
@@ -518,9 +518,9 @@ Mapping functions support converting Amazon Cedar policy to and from IDQL JSON f
 conversion of Cedar Conditions to IDQL Conditions.
 
 <details>
-<summary>Hexa Console</summary>
+<summary>Hexa CLI</summary>
 
-To map files in the hexa console, use the `map to` or `map from` commands as follows:
+To map files in the Hexa CLI, use the `map to` or `map from` commands as follows:
 
 ```shell
 hexa map to cedar input.idql cedarout.txt

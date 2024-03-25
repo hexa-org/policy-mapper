@@ -11,7 +11,7 @@ The Open Policy Agent Provider enables the retrieval and provisioning of IDQL po
 | ABAC              | Support for attribute conditions                                                                           | Yes                                        | Yes                                |
 | Type              | IDQL Native. Policy is interpreted by OPA Rego processor.                                                  | Rego                                       | Deployment of IDQL and Rego policy |
 | Attribute Mapping | Attribute names in policy can be mapped to platform                                                        |                                            | Yes                                |
-| Hexa Console      | Supported in the Hexa Console application                                                                  |                                            | Yes                                |
+| Hexa CLI      | Supported in the Hexa CLI application                                                                  |                                            | Yes                                |
 | Discovery         | Supports discovery of Policy Application Points                                                            | Queries IAP Backend and AppEngine services | Yes                                |
 | Get Policies      | Supports retrieval of all policies from a PAP                                                              | Yes                                        | Yes                                |
 | Set Policies      | Supports the ability to apply a set of policies to a PAP                                                   | Yes                                        |
@@ -31,7 +31,7 @@ information, see the [Hexa Policy-OPA project](https://github.com/hexa-org/polic
 
 ## Integration Support Notes
 
-In the Hexa Console, adding an OPA integration takes the form:
+In the Hexa CLI, adding an OPA integration takes the form:
 ```shell
 hexa add opa http myBundle --file=integration.json
 ```

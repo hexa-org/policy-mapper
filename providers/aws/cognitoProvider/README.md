@@ -10,7 +10,7 @@ does this by interrogating User Pools and their associated resources. In general
 | ABAC              | Support for attribute conditions                                                                              | No                           | No               |
 | Type              | Policy is described 'syntactically' in an exportable<BR/>format or implied through 'role' based relationships | Directory Groups             | Virtual RBAC     |
 | Attribute Mapping | Attribute names in policy can be mapped to platform                                                           |                              | N/A              |
-| Hexa Console      | Supported in the Hexa Console application                                                                     |                              | Yes              |
+| Hexa CLI      | Supported in the Hexa CLI application                                                                     |                              | Yes              |
 | Discovery         | Supports discovery of Policy Application Points                                                               | List UserPools and Resources | Yes              |
 | Get Policies      | Supports retrieval of all policies from a PAP                                                                 | Conversion                   | Yes              |
 | Set Policies      | Supports the ability to apply a set of policies to a PAP                                                      | Conversion                   | Yes              |

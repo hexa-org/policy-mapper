@@ -10,7 +10,7 @@ support for conversion of Google Condition Expression Language into IDQL's SCIM 
 | ABAC              | Support for attribute conditions                                                                              | Yes                                        | Yes              |
 | Type              | Policy is described 'syntactically' in an exportable<BR/>format or implied through 'role' based relationships | Syntactic                                  | Syntactic Mapper |
 | Attribute Mapping | Attribute names in policy can be mapped to platform                                                           |                                            | Yes              |
-| Hexa Console      | Supported in the Hexa Console application                                                                     |                                            | Yes              |
+| Hexa CLI      | Supported in the Hexa CLI application                                                                     |                                            | Yes              |
 | Discovery         | Supports discovery of Policy Application Points                                                               | Queries IAP Backend and AppEngine services | Yes              |
 | Get Policies      | Supports retrieval of all policies from a PAP                                                                 | Yes                                        | Yes              |
 | Set Policies      | Supports the ability to apply a set of policies to a PAP                                                      | Yes                                        |

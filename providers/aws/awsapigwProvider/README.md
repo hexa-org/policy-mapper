@@ -12,7 +12,7 @@ See: Tutorial: [Build a CRUD API with Lambda and DynamoDB](https://docs.aws.amaz
 | ABAC              | Support for attribute conditions                                                                           | No                             | No               |
 | Type              | Virtual policy Cognito directory, Dynamo DB for use with Amazon API Gateway                                | Cognito, DynamoDb, API Gateway | Virtual RBAC     |
 | Attribute Mapping | Attribute names in policy can be mapped to platform                                                        |                                | N/A              |
-| Hexa Console      | Supported in the Hexa Console application                                                                  |                                | Yes              |
+| Hexa CLI      | Supported in the Hexa CLI application                                                                  |                                | Yes              |
 | Discovery         | Supports discovery of Policy Application Points                                                            | List UserPools and Resources   | Yes              |
 | Get Policies      | Supports retrieval of all policies from a PAP                                                              | Conversion                     | Yes              |
 | Set Policies      | Supports the ability to apply a set of policies to a PAP                                                   | Conversion                     | Yes              |

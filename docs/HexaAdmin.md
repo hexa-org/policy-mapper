@@ -1,8 +1,8 @@
 ![Hexa](https://hexaorchestration.org/wp-content/themes/hexa/img/logo.svg)
 
-# Hexa Console Tool
+# Hexa CLI Tool
 
-The Hexa console tool uses the Hexa SDK to provision access policy to administrative APIs such as Amazon Verified Permissions, and Google Cloud Bind.
+The Hexa CLI tool uses the Hexa SDK to provision access policy to administrative APIs such as Amazon Verified Permissions, and Google Cloud Bind.
 
 ## Adding an Integration
 
@@ -213,7 +213,7 @@ Help is accessible at any time, using the `help` command. For more details, ente
 To redirect output for any command to a file, use the `-o` option. If you would like the output to be appended to an existing file,
 use the `-a` option.
 
-Hexa console maintains a configuration file in order to save previously retrieved integrations and policy administration points.
+Hexa CLI maintains a configuration file in order to save previously retrieved integrations and policy administration points.
 By default, the path is `.hexa/config.json`. This can be overriden by setting the environment variable `$HEXA_HOME`.
 
 Hexa can also accept redirected input in order to script a series of commands. For example:

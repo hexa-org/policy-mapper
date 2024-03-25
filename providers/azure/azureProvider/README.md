@@ -11,7 +11,7 @@ IDQL `resource_id` is the API Name in the Azure portal. Role assignments is extr
 | ABAC              | Support for attribute conditions                                                                           | No                 | No               |
 | Type              | Roles are converting into IDQL Policy equivalents                                                          | Azure Applications | Virtual RBAC     |
 | Attribute Mapping | Attribute names in policy can be mapped to platform                                                        |                    | N/A              |
-| Hexa Console      | Supported in the Hexa Console application                                                                  |                    | Yes              |
+| Hexa CLI      | Supported in the Hexa CLI application                                                                  |                    | Yes              |
 | Discovery         | Supports discovery of Policy Application Points                                                            | Lists Azure Apps   | Yes              |
 | Get Policies      | Supports retrieval of all policies from a PAP                                                              | Conversion         | Yes              |
 | Set Policies      | Supports the ability to apply a set of policies to a PAP                                                   | Conversion         | Yes              |

@@ -9,7 +9,7 @@ prebuilt integrations (we call them providers) as well as guidance on how to bui
 
 This project provides:
 * a GoLang SDK which can be used in open source and commercial implementations to leverage this community library.
-* a Hexa console command line tool which can be used to provision policies to web accessible policy systems.
+* a Hexa CLI command line tool which can be used to provision policies to web accessible policy systems.
 * a GoLang interface ([policyprovider.Provider](/api/policyprovider/platform_interface.go)) enabling the development of new policy provisioning providers.
 
 > [!Tip]
@@ -59,14 +59,14 @@ cd policy-mapper
 
 sh ./build.sh
 ```
-## Hexa Console Tool
+## Hexa CLI Tool
 
-To test the Hexa SDK and or develop using scripts, use the [Hexa console tool](docs/HexaAdmin.md).
+To test the Hexa SDK and or develop using scripts, use the [Hexa CLI tool](docs/HexaAdmin.md).
 
-To run the hexa console, simply type `hexa` at the command line once installed.
+To run the Hexa CLI, simply type `hexa` at the command line once installed.
 
 > [!Note]
-> Hexa console currently does not support filenames with spaces. Valid example: add gcp --file=my_key.json
+> Hexa CLI currently does not support filenames with spaces. Valid example: add gcp --file=my_key.json
 
 ## Hexa Developer Documentation
 

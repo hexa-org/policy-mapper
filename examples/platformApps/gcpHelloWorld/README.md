@@ -52,7 +52,7 @@ IAM and Admin -> IAP page and select the deployed app. Toggle "IAP" button. You 
 
 You can also open the application up in the browser at the URL: https://<gcp_project_id>.<region_id>.r.appspot.com
 
-Use the Hexa Admin tool to Add GCP provider and then download available applications (aka policy application points). 
+Use the Hexa CLI tool to Add GCP provider and then download available applications (aka policy application points). 
 
 ## Running on GKE
 

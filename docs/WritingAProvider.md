@@ -22,7 +22,7 @@ each node into the IDQL equivalent. For an example of this, see: the [/models/fo
 
 > [!Note]
 > Syntactical mappers currently do not have a standardized interface. To see how the existing mappers are used, look at
-> the `map` command inside the hexa console [command.go](../cmd/hexa/commands.go).
+> the `map` command inside the Hexa CLI [command.go](../cmd/hexa/commands.go).
 
 Example invocation of syntactical mapper:
 ```go
