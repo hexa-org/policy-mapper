@@ -1,3 +1,5 @@
+![Hexa](https://hexaorchestration.org/wp-content/themes/hexa/img/logo.svg)
+
 # GCP Hello World Test Application
 
 ## Introduction

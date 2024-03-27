@@ -1,3 +1,5 @@
+![Hexa](https://hexaorchestration.org/wp-content/themes/hexa/img/logo.svg)
+
 # Hexa Policy Conditions
 
 Hexa Policy Conditions provides support for IDQL Policy Conditions (see
@@ -109,4 +111,4 @@ The following Google CEL functions and operators are currently not support.
 
 ## OPA Condition Integration
 
-See [OPA Plugin Readme](../../server/ReadME.md).
+See [OPA Plugin Readme](https://github.com/hexa-org/policy-opa).

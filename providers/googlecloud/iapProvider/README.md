@@ -1,3 +1,5 @@
+![Hexa](https://hexaorchestration.org/wp-content/themes/hexa/img/logo.svg)
+
 # Google IAP Provider
 
 The Google IAP Provider uses the [IDQL to GCP Bind Mapper](../../../models/formats/gcpBind/google_bind_policy.go) to enable syntactical bi-directional conversion of Google Bind Policy to IDQL policy. This includes

@@ -1,4 +1,6 @@
-# Amazon Verified Permissions Provider
+![Hexa](https://hexaorchestration.org/wp-content/themes/hexa/img/logo.svg)
+
+Amazon Verified Permissions Provider
 
 The Amazon Verified Permissions Provider (AVP) is a [fine-grained permissions management system](https://docs.aws.amazon.com/verifiedpermissions/latest/userguide/what-is-avp.html) for customer written applications.
 AVP uses an open source policy language known as [Cedar](https://docs.cedarpolicy.com).

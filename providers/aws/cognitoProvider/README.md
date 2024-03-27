@@ -1,3 +1,5 @@
+![Hexa](https://hexaorchestration.org/wp-content/themes/hexa/img/logo.svg)
+
 # Amazon Cognito Provider
 
 The Cognito Provider is a virtual provider that processes a Cognito User Pool and converts the RBAC relationships defined in the Groups to generate equivalent IDQL policy. The provider

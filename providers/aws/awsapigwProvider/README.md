@@ -1,3 +1,5 @@
+![Hexa](https://hexaorchestration.org/wp-content/themes/hexa/img/logo.svg)
+
 # Amazon API Gateway Provider
 
 The API Gateway Provider is a virtual RBAC provider that combines Cognito User Pools and a custom Dynamo DB to build RBAC relationships to create equivalent IDQL policy. 

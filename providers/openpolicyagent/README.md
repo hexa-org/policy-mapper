@@ -1,3 +1,5 @@
+![Hexa](https://hexaorchestration.org/wp-content/themes/hexa/img/logo.svg)
+
 # Open Policy Agent Provider
 
 The Open Policy Agent Provider enables the retrieval and provisioning of IDQL policies to an [Open Policy Agent](https://www.openpolicyagent.org) environment.
