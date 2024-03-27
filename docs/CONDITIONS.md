@@ -91,7 +91,7 @@ func main() {
 
 ### CEL Mapping Scope of Support
 The current scope of support for mapping Google CEL expression is limited to common IAM policy cases.
-The following Google CEL functions and operators are currently not support.
+The following Google CEL functions and operators are currently not supported:
 * ? Conditional Operators
 * size list or map size functions
 * type attribute type function and type(null)
