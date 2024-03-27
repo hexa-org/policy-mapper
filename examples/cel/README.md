@@ -1,3 +1,5 @@
+![Hexa](https://hexaorchestration.org/wp-content/themes/hexa/img/logo.svg)
+
 # Example: Mapping Condition Expression Language
 
 The code in [celexample.go](celexample.go) is intended to show how to map from IDQL Condition expressions to a CEL expression in string
