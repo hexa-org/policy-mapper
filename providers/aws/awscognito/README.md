@@ -1,6 +1,6 @@
 ![Hexa](https://hexaorchestration.org/wp-content/themes/hexa/img/logo.svg)
 
-# Amazon Common Package - Cognito Client
+# Amazon Providers - Cognito Client
 
 This package is shared between [awsapigwProvider](../awsapigwProvider/README.md) and the [cognitoProvider](../cognitoProvider/README.md). 
 It is used to connect to a AWS to obtain data from Cognito services.  
