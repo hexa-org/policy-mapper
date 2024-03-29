@@ -33,6 +33,7 @@ const ProviderTypeOpa string = "opa"
 type BundleClient interface {
 	GetDataFromBundle(path string) ([]byte, error)
 	PostBundle(bundle []byte) (int, error)
+	Type() string
 }
 
 type OpaProvider struct {
@@ -49,20 +50,25 @@ func (o *OpaProvider) DiscoverApplications(info policyprovider.IntegrationInfo) 
 	if err != nil {
 		return nil, err
 	}
+	client, err := o.ConfigureClient(info.Key)
+	if err != nil {
+		return nil, err
+	}
 
+	service := fmt.Sprintf("Hexa OPA (%s)", client.Type())
 	var apps []policyprovider.ApplicationInfo
 	if strings.EqualFold(info.Name, o.Name()) {
 		apps = append(apps, policyprovider.ApplicationInfo{
 			ObjectID:    c.objectID(),
 			Name:        "Bucket " + c.objectID(),
 			Description: "Open Policy Agent bundle",
-			Service:     "Hexa OPA",
+			Service:     service,
 		})
 	}
 	return apps, nil
 }
 
-func (o *OpaProvider) GetPolicyInfo(integration policyprovider.IntegrationInfo, appInfo policyprovider.ApplicationInfo) ([]hexapolicy.PolicyInfo, error) {
+func (o *OpaProvider) GetPolicyInfo(integration policyprovider.IntegrationInfo, _ policyprovider.ApplicationInfo) ([]hexapolicy.PolicyInfo, error) {
 	key := integration.Key
 	client, err := o.ConfigureClient(key)
 	if err != nil {
@@ -83,24 +89,7 @@ func (o *OpaProvider) GetPolicyInfo(integration policyprovider.IntegrationInfo, 
 		return nil, unmarshalErr
 	}
 
-	var hexaPolicies []hexapolicy.PolicyInfo
-	for _, p := range policies.Policies {
-		var actions []hexapolicy.ActionInfo
-		for _, a := range p.Actions {
-			actions = append(actions, hexapolicy.ActionInfo{ActionUri: a.ActionUri})
-		}
-		hexaPolicies = append(hexaPolicies, hexapolicy.PolicyInfo{
-			Meta:    hexapolicy.MetaInfo{Version: p.Meta.Version},
-			Actions: actions,
-			Subject: hexapolicy.SubjectInfo{
-				Members: p.Subject.Members,
-			},
-			Object: hexapolicy.ObjectInfo{
-				ResourceID: appInfo.ObjectID, // todo - for now, ensures the correct resource identifier
-			},
-		})
-	}
-	return hexaPolicies, nil
+	return policies.Policies, nil
 }
 
 func (o *OpaProvider) SetPolicyInfo(integration policyprovider.IntegrationInfo, appInfo policyprovider.ApplicationInfo, policyInfos []hexapolicy.PolicyInfo) (int, error) {
@@ -123,20 +112,29 @@ func (o *OpaProvider) SetPolicyInfo(integration policyprovider.IntegrationInfo, 
 
 	var policies []hexapolicy.PolicyInfo
 	for _, p := range policyInfos {
-		var actions []hexapolicy.ActionInfo
-		for _, a := range p.Actions {
-			actions = append(actions, hexapolicy.ActionInfo{ActionUri: a.ActionUri})
+		// Set up and update the Meta block...
+		now := time.Now()
+		meta := p.Meta
+
+		if meta.Created == nil {
+			meta.Created = &now
 		}
-		policies = append(policies, hexapolicy.PolicyInfo{
-			Meta:    hexapolicy.MetaInfo{Version: p.Meta.Version},
-			Actions: actions,
-			Subject: hexapolicy.SubjectInfo{
-				Members: p.Subject.Members,
-			},
-			Object: hexapolicy.ObjectInfo{
-				ResourceID: appInfo.ObjectID, // todo - for now, ensures the correct resource identifier
-			},
-		})
+		meta.Modified = &now
+		meta.PapId = &appInfo.ObjectID
+		meta.ProviderType = ProviderTypeOpa
+		if meta.PolicyId == nil {
+			// Assign a default policy id based on the resourceId. If not available, use the Pap ObjectID. An alias is appended to ensure uniqueness
+			alias := generateAliasOfSize(3)
+			resId := *meta.PapId
+			if p.Object.ResourceID != "" {
+				resId = p.Object.ResourceID
+			}
+			pid := fmt.Sprintf("%s_%s", resId, alias)
+			meta.PolicyId = &pid
+		}
+
+		p.Meta = meta
+		policies = append(policies, p)
 	}
 	data, marshalErr := json.Marshal(hexapolicy.Policies{Policies: policies})
 	if marshalErr != nil {

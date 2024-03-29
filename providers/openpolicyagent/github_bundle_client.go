@@ -18,6 +18,8 @@ import (
 	// "gopkg.in/square/go-jose.v2/json"
 )
 
+const BundleTypeGithub string = "Github"
+
 type GithubHTTPClient interface {
 	Get(url string) (resp *http.Response, err error)
 	Post(url, contentType string, body io.Reader) (resp *http.Response, err error)
@@ -89,6 +91,10 @@ func NewGithubBundleClient(account, repo, bundlePath string, key []byte, opts Gi
 		credentialsKey: ghCredentials,
 		httpClient:     opts.githubHttpClient(),
 	}, nil
+}
+
+func (g *GithubBundleClient) Type() string {
+	return BundleTypeGithub
 }
 
 func (g *GithubBundleClient) GetDataFromBundle(path string) ([]byte, error) {

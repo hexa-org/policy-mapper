@@ -1,5 +1,7 @@
 package openpolicyagent_test
 
+const BundleTypeMock string = "Mock"
+
 type MockBundleClient struct {
 	GetResponse    []byte
 	GetErr         error
@@ -7,6 +9,10 @@ type MockBundleClient struct {
 	PostErr        error
 
 	ArgPostBundle []byte
+}
+
+func (m *MockBundleClient) Type() string {
+	return BundleTypeMock
 }
 
 func (m *MockBundleClient) GetDataFromBundle(_ string) ([]byte, error) {

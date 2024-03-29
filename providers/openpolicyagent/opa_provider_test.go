@@ -7,9 +7,11 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicysupport"
 
 	"github.com/hexa-org/policy-mapper/providers/openpolicyagent"
 	"github.com/hexa-org/policy-mapper/providers/openpolicyagent/compressionsupport"
@@ -29,41 +31,31 @@ import (
 
 func TestDiscoverApplications(t *testing.T) {
 	type expected struct {
-		ProjectID string
-		ObjectID  string
+		ObjectID string
+		Service  string
 	}
 
 	tests := []struct {
 		name     string
 		key      []byte
 		expected struct {
-			ProjectID string
-			ObjectID  string
+			ObjectID string
+			Service  string
 		}
 	}{
 		{
-			name: "with project id (should be ignored)",
-			key: []byte(`
-              {
-                "bundle_url": "aBigUrl",
-                "project_id": "some opa project"
-              }`),
-
-			expected: expected{ObjectID: base64.StdEncoding.EncodeToString([]byte("aBigUrl"))},
-		},
-		{
-			name: "without project id",
+			name: "http bundle",
 			key: []byte(`
               {
                 "bundle_url": "aBigUrl"
               }`),
-			expected: expected{ObjectID: base64.StdEncoding.EncodeToString([]byte("aBigUrl"))},
+			expected: expected{ObjectID: base64.StdEncoding.EncodeToString([]byte("aBigUrl")),
+				Service: fmt.Sprintf("Hexa OPA (%s)", openpolicyagent.BundleTypeHttp)},
 		},
 		{
 			name: "gcp bundle storage project",
 			key: []byte(`
 {
-  "project_id": "some gcp project",
   "gcp": {
     "bucket_name": "opa-bundles",
     "object_name": "bundle.tar.gz",
@@ -73,13 +65,15 @@ func TestDiscoverApplications(t *testing.T) {
   }
 }
 `),
-			expected: expected{ObjectID: "opa-bundles"},
+			expected: expected{
+				ObjectID: "opa-bundles",
+				Service:  fmt.Sprintf("Hexa OPA (%s)", openpolicyagent.BundleTypeGcp),
+			},
 		},
 		{
 			name: "aws bundle storage project",
 			key: []byte(`
 {
-  "project_id": "some aws project",
   "aws": {
     "bucket_name": "opa-bundles",
     "object_name": "bundle.tar.gz",
@@ -89,13 +83,15 @@ func TestDiscoverApplications(t *testing.T) {
   }
 }
 `),
-			expected: expected{ObjectID: "opa-bundles"},
+			expected: expected{
+				ObjectID: "opa-bundles",
+				Service:  fmt.Sprintf("Hexa OPA (%s)", openpolicyagent.BundleTypeAws),
+			},
 		},
 		{
 			name: "github bundle storage project",
 			key: []byte(`
 {
-  "project_id": "some github project",
   "github": {
     "account": "hexa-org",
     "repo": "opa-bundles",
@@ -106,7 +102,10 @@ func TestDiscoverApplications(t *testing.T) {
   }
 }
 `),
-			expected: expected{ObjectID: "opa-bundles"},
+			expected: expected{
+				ObjectID: "opa-bundles",
+				Service:  fmt.Sprintf("Hexa OPA (%s)", openpolicyagent.BundleTypeGithub),
+			},
 		},
 	}
 
@@ -121,7 +120,7 @@ func TestDiscoverApplications(t *testing.T) {
 			// assert.Equal(t, tt.expected.ProjectID, applications[0].Name)
 			assert.Equal(t, tt.expected.ObjectID, applications[0].ObjectID)
 			assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)
-			assert.Equal(t, "Hexa OPA", applications[0].Service)
+			assert.Equal(t, tt.expected.Service, applications[0].Service)
 		})
 	}
 }
@@ -291,6 +290,7 @@ func TestSetPolicyInfo(t *testing.T) {
   "bundle_url": "aBigUrl"
 }
 `)
+	now := time.Now()
 	mockClient := &openpolicyagenttest.MockBundleClient{PostStatusCode: http.StatusCreated}
 	_, file, _, _ := runtime.Caller(0)
 	p := openpolicyagent.OpaProvider{BundleClientOverride: mockClient, ResourcesDirectory: filepath.Join(file, "../resources")}
@@ -299,7 +299,7 @@ func TestSetPolicyInfo(t *testing.T) {
 		policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key},
 		policyprovider.ApplicationInfo{ObjectID: "anotherResourceId"},
 		[]hexapolicy.PolicyInfo{
-			{Meta: hexapolicy.MetaInfo{Version: "0.5"}, Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subject: hexapolicy.SubjectInfo{Members: []string{"allusers"}}, Object: hexapolicy.ObjectInfo{
+			{Meta: hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion}, Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subject: hexapolicy.SubjectInfo{Members: []string{"allusers"}}, Object: hexapolicy.ObjectInfo{
 				ResourceID: "aResourceId",
 			}},
 		},
@@ -312,10 +312,31 @@ func TestSetPolicyInfo(t *testing.T) {
 
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	path := filepath.Join(file, fmt.Sprintf("../resources/bundles/.bundle-%d", random.Uint64()))
-	defer os.RemoveAll(path)
+	defer func(path string) {
+		err := os.RemoveAll(path)
+		if err != nil {
+			panic("Error cleaning up tests: " + err.Error())
+		}
+	}(path)
 	_ = compressionsupport.UnTarToPath(bytes.NewReader(gzip), path)
-	readFile, _ := os.ReadFile(path + "/bundle/data.json")
-	assert.JSONEq(t, `{"policies":[{"meta":{"version":"0.5"},"actions":[{"actionUri":"http:GET"}],"subject":{"members":["allusers"]},"object":{"resource_id":"anotherResourceId"}}]}`, string(readFile))
+	// readFile, _ := os.ReadFile(path + "/bundle/data.json")
+
+	/*
+		{"policies":[{"meta":{"version":"0.5","created":"2024-03-29T13:18:17.869827-07:00","modified":"2024-03-29T13:18:17.869827-07:00","policyId":"aResourceId_wRa","papId":"anotherResourceId","providerType":"opa"},"subject":{"members":["allusers"]},"actions":[{"actionUri":"http:GET"}],"object":{"resource_id":"aResourceId"}}]}
+	*/
+	policies, err := hexapolicysupport.ParsePolicyFile(path + "/bundle/data.json")
+	assert.NoError(t, err, "Check policy parses")
+	assert.Len(t, policies, 1, "Should be 1 policy")
+	meta := policies[0].Meta
+	modified := meta.Modified
+	assert.True(t, now.Before(*modified))
+	actionURi := policies[0].Actions[0].ActionUri
+	assert.Equal(t, "http:GET", actionURi)
+	assert.Equal(t, "aResourceId", policies[0].Object.ResourceID)
+	// assert.JSONEq(t, `{"policies":[{"meta":{"version":"0.5"},"actions":[{"actionUri":"http:GET"}],"subject":{"members":["allusers"]},"object":{"resource_id":"anotherResourceId"}}]}`, string(readFile))
+	assert.Equal(t, "anotherResourceId", *meta.PapId)
+	assert.Equal(t, hexapolicy.IdqlVersion, meta.Version, "check version")
+	assert.True(t, strings.Contains(*meta.PolicyId, "aResourceId_"), "Policy id was generated")
 }
 
 func TestSetPolicyInfo_withInvalidArguments(t *testing.T) {
@@ -411,12 +432,15 @@ func TestMakeDefaultBundle(t *testing.T) {
 	data := []byte(`{
   "policies": [
     {
-      "version": "0.5",
-      "actionUri": "http:GET",
+      "meta": {
+		"version": "0.6"
+      },
+      "actions": [{
+        "actionUri": "ietf:http:GET"
+	  }],
       "subject": {
         "members": [
-          "allusers",
-          "allauthenticated"
+          "anyauthenticated"
         ]
       },
       "object": {
@@ -430,6 +454,14 @@ func TestMakeDefaultBundle(t *testing.T) {
 	gzip, _ := compressionsupport.UnGzip(bytes.NewReader(bundle.Bytes()))
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	path := filepath.Join(os.TempDir(), fmt.Sprintf("/test-bundle-%d", random.Uint64()))
+	defer func(path string) {
+		err := os.RemoveAll(path)
+		if err != nil {
+			if err != nil {
+				panic("Error cleaning up tests: " + err.Error())
+			}
+		}
+	}(path)
 	_ = compressionsupport.UnTarToPath(bytes.NewReader(gzip), path)
 
 	created, _ := os.ReadFile(filepath.Join(path, "/bundle/policy.rego"))
@@ -441,23 +473,39 @@ func TestMakeDefaultBundle(t *testing.T) {
 	mcreated, _ := os.ReadFile(filepath.Join(path, "/bundle/.manifest"))
 	assert.Contains(t, string(mcreated), "{\"revision\":\"\",\"roots\":[\"\"]}")
 
-	dcreated, _ := os.ReadFile(filepath.Join(path, "/bundle/data.json"))
-	assert.Equal(t, `{
-  "policies": [
-    {
-      "version": "0.5",
-      "actionUri": "http:GET",
-      "subject": {
-        "members": [
-          "allusers",
-          "allauthenticated"
-        ]
-      },
-      "object": {
-        "resource_id": "aResourceId"
-      }
-    }
-  ]
-}`, string(dcreated))
-	_ = os.RemoveAll(path)
+	policies, err := hexapolicysupport.ParsePolicyFile(filepath.Join(path, "/bundle/data.json"))
+	assert.NoError(t, err, "Able to parse default policy bundle")
+
+	assert.Len(t, policies, 1, "Should be 1 policy")
+	meta := policies[0].Meta
+
+	actionURi := policies[0].Actions[0].ActionUri
+	assert.Equal(t, "ietf:http:GET", actionURi)
+	assert.Equal(t, "aResourceId", policies[0].Object.ResourceID)
+	// assert.JSONEq(t, `{"policies":[{"meta":{"version":"0.5"},"actions":[{"actionUri":"http:GET"}],"subject":{"members":["allusers"]},"object":{"resource_id":"anotherResourceId"}}]}`, string(readFile))
+	// assert.Equal(t, "anotherResourceId", *meta.PapId)
+	assert.Equal(t, "0.6", meta.Version, "check version")
+
+	/*
+	   	dcreated, _ := os.ReadFile(filepath.Join(path, "/bundle/data.json"))
+	   	assert.Equal(t, `{
+	     "policies": [
+	       {
+	         "version": "0.5",
+	         "actionUri": "http:GET",
+	         "subject": {
+	           "members": [
+	             "allusers",
+	             "allauthenticated"
+	           ]
+	         },
+	         "object": {
+	           "resource_id": "aResourceId"
+	         }
+	       }
+	     ]
+	   }`, string(dcreated))
+
+	*/
+
 }
