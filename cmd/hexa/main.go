@@ -12,6 +12,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/chzyer/readline"
+	"github.com/google/shlex"
 	"github.com/hexa-org/policy-mapper/sdk"
 )
 
@@ -179,15 +180,19 @@ func lowercaseKeywords(args []string) []string {
 
 // breakIntoArgs separates the command by spaces while preserving escaped space
 func breakIntoArgs(command string) []string {
-	lr := ' '
-	res := strings.FieldsFunc(command, func(r rune) bool {
-		if r == ' ' && lr == '\\' {
+	res, _ := shlex.Split(command)
+	/*
+		lr := ' '
+		res := strings.FieldsFunc(command, func(r rune) bool {
+			if r == ' ' && lr == '\\' {
+				lr = r
+				return false
+			}
 			lr = r
-			return false
-		}
-		lr = r
-		return r == ' '
-	})
+			return r == ' '
+		})
+
+	*/
 	return res
 }
 
