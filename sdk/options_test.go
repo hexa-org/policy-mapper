@@ -38,7 +38,7 @@ func TestWithIntegrationInfo(t *testing.T) {
 
 	assert.Equal(t, "opa-bundles", applications[0].ObjectID)
 	assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)
-	assert.Equal(t, "Hexa OPA", applications[0].Service)
+	assert.Equal(t, "Hexa OPA (aws-s3)", applications[0].Service)
 }
 
 func TestWithOpaAwsIntegration(t *testing.T) {
@@ -53,7 +53,7 @@ func TestWithOpaAwsIntegration(t *testing.T) {
 
 	assert.Equal(t, "opa-bundles", applications[0].ObjectID)
 	assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)
-	assert.Equal(t, "Hexa OPA", applications[0].Service)
+	assert.Equal(t, "Hexa OPA (aws-s3)", applications[0].Service)
 }
 
 func TestWithOpaGcpIntegration(t *testing.T) {
@@ -69,7 +69,7 @@ func TestWithOpaGcpIntegration(t *testing.T) {
 
 	assert.Equal(t, "opa-bundles", applications[0].ObjectID)
 	assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)
-	assert.Equal(t, "Hexa OPA", applications[0].Service)
+	assert.Equal(t, "Hexa OPA (GCP_Storage)", applications[0].Service)
 }
 
 func TestWithOpaGithubIntegration(t *testing.T) {
@@ -85,7 +85,7 @@ func TestWithOpaGithubIntegration(t *testing.T) {
 
 	assert.Equal(t, "opa-bundles", applications[0].ObjectID)
 	assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)
-	assert.Equal(t, "Hexa OPA", applications[0].Service)
+	assert.Equal(t, "Hexa OPA (Github)", applications[0].Service)
 }
 
 func TestWithOpaHttpIntegration(t *testing.T) {
@@ -102,7 +102,7 @@ func TestWithOpaHttpIntegration(t *testing.T) {
 	objectIdMatch := base64.StdEncoding.EncodeToString([]byte("aBigUrl"))
 	assert.Equal(t, objectIdMatch, applications[0].ObjectID)
 	assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)
-	assert.Equal(t, "Hexa OPA", applications[0].Service)
+	assert.Equal(t, "Hexa OPA (HTTP)", applications[0].Service)
 }
 
 func TestWithAttributeMap(t *testing.T) {
