@@ -464,10 +464,10 @@ func TestMakeDefaultBundle(t *testing.T) {
 	}(path)
 	_ = compressionsupport.UnTarToPath(bytes.NewReader(gzip), path)
 
-	created, _ := os.ReadFile(filepath.Join(path, "/bundle/policy.rego"))
-	assert.Contains(t, string(created), "package authz")
+	//created, _ := os.ReadFile(filepath.Join(path, "/bundle/policy.rego"))
+	//assert.Contains(t, string(created), "package authz")
 
-	policyv2, _ := os.ReadFile(filepath.Join(path, "/bundle/hexaPolicy.rego"))
+	policyv2, _ := os.ReadFile(filepath.Join(path, "/bundle/hexaPolicyV2.rego"))
 	assert.Contains(t, string(policyv2), "package hexaPolicy")
 
 	mcreated, _ := os.ReadFile(filepath.Join(path, "/bundle/.manifest"))

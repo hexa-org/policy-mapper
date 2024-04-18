@@ -138,7 +138,7 @@ func initParser(cli *CLI) (*ParserData, error) {
 
 	parser, err := kong.New(cli,
 		kong.Name("hexa"),
-		kong.Description("Hexa Policy Console"),
+		kong.Description("Hexa CLI Version: 0.63.0az"),
 		kong.ConfigureHelp(kong.HelpOptions{
 			Compact:      true,
 			Summary:      true,

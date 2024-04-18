@@ -91,7 +91,7 @@ func TestWithOpaGithubIntegration(t *testing.T) {
 func TestWithOpaHttpIntegration(t *testing.T) {
 
 	integration, err := OpenIntegration(
-		WithOpaHttpIntegration("aBigUrl", ""))
+		WithOpaHttpIntegration("aBigUrl", "", nil))
 	assert.NoError(t, err, "No error on open OPA Http integration")
 	assert.NotNil(t, integration, "Integration is defined")
 

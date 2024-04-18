@@ -16,13 +16,20 @@ import (
 
 const BundleTypeHttp string = "HTTP"
 
+/*
+Do(req *http.Request) (resp *http.Response, err error)
+	NewRequest(method, url string, body io.Reader) (req *http.Request, err error)
+*/
+
 type HTTPClient interface {
 	Get(url string) (resp *http.Response, err error)
 	Post(url, contentType string, body io.Reader) (resp *http.Response, err error)
+	Do(request *http.Request) (resp *http.Response, err error)
 }
 
 type HTTPBundleClient struct {
 	BundleServerURL string
+	Authorization   *string
 	HttpClient      HTTPClient
 }
 
@@ -31,9 +38,10 @@ func (b *HTTPBundleClient) Type() string {
 }
 
 func (b *HTTPBundleClient) GetDataFromBundle(path string) ([]byte, error) {
-	get, getErr := b.HttpClient.Get(b.BundleServerURL)
-	if getErr != nil {
-		return nil, getErr
+
+	get, err := b.newRequest(http.MethodGet, b.BundleServerURL, nil, nil)
+	if err != nil {
+		return nil, err
 	}
 	defer get.Body.Close()
 
@@ -61,6 +69,27 @@ func (b *HTTPBundleClient) PostBundle(bundle []byte) (int, error) {
 	_ = writer.Close()
 	parse, _ := url.Parse(b.BundleServerURL)
 	contentType := writer.FormDataContentType()
-	resp, err := b.HttpClient.Post(fmt.Sprintf("%s://%s/bundles", parse.Scheme, parse.Host), contentType, buf)
-	return resp.StatusCode, err
+
+	resp, err := b.newRequest(http.MethodPost, fmt.Sprintf("%s://%s/bundles", parse.Scheme, parse.Host), &contentType, buf)
+
+	if resp != nil {
+		return resp.StatusCode, err
+	}
+	// resp, err := http.Post(fmt.Sprintf("%s://%s/bundles", parse.Scheme, parse.Host), contentType, buf)
+	return http.StatusInternalServerError, err
+}
+
+func (b *HTTPBundleClient) newRequest(method, url string, contentType *string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+	if b.Authorization != nil {
+		req.Header.Set("Authorization", *b.Authorization)
+	}
+	if contentType != nil {
+		req.Header.Set("Content-Type", *contentType)
+	}
+
+	return b.HttpClient.Do(req)
 }

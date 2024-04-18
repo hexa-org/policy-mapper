@@ -159,8 +159,8 @@ func (o *OpaProvider) MakeDefaultBundle(data []byte) (bytes.Buffer, error) {
 	_, file, _, _ := runtime.Caller(0)
 	join := filepath.Join(file, "../resources/bundles/bundle")
 	manifest, _ := os.ReadFile(filepath.Join(join, "/.manifest"))
-	rego, _ := os.ReadFile(filepath.Join(join, "/policy.rego"))
-	rego2, _ := os.ReadFile(filepath.Join(join, "/hexaPolicy.rego"))
+	// rego, _ := os.ReadFile(filepath.Join(join, "/policy.rego"))
+	rego2, _ := os.ReadFile(filepath.Join(join, "/hexaPolicyV2.rego"))
 	// todo - ignoring errors for the moment while spiking
 
 	tempDir := os.TempDir()
@@ -168,8 +168,8 @@ func (o *OpaProvider) MakeDefaultBundle(data []byte) (bytes.Buffer, error) {
 	_ = os.Mkdir(filepath.Join(tempDir, "/bundles/bundle"), 0744)
 	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/.manifest"), manifest, 0644)
 	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/data.json"), data, 0644)
-	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/policy.rego"), rego, 0644)
-	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/hexaPolicy.rego"), rego2, 0644)
+	// _ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/policy.rego"), rego, 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/hexaPolicyV2.rego"), rego2, 0644)
 
 	tar, _ := compressionsupport.TarFromPath(filepath.Join(tempDir, "/bundles"))
 	var buffer bytes.Buffer
@@ -180,11 +180,12 @@ func (o *OpaProvider) MakeDefaultBundle(data []byte) (bytes.Buffer, error) {
 
 type Credentials struct {
 	// ProjectID string             `json:"project_id,omitempty"`
-	BundleUrl string             `json:"bundle_url"`
-	CACert    string             `json:"ca_cert,omitempty"`
-	GCP       *GcpCredentials    `json:"gcp,omitempty"`
-	AWS       *AwsCredentials    `json:"aws,omitempty"`
-	GITHUB    *GithubCredentials `json:"github,omitempty"`
+	BundleUrl     string             `json:"bundle_url"`
+	CACert        string             `json:"ca_cert,omitempty"`
+	Authorization string             `json:"authorization,omitempty"`
+	GCP           *GcpCredentials    `json:"gcp,omitempty"`
+	AWS           *AwsCredentials    `json:"aws,omitempty"`
+	GITHUB        *GithubCredentials `json:"github,omitempty"`
 }
 
 func (c Credentials) objectID() string {
@@ -293,8 +294,18 @@ func (o *OpaProvider) ConfigureClient(key []byte) (BundleClient, error) {
 		fmt.Println("Defaulting bundle path to: bundles/bundle.tar.gz")
 		bundleUrl.Path = "/bundles/bundle.tar.gz"
 	}
+	var authorization *string
+	if creds.Authorization != "" {
+		if strings.Contains(creds.Authorization, " ") {
+			authorization = &creds.Authorization
+		} else {
+			bearer := fmt.Sprintf("Bearer %s", creds.Authorization)
+			authorization = &bearer
+		}
+	}
 	return &HTTPBundleClient{
 		BundleServerURL: bundleUrl.String(),
 		HttpClient:      client,
+		Authorization:   authorization,
 	}, nil
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/hexa-org/policy-mapper/api/policyprovider"
 	"github.com/hexa-org/policy-mapper/providers/openpolicyagent"
@@ -87,7 +88,7 @@ func WithOpaAwsIntegration(bucketName string, objectName string, credentialKey [
 	}
 }
 
-// WithOpaGithubIntegration is a convenience method to build up an integration to initialize the OPA provider with a Github repository as the
+// WithOpaGithubIntegration is a convenience method to build up an integration to initialize the OPA provider with a GitHub repository as the
 // bucket repository. This method overrides information provided with the IntegrationInfo parameter of OpenIntegration
 func WithOpaGithubIntegration(account string, repo string, bundlePath string, token []byte) func(options *Options) {
 	return func(o *Options) {
@@ -111,7 +112,7 @@ func WithOpaGithubIntegration(account string, repo string, bundlePath string, to
 // WithOpaHttpIntegration is a convenience method to build up an integration to initialize the OPA provider with an HTTP service as the
 // bucket repository. This method overrides information provided with the IntegrationInfo parameter of OpenIntegration
 // The HTTP service must support GET and POST (Form) to retrieve and replace OPA bundles.
-func WithOpaHttpIntegration(bundleUrl string, caCert string) func(options *Options) {
+func WithOpaHttpIntegration(bundleUrl string, caCert string, token *string) func(options *Options) {
 	bURL, err := url.Parse(bundleUrl)
 	targetUrl := bundleUrl
 	if err == nil && bURL.Path == "" {
@@ -119,10 +120,18 @@ func WithOpaHttpIntegration(bundleUrl string, caCert string) func(options *Optio
 		fmt.Println(fmt.Sprintf("Defaulting bundle path to: %s", bURL.String()))
 		targetUrl = bURL.String()
 	}
+	auth := ""
+	if token != nil {
+		auth = *token
+		if strings.ToLower(auth)[0:7] != "bearer " {
+			auth = "Bearer " + auth
+		}
+	}
 	return func(o *Options) {
 		credential := openpolicyagent.Credentials{
-			BundleUrl: targetUrl,
-			CACert:    caCert,
+			BundleUrl:     targetUrl,
+			CACert:        caCert,
+			Authorization: auth,
 		}
 		key, _ := json.Marshal(&credential)
 

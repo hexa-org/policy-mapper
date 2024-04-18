@@ -3,12 +3,13 @@ package testsupport
 import (
 	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/mock"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"sort"
+
+	"github.com/stretchr/testify/mock"
 )
 
 type MockHTTPClient struct {
@@ -20,6 +21,7 @@ type MockHTTPClient struct {
 	StatusCode   int
 	StatusCodes  map[string]int
 	Called       map[string]int
+	Auth         string
 }
 
 func NewMockHTTPClient() *MockHTTPClient {
@@ -40,6 +42,12 @@ func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	cognitoServiceOp := req.Header.Get("X-Amz-Target")
 	methodAndUrl := m.reqKey(req.Method, req.URL.String(), cognitoServiceOp)
 
+	auth := req.Header.Get("Authorization")
+	if m.Auth != "" {
+		if auth != m.Auth {
+			return nil, fmt.Errorf("authorization not matched %s != %s", m.Auth, auth)
+		}
+	}
 	for url := range m.ResponseBody {
 		if url == req.URL.String() || url == methodAndUrl {
 			return m.sendRequest(req.Method, req.URL.String(), cognitoServiceOp, req.Body)
