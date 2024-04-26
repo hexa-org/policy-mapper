@@ -3,6 +3,7 @@ package openpolicyagent
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"io"
 	"mime/multipart"
@@ -39,7 +40,9 @@ func (b *HTTPBundleClient) Type() string {
 
 func (b *HTTPBundleClient) GetDataFromBundle(path string) ([]byte, error) {
 
-	get, err := b.newRequest(http.MethodGet, b.BundleServerURL, nil, nil)
+	parse, _ := url.Parse(b.BundleServerURL)
+
+	get, err := b.newRequest(http.MethodGet, fmt.Sprintf("%s://%s/%s", parse.Scheme, parse.Host, "bundles/bundle.tar.gz"), nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +88,8 @@ func (b *HTTPBundleClient) newRequest(method, url string, contentType *string, b
 		return nil, err
 	}
 	if b.Authorization != nil {
-		req.Header.Set("Authorization", *b.Authorization)
+		token := *b.Authorization
+		req.Header.Set("Authorization", strings.TrimSpace(token))
 	}
 	if contentType != nil {
 		req.Header.Set("Content-Type", *contentType)

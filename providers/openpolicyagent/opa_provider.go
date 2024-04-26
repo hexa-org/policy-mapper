@@ -31,7 +31,10 @@ import (
 const ProviderTypeOpa string = "opa"
 
 type BundleClient interface {
+
+	// GetDataFromBundle calls the bundle client, retrieves the bundle and extracts the results to the path provided
 	GetDataFromBundle(path string) ([]byte, error)
+
 	PostBundle(bundle []byte) (int, error)
 	Type() string
 }
@@ -76,7 +79,7 @@ func (o *OpaProvider) GetPolicyInfo(integration policyprovider.IntegrationInfo, 
 		return nil, fmt.Errorf("invalid client: %w", err)
 	}
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
-	path := filepath.Join(os.TempDir(), fmt.Sprintf("/test-bundle-%d", random.Uint64()))
+	path := filepath.Join(os.TempDir(), fmt.Sprintf("/opa-bundle-%d", random.Uint64()))
 	data, err := client.GetDataFromBundle(path)
 	if err != nil {
 		log.Printf("open-policy-agent, unable to read expression file. %s\n", err)

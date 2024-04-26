@@ -2,6 +2,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"slices"
@@ -138,7 +139,7 @@ func initParser(cli *CLI) (*ParserData, error) {
 
 	parser, err := kong.New(cli,
 		kong.Name("hexa"),
-		kong.Description("Hexa CLI Version: 0.63.0az"),
+		kong.Description("Hexa CLI Version: 0.6.6"),
 		kong.ConfigureHelp(kong.HelpOptions{
 			Compact:      true,
 			Summary:      true,
@@ -215,6 +216,7 @@ func main() {
 	// ctx.FatalIfErrorf(err)
 	if err != nil {
 		fmt.Println(err.Error())
+		panic(err)
 	}
 	oneCommand := false
 	initialArgs := os.Args
@@ -237,6 +239,9 @@ func main() {
 	}
 
 	// fmt.Println("Loading existing configuration...")
+	if td == nil {
+		panic(errors.New("CLI parser failed to initialize"))
+	}
 	err = td.cli.Data.checkConfigPath(&td.cli.Globals)
 	if err != nil {
 		fmt.Println("Error reading config directory: " + err.Error())
