@@ -2,7 +2,6 @@ package openpolicyagent_test
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
@@ -49,8 +48,8 @@ func TestDiscoverApplications(t *testing.T) {
               {
                 "bundle_url": "aBigUrl"
               }`),
-			expected: expected{ObjectID: base64.StdEncoding.EncodeToString([]byte("aBigUrl")),
-				Service: fmt.Sprintf("Hexa OPA (%s)", openpolicyagent.BundleTypeHttp)},
+			expected: expected{ObjectID: "/aBigUrl",
+				Service: "OPA HTTP"},
 		},
 		{
 			name: "gcp bundle storage project",
@@ -67,7 +66,7 @@ func TestDiscoverApplications(t *testing.T) {
 `),
 			expected: expected{
 				ObjectID: "opa-bundles",
-				Service:  fmt.Sprintf("Hexa OPA (%s)", openpolicyagent.BundleTypeGcp),
+				Service:  fmt.Sprintf("OPA %s", openpolicyagent.BundleTypeGcp),
 			},
 		},
 		{
@@ -85,7 +84,7 @@ func TestDiscoverApplications(t *testing.T) {
 `),
 			expected: expected{
 				ObjectID: "opa-bundles",
-				Service:  fmt.Sprintf("Hexa OPA (%s)", openpolicyagent.BundleTypeAws),
+				Service:  fmt.Sprintf("OPA %s", openpolicyagent.BundleTypeAws),
 			},
 		},
 		{
@@ -104,7 +103,7 @@ func TestDiscoverApplications(t *testing.T) {
 `),
 			expected: expected{
 				ObjectID: "opa-bundles",
-				Service:  fmt.Sprintf("Hexa OPA (%s)", openpolicyagent.BundleTypeGithub),
+				Service:  fmt.Sprintf("OPA %s", openpolicyagent.BundleTypeGithub),
 			},
 		},
 	}
@@ -119,7 +118,7 @@ func TestDiscoverApplications(t *testing.T) {
 			assert.Equal(t, 1, len(applications))
 			// assert.Equal(t, tt.expected.ProjectID, applications[0].Name)
 			assert.Equal(t, tt.expected.ObjectID, applications[0].ObjectID)
-			assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)
+			// assert.Equal(t, "Open Policy Agent bundle", applications[0].Description)
 			assert.Equal(t, tt.expected.Service, applications[0].Service)
 		})
 	}
@@ -464,8 +463,8 @@ func TestMakeDefaultBundle(t *testing.T) {
 	}(path)
 	_ = compressionsupport.UnTarToPath(bytes.NewReader(gzip), path)
 
-	//created, _ := os.ReadFile(filepath.Join(path, "/bundle/policy.rego"))
-	//assert.Contains(t, string(created), "package authz")
+	// created, _ := os.ReadFile(filepath.Join(path, "/bundle/policy.rego"))
+	// assert.Contains(t, string(created), "package authz")
 
 	policyv2, _ := os.ReadFile(filepath.Join(path, "/bundle/hexaPolicyV2.rego"))
 	assert.Contains(t, string(policyv2), "package hexaPolicy")

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -53,20 +52,10 @@ func (o *OpaProvider) DiscoverApplications(info policyprovider.IntegrationInfo) 
 	if err != nil {
 		return nil, err
 	}
-	client, err := o.ConfigureClient(info.Key)
-	if err != nil {
-		return nil, err
-	}
 
-	service := fmt.Sprintf("Hexa OPA (%s)", client.Type())
 	var apps []policyprovider.ApplicationInfo
 	if strings.EqualFold(info.Name, o.Name()) {
-		apps = append(apps, policyprovider.ApplicationInfo{
-			ObjectID:    c.objectID(),
-			Name:        "Bucket " + c.objectID(),
-			Description: "Open Policy Agent bundle",
-			Service:     service,
-		})
+		apps = append(apps, c.getApplicationInfo())
 	}
 	return apps, nil
 }
@@ -192,19 +181,55 @@ type Credentials struct {
 }
 
 func (c Credentials) objectID() string {
-	if c.GCP != nil {
+	switch c.opaType() {
+	case BundleTypeGcp:
 		return c.GCP.BucketName
+	case BundleTypeAws:
+		return c.AWS.BucketName
+	case BundleTypeGithub:
+		return c.GITHUB.Repo
+	}
+	bundleUrl, _ := url.Parse(c.BundleUrl)
+
+	httpId := fmt.Sprintf("%s/%s", bundleUrl.Host, bundleUrl.Path)
+	return httpId
+}
+
+func (c Credentials) opaType() string {
+	if c.GCP != nil {
+		return BundleTypeGcp
 	}
 
 	if c.AWS != nil {
-		return c.AWS.BucketName
+		return BundleTypeAws
 	}
 
 	if c.GITHUB != nil {
-		return c.GITHUB.Repo
+		return BundleTypeGithub
 	}
 
-	return base64.StdEncoding.EncodeToString([]byte(c.BundleUrl))
+	return BundleTypeHttp
+}
+
+func (c Credentials) getApplicationInfo() policyprovider.ApplicationInfo {
+	opaType := c.opaType()
+	switch opaType {
+	case BundleTypeAws, BundleTypeGithub, BundleTypeGcp:
+		return policyprovider.ApplicationInfo{
+			ObjectID:    c.objectID(),
+			Name:        fmt.Sprintf("OPA %s Bucket %s", opaType, c.objectID()),
+			Description: fmt.Sprintf("OPA %s Bundle Service", opaType),
+			Service:     fmt.Sprintf("OPA %s", opaType),
+		}
+
+	default:
+		return policyprovider.ApplicationInfo{
+			ObjectID:    c.objectID(),
+			Name:        fmt.Sprintf("OPA %s %s", BundleTypeHttp, c.BundleUrl),
+			Description: "OPA HTTP Bundle Service",
+			Service:     fmt.Sprintf("OPA %s", BundleTypeHttp),
+		}
+	}
 }
 
 type GcpCredentials struct {
