@@ -13,7 +13,7 @@ import (
 
 func TestGoogleProvider_BadClientKey(t *testing.T) {
 	p := iapProvider.GoogleProvider{}
-	info := policyprovider.IntegrationInfo{Name: "google_cloud", Key: []byte("aKey")}
+	info := policyprovider.IntegrationInfo{Name: iapProvider.ProviderTypeGoogleCloudIAP, Key: []byte("aKey")}
 
 	_, discoverErr := p.DiscoverApplications(info)
 	assert.Error(t, discoverErr)
@@ -31,7 +31,7 @@ func TestGoogleProvider_DiscoverApplications(t *testing.T) {
 	m.ResponseBody["https://compute.googleapis.com/compute/v1/projects/google-cloud-project-id/global/backendServices"] = backendAppsJSON
 	m.ResponseBody["https://appengine.googleapis.com/v1/apps/google-cloud-project-id"] = appEngineAppsJSON
 	p := &iapProvider.GoogleProvider{HttpClientOverride: m}
-	info := policyprovider.IntegrationInfo{Name: "google_cloud", Key: projectJSON}
+	info := policyprovider.IntegrationInfo{Name: iapProvider.ProviderTypeGoogleCloudIAP, Key: projectJSON}
 
 	applications, err := p.DiscoverApplications(info)
 
@@ -41,7 +41,7 @@ func TestGoogleProvider_DiscoverApplications(t *testing.T) {
 	assert.Equal(t, "Kubernetes", applications[1].Service)
 	assert.Equal(t, "Cloud Run", applications[2].Service)
 	assert.Equal(t, "AppEngine", applications[3].Service)
-	assert.Equal(t, "google_cloud", p.Name())
+	assert.Equal(t, iapProvider.ProviderTypeGoogleCloudIAP, p.Name())
 }
 
 func TestGoogleProvider_DiscoverApplications_ignoresProviderCase(t *testing.T) {
@@ -49,13 +49,13 @@ func TestGoogleProvider_DiscoverApplications_ignoresProviderCase(t *testing.T) {
 	m.ResponseBody["https://compute.googleapis.com/compute/v1/projects/google-cloud-project-id/global/backendServices"] = backendAppsJSON
 	m.ResponseBody["https://appengine.googleapis.com/v1/apps/google-cloud-project-id"] = appEngineAppsJSON
 	p := &iapProvider.GoogleProvider{HttpClientOverride: m}
-	info := policyprovider.IntegrationInfo{Name: "google_cloud", Key: projectJSON}
+	info := policyprovider.IntegrationInfo{Name: iapProvider.ProviderTypeGoogleCloudIAP, Key: projectJSON}
 
 	applications, err := p.DiscoverApplications(info)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 4, len(applications))
-	assert.Equal(t, "google_cloud", p.Name())
+	assert.Equal(t, iapProvider.ProviderTypeGoogleCloudIAP, p.Name())
 }
 
 func TestGoogleProvider_DiscoverApplications_emptyResponse(t *testing.T) {
@@ -95,7 +95,7 @@ func TestGoogleProvider_GetPolicy(t *testing.T) {
 	m := testsupport.NewMockHTTPClient()
 	m.ResponseBody["https://iap.googleapis.com/v1/projects/google-cloud-project-id/iap_web/compute/services/k8sObjectId:getIamPolicy"] = policyJSON
 	p := iapProvider.GoogleProvider{HttpClientOverride: m}
-	info := policyprovider.IntegrationInfo{Name: "google_cloud", Key: projectJSON}
+	info := policyprovider.IntegrationInfo{Name: iapProvider.ProviderTypeGoogleCloudIAP, Key: projectJSON}
 
 	infos, _ := p.GetPolicyInfo(info, policyprovider.ApplicationInfo{ObjectID: "k8sObjectId", Name: "k8sName"})
 
@@ -111,7 +111,7 @@ func TestGoogleProvider_SetPolicy(t *testing.T) {
 	m := testsupport.NewMockHTTPClient()
 
 	p := iapProvider.GoogleProvider{HttpClientOverride: m}
-	info := policyprovider.IntegrationInfo{Name: "google_cloud", Key: []byte("aKey")}
+	info := policyprovider.IntegrationInfo{Name: iapProvider.ProviderTypeGoogleCloudIAP, Key: []byte("aKey")}
 	status, err := p.SetPolicyInfo(info, policyprovider.ApplicationInfo{ObjectID: "anObjectId"}, []hexapolicy.PolicyInfo{policy})
 	assert.Equal(t, 201, status)
 	assert.NoError(t, err)
