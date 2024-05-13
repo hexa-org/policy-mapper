@@ -113,6 +113,7 @@ func WithOpaGithubIntegration(account string, repo string, bundlePath string, to
 // bucket repository. This method overrides information provided with the IntegrationInfo parameter of OpenIntegration
 // The HTTP service must support GET and POST (Form) to retrieve and replace OPA bundles.
 func WithOpaHttpIntegration(bundleUrl string, caCert string, token *string) func(options *Options) {
+
 	bURL, err := url.Parse(bundleUrl)
 	targetUrl := bundleUrl
 	if err == nil && bURL.Path == "" {
@@ -121,7 +122,7 @@ func WithOpaHttpIntegration(bundleUrl string, caCert string, token *string) func
 		targetUrl = bURL.String()
 	}
 	auth := ""
-	if token != nil {
+	if token != nil && len(*token) > 7 {
 		auth = *token
 		if strings.ToLower(auth)[0:7] != "bearer " {
 			auth = "Bearer " + auth
