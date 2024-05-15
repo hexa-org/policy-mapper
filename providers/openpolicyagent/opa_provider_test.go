@@ -220,7 +220,7 @@ func TestOpaProvider_EnsureClientIsAvailable_Error(t *testing.T) {
 
 	_, err := p.ConfigureClient(key)
 
-	assert.Contains(t, err.Error(), "invalid integration key")
+	assert.Error(t, err, "invalid integration key")
 
 	key = []byte(`
 {
@@ -264,7 +264,7 @@ func TestGetPolicyInfo_withBadKey(t *testing.T) {
 		policyprovider.ApplicationInfo{},
 	)
 
-	assert.Contains(t, err.Error(), "invalid client")
+	assert.Error(t, err, "invalid client")
 }
 
 func TestGetPolicyInfo_withBadRequest(t *testing.T) {
@@ -355,7 +355,7 @@ func TestSetPolicyInfo_withInvalidArguments(t *testing.T) {
 	)
 
 	assert.Equal(t, 500, status)
-	assert.Contains(t, err.Error(), "invalid app info")
+	assert.Error(t, err, "invalid app info")
 
 	status, err = p.SetPolicyInfo(
 		policyprovider.IntegrationInfo{Name: "open_policy_agent", Key: key},
@@ -369,7 +369,7 @@ func TestSetPolicyInfo_withInvalidArguments(t *testing.T) {
 	)
 
 	assert.Equal(t, 500, status)
-	assert.Contains(t, err.Error(), "invalid policy info")
+	assert.Error(t, err, "invalid policy info")
 
 	key = []byte(`{
   "bundle_url": "aBigUrl",
@@ -382,7 +382,7 @@ func TestSetPolicyInfo_withInvalidArguments(t *testing.T) {
 	)
 
 	assert.Equal(t, 500, status)
-	assert.Contains(t, err.Error(), "invalid client")
+	assert.Error(t, err, "invalid client")
 }
 
 func TestSetPolicyInfo_WithHTTPSBundleServer(t *testing.T) {
@@ -424,10 +424,6 @@ func TestSetPolicyInfo_WithHTTPSBundleServer(t *testing.T) {
 }
 
 func TestMakeDefaultBundle(t *testing.T) {
-	client := &openpolicyagent.HTTPBundleClient{}
-	_, file, _, _ := runtime.Caller(0)
-	p := openpolicyagent.OpaProvider{BundleClientOverride: client, ResourcesDirectory: filepath.Join(file, "../resources")}
-
 	data := []byte(`{
   "policies": [
     {
@@ -448,7 +444,7 @@ func TestMakeDefaultBundle(t *testing.T) {
     }
   ]
 }`)
-	bundle, _ := p.MakeDefaultBundle(data)
+	bundle, _ := openpolicyagent.MakeHexaBundle(data)
 
 	gzip, _ := compressionsupport.UnGzip(bytes.NewReader(bundle.Bytes()))
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -466,11 +462,11 @@ func TestMakeDefaultBundle(t *testing.T) {
 	// created, _ := os.ReadFile(filepath.Join(path, "/bundle/policy.rego"))
 	// assert.Contains(t, string(created), "package authz")
 
-	policyv2, _ := os.ReadFile(filepath.Join(path, "/bundle/hexaPolicyV2.rego"))
+	policyv2, _ := os.ReadFile(filepath.Join(path, "/bundle/hexaPolicy.rego"))
 	assert.Contains(t, string(policyv2), "package hexaPolicy")
 
 	mcreated, _ := os.ReadFile(filepath.Join(path, "/bundle/.manifest"))
-	assert.Contains(t, string(mcreated), "{\"revision\":\"\",\"roots\":[\"\"]}")
+	assert.Contains(t, string(mcreated), "{\"revision\":\"\",\"roots\":[\"\"],\"rego_version\":1}")
 
 	policies, err := hexapolicysupport.ParsePolicyFile(filepath.Join(path, "/bundle/data.json"))
 	assert.NoError(t, err, "Able to parse default policy bundle")

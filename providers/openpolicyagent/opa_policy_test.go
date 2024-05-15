@@ -41,7 +41,7 @@ func TestPolicy(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusNoContent, dataDo.StatusCode)
 
-	rego, err := os.ReadFile(filepath.Join(file, "../resources/bundles/bundle/hexaPolicyV2.rego"))
+	rego, err := os.ReadFile(filepath.Join(file, "../resources/bundles/bundle/hexaPolicy.rego"))
 	assert.NoError(t, err)
 	regoReq, err := http.NewRequest(http.MethodPut, "http://localhost:8887/v1/policies/hexaPolicy", bytes.NewBuffer(rego))
 	assert.NoError(t, err)

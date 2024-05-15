@@ -19,7 +19,7 @@ const (
 	SSamlAuth  string = "saml"
 	SCidr      string = "net"
 
-	IdqlVersion string = "0.6"
+	IdqlVersion string = "0.6.9"
 )
 
 type Policies struct {
@@ -46,13 +46,14 @@ func (p *Policies) AddPolicies(policies Policies) {
 	}
 }
 
+// PolicyInfo holds a single IDQL Policy Statement
 type PolicyInfo struct {
-	Meta      MetaInfo                  `json:"meta" validate:"required"`
-	Subject   SubjectInfo               `json:"subject" validate:"required"`
-	Actions   []ActionInfo              `json:"actions" validate:"required"`
-	Object    ObjectInfo                `json:"object" validate:"required"`
-	Condition *conditions.ConditionInfo `json:",omitempty"` // Condition is optional
-	Scope     *ScopeInfo                `json:"scope,omitempty"`
+	Meta      MetaInfo                  `json:"meta" validate:"required"`    // Meta holds additional information about the policy including policy management data
+	Subject   SubjectInfo               `json:"subject" validate:"required"` // Subject holds the subject clause of an IDQL policy
+	Actions   []ActionInfo              `json:"actions" validate:"required"` // Actions holds one or moe action uris
+	Object    ObjectInfo                `json:"object" validate:"required"`  // Object the resource, application, or system to which a policy applies
+	Condition *conditions.ConditionInfo `json:",omitempty"`                  // Condition is optional // Condition is an IDQL filter condition (e.g. ABAC rule) which must also be met
+	Scope     *ScopeInfo                `json:"scope,omitempty"`             // Scope represents obligations returned to a PEP (e.g attributes, where clause)
 }
 
 func (p *PolicyInfo) String() string {
@@ -138,6 +139,7 @@ const (
 	CompareDifCondition string = "CONDITION"
 )
 
+// Compare reports the differences between two policies, one or more of CompareEqual, CompareDifAction, CompareDifSubject, CompareDifObject, CompareDifCondition
 func (p *PolicyInfo) Compare(hexaPolicy PolicyInfo) []string {
 	// First do a textual compare
 	if p.Equals(hexaPolicy) {
@@ -194,15 +196,15 @@ func (p *PolicyInfo) actionEquals(actions []ActionInfo) bool {
 }
 
 type MetaInfo struct {
-	Version      string                 `json:"version,omitempty" validate:"required"` // this is the idql policy format version
-	SourceData   map[string]interface{} `json:"sourceData,omitempty"`                  // Logistical information required to map in source provider, e.g. type, identifiers
-	Description  string                 `json:"description,omitempty"`
-	Created      *time.Time             `json:"created,omitempty"`
-	Modified     *time.Time             `json:"modified,omitempty"`
-	Etag         string                 `json:"etag,omitempty"`
-	PolicyId     *string                `json:"policyId,omitempty"`
-	PapId        *string                `json:"papId,omitempty"`
-	ProviderType string                 `json:"providerType,omitempty"`
+	Version      string                 `json:"version,omitempty" validate:"required"` // Version is the idql policy format version
+	SourceData   map[string]interface{} `json:"sourceData,omitempty"`                  // SourceData custom map for providers (e.g. AVP), e.g. type, identifiers
+	Description  string                 `json:"description,omitempty"`                 // Description is an information description of the policy
+	Created      *time.Time             `json:"created,omitempty"`                     // Created is the time the policy was originally created
+	Modified     *time.Time             `json:"modified,omitempty"`                    // Modified inicates the last time the policy was updated or created, used in change detection in some providers
+	Etag         string                 `json:"etag,omitempty"`                        // Etag holds a calculated hash value used for change detection See Policy.CalculateEtag()
+	PolicyId     *string                `json:"policyId,omitempty"`                    // PolicyId is a unique identifier for a policy, may be assigned by the source provider
+	PapId        *string                `json:"papId,omitempty"`                       // PapId is the source Policy Application Point or Application where the policy originated
+	ProviderType string                 `json:"providerType,omitempty"`                // ProviderType is the SDK provider type indicating the source of the policy
 }
 
 type ActionInfo struct {

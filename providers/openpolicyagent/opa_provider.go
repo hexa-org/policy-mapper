@@ -134,7 +134,7 @@ func (o *OpaProvider) SetPolicyInfo(integration policyprovider.IntegrationInfo, 
 		return http.StatusInternalServerError, marshalErr
 	}
 
-	bundle, copyErr := o.MakeDefaultBundle(data)
+	bundle, copyErr := MakeHexaBundle(data)
 	if copyErr != nil {
 		log.Printf("open-policy-agent, unable to create default bundle. %s\n", copyErr)
 		return http.StatusInternalServerError, copyErr
@@ -147,21 +147,28 @@ func (o *OpaProvider) SetPolicyInfo(integration policyprovider.IntegrationInfo, 
 	return client.PostBundle(bundle.Bytes())
 }
 
-func (o *OpaProvider) MakeDefaultBundle(data []byte) (bytes.Buffer, error) {
+// MakeHexaBundle will generate a default bundle with current rego. If data is nil, an empty set of policies is generated.
+func MakeHexaBundle(data []byte) (bytes.Buffer, error) {
 	_, file, _, _ := runtime.Caller(0)
 	join := filepath.Join(file, "../resources/bundles/bundle")
 	manifest, _ := os.ReadFile(filepath.Join(join, "/.manifest"))
 	// rego, _ := os.ReadFile(filepath.Join(join, "/policy.rego"))
-	rego2, _ := os.ReadFile(filepath.Join(join, "/hexaPolicyV2.rego"))
-	// todo - ignoring errors for the moment while spiking
+	rego2, _ := os.ReadFile(filepath.Join(join, "/hexaPolicy.rego"))
 
-	tempDir := os.TempDir()
+	tempDir, err := os.MkdirTemp("", "policy-opa-*")
+	if err != nil {
+		log.Fatalf("unable to create temporary directory: %s", err)
+	}
 	_ = os.Mkdir(filepath.Join(tempDir, "/bundles"), 0744)
 	_ = os.Mkdir(filepath.Join(tempDir, "/bundles/bundle"), 0744)
 	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/.manifest"), manifest, 0644)
+	if data == nil {
+		emptyPolicies := hexapolicy.Policies{}
+		data, _ = json.Marshal(&emptyPolicies)
+	}
 	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/data.json"), data, 0644)
 	// _ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/policy.rego"), rego, 0644)
-	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/hexaPolicyV2.rego"), rego2, 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/hexaPolicy.rego"), rego2, 0644)
 
 	tar, _ := compressionsupport.TarFromPath(filepath.Join(tempDir, "/bundles"))
 	var buffer bytes.Buffer
