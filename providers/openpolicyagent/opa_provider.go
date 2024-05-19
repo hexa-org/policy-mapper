@@ -4,6 +4,7 @@ import (
     "bytes"
     "crypto/tls"
     "crypto/x509"
+    _ "embed"
     "encoding/json"
     "errors"
     "fmt"
@@ -26,6 +27,12 @@ import (
 
     "github.com/go-playground/validator/v10"
 )
+
+//go:embed resources/bundles/bundle/hexaPolicy.rego
+var hexaRego []byte
+
+//go:embed resources/bundles/bundle/.manifest
+var manifest []byte
 
 const ProviderTypeOpa string = "opa"
 
@@ -149,11 +156,6 @@ func (o *OpaProvider) SetPolicyInfo(integration policyprovider.IntegrationInfo, 
 
 // MakeHexaBundle will generate a default bundle with current rego. If data is nil, an empty set of policies is generated.
 func MakeHexaBundle(data []byte) (bytes.Buffer, error) {
-    _, file, _, _ := runtime.Caller(0)
-    join := filepath.Join(file, "../resources/bundles/bundle")
-    manifest, _ := os.ReadFile(filepath.Join(join, "/.manifest"))
-    // rego, _ := os.ReadFile(filepath.Join(join, "/policy.rego"))
-    rego2, _ := os.ReadFile(filepath.Join(join, "/hexaPolicy.rego"))
 
     tempDir, err := os.MkdirTemp("", "policy-opa-*")
     defer func(path string) {
@@ -171,8 +173,7 @@ func MakeHexaBundle(data []byte) (bytes.Buffer, error) {
         data, _ = json.Marshal(&emptyPolicies)
     }
     _ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/data.json"), data, 0644)
-    // _ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/policy.rego"), rego, 0644)
-    _ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/hexaPolicy.rego"), rego2, 0644)
+    _ = os.WriteFile(filepath.Join(tempDir, "/bundles/bundle/hexaPolicy.rego"), hexaRego, 0644)
 
     tar, _ := compressionsupport.TarFromPath(filepath.Join(tempDir, "/bundles"))
     var buffer bytes.Buffer
