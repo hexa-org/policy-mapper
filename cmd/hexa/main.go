@@ -17,6 +17,8 @@ import (
     "github.com/hexa-org/policy-mapper/sdk"
 )
 
+const Version string = "0.6.11"
+
 type ParserData struct {
     parser *kong.Kong
     cli    *CLI
@@ -36,6 +38,7 @@ type CLI struct {
     Add       AddCmd       `cmd:"" help:"Add a new integration"`
     Delete    DeleteCmd    `cmd:"" help:"Delete an integration or policy application point from local configuration"`
     Get       GetCmd       `cmd:"" help:"Retrieve or update information and display"`
+    Export    ExportCmd    `cmd:"" help:"Export an integration configuration (for use with Policy-Orchestrator web application)"`
     Map       MapCmd       `cmd:"" help:"Convert syntactical policies to and from IDQL"`
     Reconcile ReconcileCmd `cmd:"" help:"Reconcile compares a source set of policies another source (file or alias) of policies to determine differences."`
     Set       SetCmd       `cmd:"" help:"Set or update policies (e.g. set policies -file=idql.json)"`
@@ -139,7 +142,7 @@ func initParser(cli *CLI) (*ParserData, error) {
 
     parser, err := kong.New(cli,
         kong.Name("hexa"),
-        kong.Description("Hexa CLI Version: 0.6.10"),
+        kong.Description("Hexa CLI Version: "+Version),
         kong.ConfigureHelp(kong.HelpOptions{
             Compact:      true,
             Summary:      true,
@@ -198,6 +201,7 @@ func breakIntoArgs(command string) []string {
 }
 
 func main() {
+    log.Println(fmt.Sprintf("Hexa Command Line Utility (version: %s)", Version))
 
     console, err := readline.NewEx(&readline.Config{
         Prompt: "hexa> ",

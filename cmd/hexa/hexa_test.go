@@ -116,7 +116,7 @@ func TestHexaAdmin(t *testing.T) {
     testLog.Println("** Testing complete **")
 }
 
-func (suite *testSuite) Test0_ConfigInit() {
+func (suite *testSuite) Test00_ConfigInit() {
 
     testConfigPath := filepath.Join(suite.testDir, ".hexa", "config.json")
     suite.pd.cli.Config = testConfigPath
@@ -134,7 +134,7 @@ func (suite *testSuite) Test0_ConfigInit() {
     assert.NoError(suite.T(), err, "Check no error on load")
 }
 
-func (suite *testSuite) Test1_AddIntegrations() {
+func (suite *testSuite) Test01_AddIntegrations() {
     testLog.Println("Test 0 - Testing Add Integration")
 
     testLog.Println("  ...AVP")
@@ -217,7 +217,7 @@ func getPapIds(suite *testSuite) []string {
     return res
 }
 
-func (suite *testSuite) Test2_GetPaps() {
+func (suite *testSuite) Test02_GetPaps() {
     command := "get paps test"
     testLog.Println("Executing: " + command)
     res, err := suite.executeCommand(command, 1)
@@ -235,7 +235,7 @@ func (suite *testSuite) Test2_GetPaps() {
     assert.Empty(suite.T(), res, "Empty result")
 }
 
-func (suite *testSuite) Test3_ListIntegrations() {
+func (suite *testSuite) Test03_ListIntegrations() {
     command := "show integration test"
     testLog.Println("Executing: " + command)
     res, err := suite.executeCommand(command, 1)
@@ -263,7 +263,7 @@ func (suite *testSuite) Test3_ListIntegrations() {
 
 }
 
-func (suite *testSuite) Test4_GetPolicy() {
+func (suite *testSuite) Test04_GetPolicy() {
     // Load up test policies
     integration := suite.pd.cli.Data.GetIntegration("test")
     assert.NotNil(suite.T(), integration)
@@ -296,7 +296,7 @@ func (suite *testSuite) Test4_GetPolicy() {
     assert.Equal(suite.T(), len(testPols), len(testPols2), "Check same count of policies")
 }
 
-func (suite *testSuite) Test5_SetPolicies() {
+func (suite *testSuite) Test05_SetPolicies() {
     // Note: this test assumes policies were loaded from Test1
     papAliases := getPapIds(suite)
     policyPath := fmt.Sprintf("%s/policytest1-%s.json", suite.testDir, papAliases[0])
@@ -373,7 +373,7 @@ func (suite *testSuite) Test5_SetPolicies() {
     assert.Equal(suite.T(), 0, ignoreCnt, "no ignored records")
 }
 
-func (suite *testSuite) Test6_Reconcile() {
+func (suite *testSuite) Test06_Reconcile() {
     integration := suite.pd.cli.Data.GetIntegration("test")
     assert.NotNil(suite.T(), integration)
 
@@ -434,7 +434,7 @@ func (suite *testSuite) Test6_Reconcile() {
     assert.Len(suite.T(), difs4, 3, "Should be 3 difs")
 }
 
-func (suite *testSuite) Test7_MapToCmd() {
+func (suite *testSuite) Test07_MapToCmd() {
     command := "map to abc"
     _, err := suite.executeCommand(command, 0)
 
@@ -456,7 +456,7 @@ func (suite *testSuite) Test7_MapToCmd() {
     assert.Contains(suite.T(), string(res), "bindings")
 }
 
-func (suite *testSuite) Test8_MapFromCmd() {
+func (suite *testSuite) Test08_MapFromCmd() {
     command := "map from abc"
     _, err := suite.executeCommand(command, 0)
 
@@ -478,7 +478,7 @@ func (suite *testSuite) Test8_MapFromCmd() {
     assert.Contains(suite.T(), string(res), "req.ip sw 127 and req.method eq ")
 }
 
-func (suite *testSuite) Test9_DeleteCmds() {
+func (suite *testSuite) Test09_DeleteCmds() {
     integration := suite.pd.cli.Data.GetIntegration("test")
     assert.NotNil(suite.T(), integration)
 
@@ -505,6 +505,27 @@ func (suite *testSuite) Test9_DeleteCmds() {
     assert.NoError(suite.T(), err, "No error deleting test")
     integrationDeleted := suite.pd.cli.Data.GetIntegration("test")
     assert.Nil(suite.T(), integrationDeleted)
+}
+
+func (suite *testSuite) Test10_Export() {
+    cmd := "add aws avp test10 --file=./test/aws_test.json"
+    res, err := suite.executeCommand(cmd, 1)
+    assert.NoError(suite.T(), err, "Check no error after add avp --file")
+    testLog.Println(string(res))
+
+    keybytesOrig, err := os.ReadFile("./test/aws_test.json")
+
+    exportCommand := "export test10 test10.json"
+    res, err = suite.executeCommand(exportCommand, 0)
+    assert.NoError(suite.T(), err, "Check no error after add avp --file")
+    testLog.Println(string(res))
+
+    newIntegrationBytes, err := os.ReadFile("test10.json")
+    assert.NoError(suite.T(), err)
+
+    assert.Equal(suite.T(), keybytesOrig, newIntegrationBytes)
+
+    _ = os.Remove("test10.json")
 }
 
 func (suite *testSuite) Test99_ConfigSave() {
