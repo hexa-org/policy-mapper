@@ -12,6 +12,8 @@ import (
 
     "github.com/hexa-org/policy-mapper/api/policyprovider"
     "github.com/hexa-org/policy-mapper/pkg/hexapolicy"
+    "github.com/hexa-org/policy-mapper/pkg/oauth2support"
+    "golang.org/x/oauth2/clientcredentials"
 
     "github.com/hexa-org/policy-mapper/providers/aws/awscommon"
     "github.com/hexa-org/policy-mapper/providers/openpolicyagent/compressionsupport"
@@ -48,6 +50,8 @@ type BundleClient interface {
 type OpaProvider struct {
     BundleClientOverride BundleClient
     ResourcesDirectory   string
+    HttpClient           *http.Client
+    JwtHandler           oauth2support.JwtClientHandler
 }
 
 func (o *OpaProvider) Name() string {
@@ -184,12 +188,13 @@ func MakeHexaBundle(data []byte) (bytes.Buffer, error) {
 
 type Credentials struct {
     // ProjectID string             `json:"project_id,omitempty"`
-    BundleUrl     string             `json:"bundle_url"`
-    CACert        string             `json:"ca_cert,omitempty"`
-    Authorization string             `json:"authorization,omitempty"`
-    GCP           *GcpCredentials    `json:"gcp,omitempty"`
-    AWS           *AwsCredentials    `json:"aws,omitempty"`
-    GITHUB        *GithubCredentials `json:"github,omitempty"`
+    BundleUrl     string                    `json:"bundle_url"`
+    CACert        string                    `json:"ca_cert,omitempty"`
+    Authorization string                    `json:"authorization,omitempty"`
+    GCP           *GcpCredentials           `json:"gcp,omitempty"`
+    AWS           *AwsCredentials           `json:"aws,omitempty"`
+    GITHUB        *GithubCredentials        `json:"github,omitempty"`
+    Client        *clientcredentials.Config `json:"oauth_client,omitempty"`
 }
 
 func (c Credentials) objectID() string {
@@ -271,6 +276,10 @@ func (o *OpaProvider) credentials(key []byte) (Credentials, error) {
     return foundCredentials, nil
 }
 
+func (o *OpaProvider) IsOAuthClient() bool {
+    return o.JwtHandler != nil
+}
+
 func (o *OpaProvider) ConfigureClient(key []byte) (BundleClient, error) {
     // todo - do we need ResourcesDirectory here? Are we using it?
     if o.ResourcesDirectory == "" {
@@ -320,6 +329,11 @@ func (o *OpaProvider) ConfigureClient(key []byte) (BundleClient, error) {
                 RootCAs: caCertPool,
             },
         }
+    }
+
+    if creds.Client != nil {
+        o.JwtHandler = oauth2support.NewJwtClientHandlerWithConfig(creds.Client)
+        o.HttpClient = o.JwtHandler.GetHttpClient()
     }
 
     if o.BundleClientOverride != nil {
