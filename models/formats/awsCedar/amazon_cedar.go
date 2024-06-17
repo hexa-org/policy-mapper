@@ -413,7 +413,7 @@ func (c *CedarPolicyMapper) MapCedarPolicyToIdql(policy *CedarPolicy) (*hexapoli
         obj = mapResourceToObject(policy.Head.Resource)
     }
     ret := hexapolicy.PolicyInfo{
-        Meta:      hexapolicy.MetaInfo{Version: "0.6"},
+        Meta:      hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
         Actions:   actions,
         Subject:   subj,
         Object:    obj,
