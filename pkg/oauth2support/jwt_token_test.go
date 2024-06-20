@@ -9,6 +9,8 @@ import (
     "net/http/httptest"
     "net/url"
     "os"
+    "path/filepath"
+    "runtime"
     "testing"
     "time"
 
@@ -48,13 +50,13 @@ func TestResourceServer(t *testing.T) {
     _ = os.Setenv(EnvJwtAuth, "true")
     _ = os.Setenv(EnvJwtAudience, s.audience)
     _ = os.Setenv(EnvJwtScope, "orchestrator")
-    s.jwtHandler = NewResourceJwtAuthorizer()
+    s.jwtHandler, _ = NewResourceJwtAuthorizer()
     assert.NotNil(t, s.jwtHandler)
     assert.Equal(t, mockUrlJwks, s.jwtHandler.jwksUrl)
     assert.Equal(t, "TEST_REALM", s.jwtHandler.realm)
     assert.NotNil(t, s.jwtHandler.Key)
 
-    helloHandler := JwtAuthenticationHandler(oidctestsupport.HandleHello, s.jwtHandler)
+    helloHandler := JwtAuthenticationHandler(oidctestsupport.HandleHello, s.jwtHandler, nil)
 
     assert.NoError(t, err, "Should be a valid url")
 
@@ -99,7 +101,7 @@ func (s *testData) Test1_JWT() {
     req := httptest.NewRequest("GET", "/hello", nil)
     req.Header.Set("Authorization", "Bearer "+tokenString)
 
-    token, valid := s.jwtHandler.authenticate(httptest.NewRecorder(), req)
+    token, valid := s.jwtHandler.authenticate(httptest.NewRecorder(), req, []string{"orchestrator"})
     assert.True(s.T(), valid, "Token was valid")
 
     sub, _ := token.Claims.GetSubject()
@@ -115,7 +117,7 @@ func (s *testData) Test2_JWT_Errors() {
     req.Header.Set("Authorization", tokenString)
 
     resp := httptest.NewRecorder()
-    token, valid := s.jwtHandler.authenticate(resp, req)
+    token, valid := s.jwtHandler.authenticate(resp, req, []string{"orchestrator"})
     assert.False(s.T(), valid)
     assert.Nil(s.T(), token)
     assert.Equal(s.T(), http.StatusUnauthorized, resp.Code)
@@ -128,7 +130,7 @@ func (s *testData) Test2_JWT_Errors() {
     req2 := httptest.NewRequest("GET", "/hello", nil)
     req2.Header.Set("Authorization", tokenString)
     resp2 := httptest.NewRecorder()
-    token, valid = s.jwtHandler.authenticate(resp2, req2)
+    token, valid = s.jwtHandler.authenticate(resp2, req2, []string{"orchestrator"})
     assert.False(s.T(), valid)
     assert.Nil(s.T(), token)
     assert.Equal(s.T(), http.StatusUnauthorized, resp2.Code)
@@ -140,7 +142,7 @@ func (s *testData) Test2_JWT_Errors() {
     fmt.Println("Missing Authorization")
     req3 := httptest.NewRequest("GET", "/hello", nil)
     resp3 := httptest.NewRecorder()
-    token, valid = s.jwtHandler.authenticate(resp3, req3)
+    token, valid = s.jwtHandler.authenticate(resp3, req3, nil)
     assert.False(s.T(), valid)
     assert.Nil(s.T(), token)
     assert.Equal(s.T(), http.StatusUnauthorized, resp3.Code)
@@ -154,7 +156,7 @@ func (s *testData) Test2_JWT_Errors() {
     req4 := httptest.NewRequest("GET", "/hello", nil)
     req4.Header.Set("Authorization", "Bearer Bearer "+tokenString)
     resp4 := httptest.NewRecorder()
-    token, valid = s.jwtHandler.authenticate(resp4, req4)
+    token, valid = s.jwtHandler.authenticate(resp4, req4, []string{"orchestrator"})
     assert.False(s.T(), valid)
     assert.Nil(s.T(), token)
     assert.Equal(s.T(), http.StatusUnauthorized, resp4.Code)
@@ -168,7 +170,7 @@ func (s *testData) Test2_JWT_Errors() {
     req5 := httptest.NewRequest("GET", "/hello", nil)
     req5.Header.Set("Authorization", "Bearer "+expireTokenString)
     resp5 := httptest.NewRecorder()
-    token, valid = s.jwtHandler.authenticate(resp5, req5)
+    token, valid = s.jwtHandler.authenticate(resp5, req5, nil)
     assert.False(s.T(), valid)
     assert.Nil(s.T(), token)
     assert.Equal(s.T(), http.StatusUnauthorized, resp4.Code)
@@ -182,7 +184,7 @@ func (s *testData) Test2_JWT_Errors() {
     req6 := httptest.NewRequest("GET", "/hello", nil)
     req6.Header.Set("Authorization", "Bearer "+tokenString)
     resp6 := httptest.NewRecorder()
-    token, valid = s.jwtHandler.authenticate(resp6, req6)
+    token, valid = s.jwtHandler.authenticate(resp6, req6, nil)
     assert.False(s.T(), valid)
     assert.Nil(s.T(), token)
     assert.Equal(s.T(), http.StatusUnauthorized, resp6.Code)
@@ -195,7 +197,7 @@ func (s *testData) Test2_JWT_Errors() {
     req7 := httptest.NewRequest("GET", "/hello", nil)
     req7.Header.Set("Authorization", "Bearer "+tokenString)
     resp7 := httptest.NewRecorder()
-    token, valid = s.jwtHandler.authenticate(resp7, req7)
+    token, valid = s.jwtHandler.authenticate(resp7, req7, []string{"orchestrator"})
     assert.False(s.T(), valid)
     assert.Nil(s.T(), token)
     assert.Equal(s.T(), http.StatusForbidden, resp7.Code)
@@ -221,7 +223,7 @@ func (s *testData) Test3_JwtHandlerToken() {
 
     req := httptest.NewRequest("GET", "/hello", nil)
     req.Header.Set("Authorization", "Bearer "+tokenString)
-    tokenParsed, valid := s.jwtHandler.authenticate(httptest.NewRecorder(), req)
+    tokenParsed, valid := s.jwtHandler.authenticate(httptest.NewRecorder(), req, nil)
     assert.True(s.T(), valid, "Token was valid")
 
     sub, _ := tokenParsed.Claims.GetSubject()
@@ -301,4 +303,24 @@ func (s *testData) Test5_Middleware_Error() {
     assert.Equal(s.T(), http.StatusUnauthorized, resp.StatusCode)
     wwwAuthHeader = resp.Header.Get("WWW-Authenticate")
     assert.Equal(s.T(), "Bearer realm=\"TEST_REALM\", error=\"invalid_token\", error_description=\"token is malformed: token contains an invalid number of segments\"", wwwAuthHeader)
+}
+
+func (s *testData) Test6_LoadPubKeyFile() {
+    _, file, _, _ := runtime.Caller(0)
+    keyfile := filepath.Join(file, "../test/issuer-cert.pem")
+
+    _ = os.Unsetenv(EnvOAuthJwksUrl)
+    _ = os.Setenv(EnvTknPubKeyFile, keyfile)
+    authorizer, err := NewResourceJwtAuthorizer()
+    assert.NoError(s.T(), err)
+    assert.NotNil(s.T(), authorizer)
+    assert.NotNil(s.T(), authorizer.Key)
+
+    // Test wrong certificate type (in this case TLS cert)
+    keyfile = filepath.Join(file, "../test/ca-cert.pem")
+    _ = os.Setenv(EnvTknPubKeyFile, keyfile)
+    authorizer, err = NewResourceJwtAuthorizer()
+    assert.Error(s.T(), err, "asn1: structure error: tags don't match (2 vs {class:0 tag:16 length:853 isCompound:true}) {optional:false explicit:false application:false private:false defaultValue:<nil> tag:<nil> stringType:0 timeType:0 set:false omitEmpty:false}  @4")
+    assert.Nil(s.T(), authorizer)
+
 }

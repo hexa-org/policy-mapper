@@ -2,12 +2,17 @@ package oauth2support
 
 import (
     "context"
+    "crypto/x509"
+    "encoding/pem"
+    "errors"
     "fmt"
-    "log"
     "net/http"
     "os"
     "strings"
 
+    log "golang.org/x/exp/slog"
+
+    "github.com/MicahParks/jwkset"
     "github.com/MicahParks/keyfunc/v3"
     "github.com/golang-jwt/jwt/v5"
     "github.com/hexa-org/policy-mapper/pkg/keysupport"
@@ -16,16 +21,21 @@ import (
 )
 
 const (
-    EnvOAuthJwksUrl string = "HEXA_TOKEN_JWKSURL"
-    EnvJwtAuth      string = "HEXA_JWT_AUTH_ENABLE"
-    EnvJwtRealm     string = "HEXA_JWT_REALM"
-    EnvJwtAudience  string = "HEXA_JWT_AUDIENCE"
-    EnvJwtScope     string = "HEXA_JWT_SCOPE"
+    EnvOAuthJwksUrl  string = "HEXA_TOKEN_JWKSURL"
+    EnvTknPubKeyFile string = "HEXA_TKN_PUBKEYFILE"
+    EnvJwtAuth       string = "HEXA_JWT_AUTH_ENABLE"
+    EnvJwtRealm      string = "HEXA_JWT_REALM"
+    EnvJwtAudience   string = "HEXA_JWT_AUDIENCE"
+    EnvJwtScope      string = "HEXA_JWT_SCOPE"
+    EnvJwtKid        string = "HEXA_JWT_KID"
 
     EnvOAuthClientId      string = "HEXA_OAUTH_CLIENT_ID"
     EnvOAuthClientSecret  string = "HEXA_OAUTH_CLIENT_SECRET"
     EnvOAuthClientScope   string = "HEXA_OAUTH_CLIENT_SCOPE"
     EnvOAuthTokenEndpoint string = "HEXA_OAUTH_TOKEN_ENDPOINT"
+
+    Header_Email string = "X-JWT-EMAIL"
+    Header_Subj  string = "X-JWT-SUBJECT"
 )
 
 type ResourceJwtAuthorizer struct {
@@ -34,62 +44,117 @@ type ResourceJwtAuthorizer struct {
     enable  bool
     Key     keyfunc.Keyfunc
     Aud     string
-    Scope   string
 }
 
-func NewResourceJwtAuthorizer() *ResourceJwtAuthorizer {
+func NewResourceJwtAuthorizer() (*ResourceJwtAuthorizer, error) {
     enable := os.Getenv(EnvJwtAuth)
     if enable == "true" {
-        url := os.Getenv(EnvOAuthJwksUrl)
-        if url != "" {
-            jwkKeyfunc, err := keyfunc.NewDefaultCtx(context.Background(), []string{url})
+        jwksUrl := os.Getenv(EnvOAuthJwksUrl)
+        keyPath := os.Getenv(EnvTknPubKeyFile)
+
+        if jwksUrl == "" && keyPath == "" {
+            return nil, errors.New(fmt.Sprintf("One of %s or %s environment variables must be set to validate authorizations", EnvOAuthTokenEndpoint, EnvTknPubKeyFile))
+        }
+
+        realm := os.Getenv(EnvJwtRealm)
+        if realm == "" {
+            log.Warn(fmt.Sprintf("Warning: realm environment value not set (%s)", EnvJwtRealm))
+            realm = "UNDEFINED"
+        }
+        aud := os.Getenv(EnvJwtAudience)
+        if aud == "" {
+            log.Warn(fmt.Sprintf("Warning: audience environment value not set (%s)", EnvJwtAudience))
+        }
+
+        if jwksUrl != "" {
+            jwkKeyfunc, err := keyfunc.NewDefaultCtx(context.Background(), []string{jwksUrl})
             if err != nil {
-                log.Fatalf("Failed to create client JWK set. Error: %s", err)
+                log.Error("Failed to create client JWK set. Error: %s", err)
+                return nil, err
             }
-            realm := os.Getenv(EnvJwtRealm)
-            if realm == "" {
-                log.Println(fmt.Sprintf("Warning: realm environment value not set (%s)", EnvJwtRealm))
-                realm = "UNDEFINED"
-            }
-            aud := os.Getenv(EnvJwtAudience)
-            if aud == "" {
-                log.Println(fmt.Sprintf("Warning: audience environment value not set (%s)", EnvJwtAudience))
-                log.Println("Defaulting to aud=orchestrator")
-                aud = "orchestrator"
-            }
-            scope := os.Getenv(EnvJwtScope)
-            if scope == "" {
-                log.Println(fmt.Sprintf("Warning: scope environment value not set (%s)", EnvOAuthClientScope))
-                log.Println("Defaulting to scope=orchestrator")
-                scope = "orchestrator"
-            }
+
             return &ResourceJwtAuthorizer{
-                jwksUrl: url,
+                jwksUrl: jwksUrl,
                 enable:  true,
                 Key:     jwkKeyfunc,
                 realm:   realm,
                 Aud:     aud,
-                Scope:   scope,
-            }
+            }, nil
         }
-        log.Fatalf("Configuration parameter %s not set", EnvOAuthJwksUrl)
+
+        jwkKeyfunc, err := getKeyFuncFromFile(os.Getenv(EnvJwtKid), keyPath)
+        if err != nil {
+            log.Error("Failed to load JWK set from file. Error: %s", err)
+            return nil, err
+        }
+
+        return &ResourceJwtAuthorizer{
+            jwksUrl: jwksUrl,
+            enable:  true,
+            Key:     jwkKeyfunc,
+            realm:   realm,
+            Aud:     aud,
+        }, nil
 
     }
-    log.Println("JWT Authentication disabled.")
-    return &ResourceJwtAuthorizer{enable: false}
+    log.Info("JWT Authentication disabled.")
+    return &ResourceJwtAuthorizer{enable: false}, nil
 }
 
-func JwtAuthenticationHandler(next http.HandlerFunc, s *ResourceJwtAuthorizer) http.HandlerFunc {
+func getKeyFuncFromFile(name string, path string) (keyfunc.Keyfunc, error) {
+    pemBytes, err := os.ReadFile(path)
+    if err != nil {
+        return nil, errors.New(fmt.Sprintf("Unalbe to load public key (%s): %s", path, err.Error()))
+    }
+
+    derBlock, _ := pem.Decode(pemBytes)
+    publicKey, err := x509.ParsePKCS1PublicKey(derBlock.Bytes)
+    if err != nil {
+        return nil, err
+    }
+
+    jwk, _ := jwkset.NewJWKFromKey(publicKey, jwkset.JWKOptions{
+        Metadata: jwkset.JWKMetadataOptions{
+            ALG: "RS256",
+            KID: name,
+        },
+    })
+
+    store := jwkset.NewMemoryStorage()
+    _ = store.KeyWrite(context.Background(), jwk)
+
+    options := keyfunc.Options{
+        Storage: store,
+        Ctx:     context.Background(),
+    }
+
+    return keyfunc.New(options)
+
+}
+
+func scopeMatch(scopesAccepted []string, scopesHave []string) bool {
+    for _, acceptedScope := range scopesAccepted {
+        for _, scope := range scopesHave {
+            if strings.EqualFold(scope, acceptedScope) {
+                return true
+            }
+
+        }
+    }
+    return false
+}
+
+func JwtAuthenticationHandler(next http.HandlerFunc, s *ResourceJwtAuthorizer, scopes []string) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         if s.enable {
             if r.Header.Get("Authorization") == "" {
-                log.Println("Request missing authorization header")
+                log.Info("Request missing authorization header")
                 w.Header().Set("www-authenticate", fmt.Sprintf("Bearer realm=\"%s\"", s.realm))
                 w.WriteHeader(http.StatusUnauthorized)
                 return
             }
 
-            cred, valid := s.authenticate(w, r)
+            cred, valid := s.authenticate(w, r, scopes)
             if !valid {
                 // Error has already been encoded in the response
                 return
@@ -105,12 +170,23 @@ func JwtAuthenticationHandler(next http.HandlerFunc, s *ResourceJwtAuthorizer) h
     }
 }
 
-type AccessTokenInfo struct {
+type AccessToken struct {
     *jwt.RegisteredClaims
-    Scope string `json:"scope"`
+    Email string   `json:"email,omitempty"`
+    Scope string   `json:"scope,omitempty"`
+    Roles []string `json:"roles,omitempty"`
 }
 
-func (s *ResourceJwtAuthorizer) authenticate(w http.ResponseWriter, r *http.Request) (*jwt.Token, bool) {
+func (s *ResourceJwtAuthorizer) ValidateAuthorization(w http.ResponseWriter, r *http.Request, scopes []string) *AccessToken {
+    token, valid := s.authenticate(w, r, scopes)
+
+    if !valid {
+        return nil
+    }
+    return token.Claims.(*AccessToken)
+}
+
+func (s *ResourceJwtAuthorizer) authenticate(w http.ResponseWriter, r *http.Request, scopeAccepted []string) (*jwt.Token, bool) {
     authorization := r.Header.Get("Authorization")
     if authorization == "" {
         w.Header().Set("www-authenticate", fmt.Sprintf("Bearer realm=\"%s\"", s.realm))
@@ -129,7 +205,7 @@ func (s *ResourceJwtAuthorizer) authenticate(w http.ResponseWriter, r *http.Requ
     if strings.EqualFold(parts[0], "bearer") {
         tokenString := strings.TrimSpace(parts[1])
 
-        token, err := jwt.ParseWithClaims(tokenString, &AccessTokenInfo{}, s.Key.Keyfunc)
+        token, err := jwt.ParseWithClaims(tokenString, &AccessToken{}, s.Key.Keyfunc)
 
         if err != nil {
             headerMsg := fmt.Sprintf("Bearer realm=\"%s\", error=\"invalid_token\", error_description=\"%s\"", s.realm, err.Error())
@@ -139,41 +215,53 @@ func (s *ResourceJwtAuthorizer) authenticate(w http.ResponseWriter, r *http.Requ
             return nil, false
         }
 
-        // Check Audience
-        audMatch := false
-        var audStrings []string
-        audStrings, err = token.Claims.GetAudience()
-        if err != nil {
-            log.Printf("Error parsing audience from token claims: %s", err.Error())
-        }
-        for _, aud := range audStrings {
-            if strings.EqualFold(aud, s.Aud) {
-                audMatch = true
-            }
-        }
-        if !audMatch {
-            headerMsg := fmt.Sprintf("Bearer realm=\"%s\", error=\"invalid_token\", error_description=\"invalid audience\"", s.realm)
-            w.Header().Set("www-authenticate", headerMsg)
-            w.WriteHeader(http.StatusUnauthorized)
-            // log.Printf("Authorization invalid: [%s]\n", err.Error())
-            return nil, false
+        if claims, ok := token.Claims.(*AccessToken); ok {
+            r.Header.Set(Header_Subj, claims.Subject)
+            r.Header.Set(Header_Email, claims.Email)
         }
 
-        scopeMatch := false
-        var scopes []string
-        atToken := token.Claims.(*AccessTokenInfo)
-        scopeString := atToken.Scope
-        scopes = strings.Split(scopeString, " ")
-        if s.Scope != "" {
-            for _, scope := range scopes {
-                if strings.EqualFold(s.Scope, scope) {
-                    scopeMatch = true
+        // Check Audience
+        if s.Aud != "" {
+            audMatch := false
+            var audStrings []string
+            audStrings, err = token.Claims.GetAudience()
+            if err != nil {
+                log.Info("Error parsing audience from token claims: %s", err.Error())
+            }
+            for _, aud := range audStrings {
+                if strings.EqualFold(aud, s.Aud) {
+                    audMatch = true
                 }
             }
+            if !audMatch {
+                headerMsg := fmt.Sprintf("Bearer realm=\"%s\", error=\"invalid_token\", error_description=\"invalid audience\"", s.realm)
+                w.Header().Set("www-authenticate", headerMsg)
+                w.WriteHeader(http.StatusUnauthorized)
+                // log.Printf("Authorization invalid: [%s]\n", err.Error())
+                return nil, false
+            }
         }
 
-        if !scopeMatch {
-            headerMsg := fmt.Sprintf("Bearer realm=\"%s\", error=\"insufficient_scope\", error_description=\"requires scope=%s\"", s.realm, s.Scope)
+        var scopes []string
+        atToken := token.Claims.(*AccessToken)
+        scopeString := atToken.Scope
+        scopes = strings.Split(scopeString, " ")
+        sMatch := true
+        if scopeAccepted != nil {
+            sMatch = scopeMatch(scopeAccepted, scopes)
+        }
+
+        // check roles
+        if !sMatch {
+            tokenRoles := atToken.Roles
+            if tokenRoles != nil && len(tokenRoles) > 0 {
+                sMatch = scopeMatch(scopeAccepted, tokenRoles)
+            }
+        }
+
+        if !sMatch {
+            scopesRequired := strings.Join(scopeAccepted, ",")
+            headerMsg := fmt.Sprintf("Bearer realm=\"%s\", error=\"insufficient_scope\", error_description=\"requires scope=%s\"", s.realm, scopesRequired)
             w.Header().Set("www-authenticate", headerMsg)
             w.WriteHeader(http.StatusForbidden)
             // log.Printf("Authorization invalid: [%s]\n", err.Error())
@@ -213,7 +301,7 @@ func NewJwtClientHandler() JwtClientHandler {
     secret := os.Getenv(EnvOAuthClientSecret)
     tokenUrl := os.Getenv(EnvOAuthTokenEndpoint)
     if tokenUrl == "" {
-        log.Println(fmt.Sprintf("Error: Token endpoint (%s) not declared", EnvOAuthTokenEndpoint))
+        log.Error(fmt.Sprintf("Error: Token endpoint (%s) not declared", EnvOAuthTokenEndpoint))
     }
 
     config := &clientcredentials.Config{
