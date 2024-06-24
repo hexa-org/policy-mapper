@@ -1,0 +1,8 @@
+{
+  "bundle_url": "http://localhost:8889/bundles/bundle.tar.gz",
+  "oauth_client": {
+    "ClientID": "hexacli",
+    "ClientSecret": "abc123",
+    "TokenURL": "http://localhost:8080/token",
+  }
+}

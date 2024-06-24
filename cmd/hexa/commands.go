@@ -21,6 +21,7 @@ import (
     "github.com/hexa-org/policy-mapper/pkg/hexapolicy"
     "github.com/hexa-org/policy-mapper/pkg/hexapolicysupport"
     "github.com/hexa-org/policy-mapper/sdk"
+    "golang.org/x/oauth2/clientcredentials"
 )
 
 var MapFormats = []string{"gcp", "cedar"}
@@ -140,17 +141,21 @@ func (a *AddGcpIntegrationCmd) Run(cli *CLI) error {
 }
 
 type AddOpaIntegrationCmd struct {
-    Type       string `arg:"" required:"" help:"Type of OPA integration: aws, gcp, github, or http"`
-    Alias      string `arg:"" optional:"" help:"A new local alias that will be used to refer to the integration in subsequent operations. Defaults to an auto-generated alias"`
-    Account    string `help:"The account name for a Github project"`
-    Repo       string `help:"The repository name for a Github project"`
-    Path       string `help:"The path to the bundle in a Github project"`
-    Bucket     string `help:"The storage bucket name on AWS or GCP storage service"`
-    Object     string `help:"The storage object name on AWS or GCP storage service"`
-    Credential string `aliases:"key,secret" help:"A file containing the credential key or token used to access the bundle service or repo"`
-    Url        string `help:"The Http URL for the Bundle service"`
-    Cafile     string `aliases:"cacert" help:"For HTTP integration, public key file (PEM) to verify the server TLS certificate"`
-    File       string `short:"f" help:"File containing a JSON formatted OPA Integration"`
+    Type         string   `arg:"" required:"" help:"Type of OPA integration: aws, gcp, github, or http"`
+    Alias        string   `arg:"" optional:"" help:"A new local alias that will be used to refer to the integration in subsequent operations. Defaults to an auto-generated alias"`
+    GitAccount   string   `name:"gitaccount" help:"The account name for a Github project"`
+    GitRepo      string   `name:"gitrepo" help:"The repository name for a Github project"`
+    GitPath      string   `name:"gitpath" help:"The path to the bundle in a Github project"`
+    Bucket       string   `help:"The storage bucket name on AWS or GCP storage service"`
+    Object       string   `help:"The storage object name on AWS or GCP storage service"`
+    Credential   string   `aliases:"key" help:"A file containing the credential key or token used to access the bundle service or repo"`
+    Url          string   `help:"The Http URL for the Bundle service"`
+    Cafile       string   `aliases:"cacert" help:"For HTTP integration, public key file (PEM) to verify the server TLS certificate"`
+    File         string   `short:"f" help:"File containing a JSON formatted OPA Integration"`
+    ClientId     string   `name:"clientid" aliases:"id" help:"OAuth2 Client Id for client credential grant (HTTP Bundle Server)"`
+    ClientSecret string   `name:"secret" help:"OAuth2 client secret for obtaining access tokens (HTTP Bundle Server)"`
+    TokenUrl     string   `name:"tokenurl" help:"OAuth2 Token Endpoint url for client credential grant flow (HTTP Bundle Server)"`
+    Scopes       []string `help:"OAuth2 scopes for client grant flow (HTTP Bundle Server"`
 }
 
 func (a *AddOpaIntegrationCmd) Help() string {
@@ -187,6 +192,17 @@ or for HTTP:
   "ca_cert": "pem_encoded_key"
 }
 
+or 
+
+{
+  "bundle_url": "http://localhost:8889/bundles/bundle.tar.gz",
+  "oauth_client": {
+    "ClientID": "hexacli",
+    "ClientSecret": "abc123",
+    "TokenURL": "http://localhost:8080/token",
+  }
+}
+
 Or, use the parameters in combinations as follows for:
 * "gcp", "aws":  specify a --bucket, --object, and --credential
 * "github":      specify --account, --repo, --path, and --credential
@@ -202,6 +218,7 @@ func (a *AddOpaIntegrationCmd) AfterApply(_ *kong.Context) error {
         if err != nil {
             return err
         }
+        return nil // if we are using file, all other parameters ignored
     }
     if a.Cafile != "" {
         err := checkFile(a.Cafile)
@@ -233,13 +250,13 @@ func (a *AddOpaIntegrationCmd) AfterApply(_ *kong.Context) error {
         if a.Credential == "" {
             return errors.New("missing github credential")
         }
-        if a.Account == "" {
+        if a.GitAccount == "" {
             return errors.New("missing --account parameter")
         }
-        if a.Repo == "" {
+        if a.GitRepo == "" {
             return errors.New("missing --repo parameter")
         }
-        if a.Path == "" {
+        if a.GitPath == "" {
             return errors.New("missing --path parameter for bundle")
         }
         return nil
@@ -247,6 +264,11 @@ func (a *AddOpaIntegrationCmd) AfterApply(_ *kong.Context) error {
     case "http":
         if a.Url == "" {
             return errors.New("missing --url for bundle location")
+        }
+        if a.ClientId != "" || a.ClientSecret != "" || a.TokenUrl != "" {
+            if a.ClientId == "" || a.ClientSecret == "" || a.TokenUrl == "" {
+                return errors.New("for OAuth2 Client Credentials support, provide all of --clientid, --secret, --tokenurl")
+            }
         }
         return nil
     }
@@ -282,7 +304,7 @@ func (a *AddOpaIntegrationCmd) Run(cli *CLI) error {
         case "gcp":
             integration, err = openIntegration(alias, sdk.WithOpaGcpIntegration(a.Bucket, a.Object, credBytes))
         case "github":
-            integration, err = openIntegration(alias, sdk.WithOpaGithubIntegration(a.Account, a.Repo, a.Path, credBytes))
+            integration, err = openIntegration(alias, sdk.WithOpaGithubIntegration(a.GitAccount, a.GitRepo, a.GitPath, credBytes))
         case "http":
             var keyFileBytes []byte
             if a.Cafile != "" {
@@ -290,7 +312,17 @@ func (a *AddOpaIntegrationCmd) Run(cli *CLI) error {
             }
 
             token := string(credBytes)
-            integration, err = openIntegration(alias, sdk.WithOpaHttpIntegration(a.Url, string(keyFileBytes), &token))
+            if a.ClientId != "" {
+                config := clientcredentials.Config{
+                    ClientID:     a.ClientId,
+                    ClientSecret: a.ClientSecret,
+                    TokenURL:     a.TokenUrl,
+                    Scopes:       a.Scopes,
+                }
+                integration, err = openIntegration(alias, sdk.WithOpaHttpOauth2Integration(a.Url, string(keyFileBytes), &config))
+            } else {
+                integration, err = openIntegration(alias, sdk.WithOpaHttpIntegration(a.Url, string(keyFileBytes), &token))
+            }
         }
     }
     if err != nil {

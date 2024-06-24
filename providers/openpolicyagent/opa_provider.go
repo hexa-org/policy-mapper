@@ -18,14 +18,14 @@ import (
     "github.com/hexa-org/policy-mapper/providers/aws/awscommon"
     "github.com/hexa-org/policy-mapper/providers/openpolicyagent/compressionsupport"
 
-    "log"
     "math/rand"
     "net/http"
     "os"
     "path/filepath"
-    "runtime"
     "strings"
     "time"
+
+    log "golang.org/x/exp/slog"
 
     "github.com/go-playground/validator/v10"
 )
@@ -49,7 +49,6 @@ type BundleClient interface {
 
 type OpaProvider struct {
     BundleClientOverride BundleClient
-    ResourcesDirectory   string
     HttpClient           *http.Client
     JwtHandler           oauth2support.JwtClientHandler
 }
@@ -75,14 +74,15 @@ func (o *OpaProvider) GetPolicyInfo(integration policyprovider.IntegrationInfo, 
     key := integration.Key
     client, err := o.ConfigureClient(key)
     if err != nil {
-        log.Printf("open-policy-agent, unable to build client: %s", err)
+        msg := fmt.Sprintf("open-policy-agent, unable to build client: %s", err)
+        log.Error(msg)
         return nil, fmt.Errorf("invalid client: %w", err)
     }
     random := rand.New(rand.NewSource(time.Now().UnixNano()))
     path := filepath.Join(os.TempDir(), fmt.Sprintf("/opa-bundle-%d", random.Uint64()))
     data, err := client.GetDataFromBundle(path)
     if err != nil {
-        log.Printf("open-policy-agent, unable to read expression file. %s\n", err)
+        log.Warn("open-policy-agent, unable to retrieve bundle data file. %s\n", err)
         return nil, err
     }
 
@@ -109,7 +109,7 @@ func (o *OpaProvider) SetPolicyInfo(integration policyprovider.IntegrationInfo, 
     key := integration.Key
     client, err := o.ConfigureClient(key)
     if err != nil {
-        log.Printf("open-policy-agent, unable to build client: %s", err)
+        log.Warn("open-policy-agent, unable to build client: %s", err)
         return http.StatusInternalServerError, fmt.Errorf("invalid client: %w", err)
     }
 
@@ -141,18 +141,18 @@ func (o *OpaProvider) SetPolicyInfo(integration policyprovider.IntegrationInfo, 
     }
     data, marshalErr := json.Marshal(hexapolicy.Policies{Policies: policies})
     if marshalErr != nil {
-        log.Printf("open-policy-agent, unable to create data file. %s\n", marshalErr)
+        log.Warn("open-policy-agent, unable to create data file. %s\n", marshalErr)
         return http.StatusInternalServerError, marshalErr
     }
 
     bundle, copyErr := MakeHexaBundle(data)
     if copyErr != nil {
-        log.Printf("open-policy-agent, unable to create default bundle. %s\n", copyErr)
+        log.Warn("open-policy-agent, unable to create default bundle. %s\n", copyErr)
         return http.StatusInternalServerError, copyErr
     }
     defer func() {
         if err := recover(); err != nil {
-            log.Printf("unable to set policy: %v", err)
+            log.Warn("unable to set policy: %v", err)
         }
     }()
     return client.PostBundle(bundle.Bytes())
@@ -167,7 +167,9 @@ func MakeHexaBundle(data []byte) (bytes.Buffer, error) {
     }(tempDir)
 
     if err != nil {
-        log.Fatalf("unable to create temporary directory: %s", err)
+
+        log.Error("unable to create temporary directory: %s", err)
+        return bytes.Buffer{}, err
     }
     _ = os.Mkdir(filepath.Join(tempDir, "/bundles"), 0744)
     _ = os.Mkdir(filepath.Join(tempDir, "/bundles/bundle"), 0744)
@@ -281,85 +283,86 @@ func (o *OpaProvider) IsOAuthClient() bool {
 }
 
 func (o *OpaProvider) ConfigureClient(key []byte) (BundleClient, error) {
-    // todo - do we need ResourcesDirectory here? Are we using it?
-    if o.ResourcesDirectory == "" {
-        _, file, _, _ := runtime.Caller(0)
-        o.ResourcesDirectory = filepath.Join(file, "../resources")
-    }
 
-    creds, err := o.credentials(key)
+    integrationCredential, err := o.credentials(key)
     if err != nil {
         return nil, err
     }
 
-    if creds.GCP != nil {
+    if integrationCredential.GCP != nil {
         return NewGCPBundleClient(
-            creds.GCP.BucketName,
-            creds.GCP.ObjectName,
-            creds.GCP.Key,
+            integrationCredential.GCP.BucketName,
+            integrationCredential.GCP.ObjectName,
+            integrationCredential.GCP.Key,
         )
     }
 
-    if creds.AWS != nil {
+    if integrationCredential.AWS != nil {
         return NewAWSBundleClient(
-            creds.AWS.BucketName,
-            creds.AWS.ObjectName,
-            creds.AWS.Key,
+            integrationCredential.AWS.BucketName,
+            integrationCredential.AWS.ObjectName,
+            integrationCredential.AWS.Key,
             awscommon.AWSClientOptions{},
         )
     }
 
-    if creds.GITHUB != nil {
+    if integrationCredential.GITHUB != nil {
         return NewGithubBundleClient(
-            creds.GITHUB.Account,
-            creds.GITHUB.Repo,
-            creds.GITHUB.BundlePath,
-            creds.GITHUB.Key,
+            integrationCredential.GITHUB.Account,
+            integrationCredential.GITHUB.Repo,
+            integrationCredential.GITHUB.BundlePath,
+            integrationCredential.GITHUB.Key,
             GithubBundleClientOptions{})
-    }
-
-    client := &http.Client{
-        Timeout: 10 * time.Second,
-    }
-    if creds.CACert != "" {
-        caCertPool := x509.NewCertPool()
-        caCertPool.AppendCertsFromPEM([]byte(creds.CACert))
-        client.Transport = &http.Transport{
-            TLSClientConfig: &tls.Config{
-                RootCAs: caCertPool,
-            },
-        }
-    }
-
-    if creds.Client != nil {
-        o.JwtHandler = oauth2support.NewJwtClientHandlerWithConfig(creds.Client)
-        o.HttpClient = o.JwtHandler.GetHttpClient()
     }
 
     if o.BundleClientOverride != nil {
         return o.BundleClientOverride, nil
     }
 
-    bundleUrl, err := url.Parse(creds.BundleUrl)
+    // If there is an externally provided HTTP client, these defaults will not be set including CA Cert install
+    if o.HttpClient == nil {
+        client := &http.Client{
+            Timeout: 10 * time.Second,
+        }
+        if integrationCredential.CACert != "" {
+            log.Debug("Installing CA certificate.")
+            caCertPool := x509.NewCertPool()
+            caCertPool.AppendCertsFromPEM([]byte(integrationCredential.CACert))
+            client.Transport = &http.Transport{
+                TLSClientConfig: &tls.Config{
+                    RootCAs: caCertPool,
+                },
+            }
+        }
+        o.HttpClient = client
+    }
+
+    if integrationCredential.Client != nil {
+        log.Debug("Configuring OAuth2 Client credentials support")
+        o.JwtHandler = oauth2support.NewJwtClientHandlerWithConfig(integrationCredential.Client, o.HttpClient)
+        o.HttpClient = o.JwtHandler.GetHttpClient()
+    }
+
+    bundleUrl, err := url.Parse(integrationCredential.BundleUrl)
     if err != nil {
         return nil, errors.New(fmt.Sprintf("error parsing bundleUrl: %s", err.Error()))
     }
-    if bundleUrl.Path == "" {
-        fmt.Println("Defaulting bundle path to: bundles/bundle.tar.gz")
+    if bundleUrl.Path == "" || bundleUrl.Path == "/" {
+        log.Debug("Defaulting bundle path to: bundles/bundle.tar.gz")
         bundleUrl.Path = "/bundles/bundle.tar.gz"
     }
     var authorization *string
-    if creds.Authorization != "" {
-        if strings.Contains(creds.Authorization, " ") {
-            authorization = &creds.Authorization
+    if integrationCredential.Authorization != "" {
+        if strings.Contains(integrationCredential.Authorization, " ") {
+            authorization = &integrationCredential.Authorization
         } else {
-            bearer := fmt.Sprintf("Bearer %s", creds.Authorization)
+            bearer := fmt.Sprintf("Bearer %s", integrationCredential.Authorization)
             authorization = &bearer
         }
     }
     return &HTTPBundleClient{
         BundleServerURL: bundleUrl.String(),
-        HttpClient:      client,
+        HttpClient:      o.HttpClient,
         Authorization:   authorization,
     }, nil
 }

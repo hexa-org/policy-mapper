@@ -311,28 +311,32 @@ func NewJwtClientHandler() JwtClientHandler {
         AuthStyle:    oauth2.AuthStyle(oauth2.AuthStyleAutoDetect),
     }
 
-    return NewJwtClientHandlerWithConfig(config)
+    return NewJwtClientHandlerWithConfig(config, nil)
 }
 
 /*
 NewJwtClientHandlerWithConfig opens a new JwtClientHandler which allows an OAuth Client to make calls to a JWT protected
-endpoint. The `config` parameter specifies a client credential for the OAuth2 Client Credential Flow
+endpoint. The `config` parameter specifies a client credential for the OAuth2 Client Credential Flow. `httpClientOverride`
+is used to override the normal HTTP client and will be inserted to the oauth2 http client.
 */
-func NewJwtClientHandlerWithConfig(config *clientcredentials.Config) JwtClientHandler {
+func NewJwtClientHandlerWithConfig(config *clientcredentials.Config, httpClientOverride *http.Client) JwtClientHandler {
     // Set up an http.Client to use and install self-signed CA if needed
-    client := http.Client{}
-    keysupport.CheckCaInstalled(&client)
+    client := &http.Client{}
+    if httpClientOverride != nil {
+        client = httpClientOverride
+    }
+    keysupport.CheckCaInstalled(client)
 
     return &jwtClient{
         Config:     config,
-        httpClient: &client,
+        httpClient: client,
     }
 }
 
 // GetHttpClient returns an http.Client object that can be used to make calls to protected services. The client
 // automatically appends the authorization header and handles refresh with the OAuth Token Server as needed.
 func (j *jwtClient) GetHttpClient() *http.Client {
-    // j.httpClient is a client with the self-signed CA instlled if needed
+    // j.httpClient is a client with the self-signed CA installed if needed
     ctx := context.WithValue(context.Background(), oauth2.HTTPClient, j.httpClient)
     return j.Config.Client(ctx)
 }

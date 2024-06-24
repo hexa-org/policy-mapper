@@ -135,6 +135,7 @@ func (suite *testSuite) Test00_ConfigInit() {
 }
 
 func (suite *testSuite) Test01_AddIntegrations() {
+
     testLog.Println("Test 0 - Testing Add Integration")
 
     testLog.Println("  ...AVP")
@@ -182,8 +183,23 @@ func (suite *testSuite) Test01_AddIntegrations() {
 
     cmd7 := "add azure test5 --file=./test/azure_test.json"
     res7, err := suite.executeCommand(cmd7, 1)
-    assert.NoError(suite.T(), err, "Check no error after add cognito --file")
+    assert.NoError(suite.T(), err, "Check no error after add azure --file")
     testLog.Println(string(res7))
+
+    cmd8 := "add opa http --file=./test/opa_test.json"
+    res8, err := suite.executeCommand(cmd8, 1)
+    assert.NoError(suite.T(), err, "Check no error after add opa http --file")
+    testLog.Println(string(res8))
+
+    cmd9 := "add opa http --file=./test/opa_oauth_http.json"
+    res9, err := suite.executeCommand(cmd9, 1)
+    assert.NoError(suite.T(), err, "Check no error after add opa http --file")
+    testLog.Println(string(res9))
+
+    cmd10 := "add opa http --url=http://localhost:8889 --tokenurl=http://localhost:8080/token --clientid=hexacli --secret=abc123"
+    res10, err := suite.executeCommand(cmd10, 1)
+    assert.NoError(suite.T(), err, "Check no error after add opa http --file")
+    testLog.Println(string(res10))
 
     testLog.Println("  ...Negative Tests")
     // Negative tests
@@ -196,6 +212,7 @@ func (suite *testSuite) Test01_AddIntegrations() {
         "add aws cognito testf --keyid=123",
         "add azure testg --file=notvalid.txt",
         "add azure testh --tenant=123",
+        "add opa http --url=http://localhost:8889 --clientid=hexaclient",
     }
     for _, testCmd := range negTests {
         result, err := suite.executeCommand(testCmd, 1)

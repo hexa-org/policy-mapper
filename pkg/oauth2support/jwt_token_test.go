@@ -210,7 +210,7 @@ func (s *testData) Test3_JwtHandlerToken() {
     // This call pulls config from environment variables
     jwtHandler := NewJwtClientHandler()
 
-    jwtHandler2 := NewJwtClientHandlerWithConfig(s.config)
+    jwtHandler2 := NewJwtClientHandlerWithConfig(s.config, nil)
 
     token, err := jwtHandler.GetToken()
     assert.NoError(s.T(), err)
