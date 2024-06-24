@@ -17,7 +17,7 @@ import (
     "github.com/hexa-org/policy-mapper/sdk"
 )
 
-const Version string = "0.6.11"
+const Version string = "0.6.13"
 
 type ParserData struct {
     parser *kong.Kong
