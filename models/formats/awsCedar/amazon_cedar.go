@@ -358,8 +358,9 @@ func (c *CedarPolicyMapper) MapCedarPolicyToIdql(policy *CedarPolicy) (*hexapoli
         if strings.Contains(cel, "::") {
             cel = strings.ReplaceAll(cel, "Group::\"", "\"Group:")
             cel = strings.ReplaceAll(cel, "User::\"", "\"User:")
-            cel = strings.ReplaceAll(cel, "Account::\"", "\"Account:")
+            cel = strings.ReplaceAll(cel, "GitAccount::\"", "\"GitAccount:")
             cel = strings.ReplaceAll(cel, "Domain::\"", "\"Domain:")
+            cel = strings.ReplaceAll(cel, "Account::\"", "\"Account:")
             // cel = strings.ReplaceAll(cel, " in ", " co ") // this is just temporary
         }
         if strings.EqualFold(cel, "true") {
