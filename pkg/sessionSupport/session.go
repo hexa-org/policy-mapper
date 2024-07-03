@@ -13,14 +13,13 @@ import (
 )
 
 const (
-    KeyHexaState   = "hexa-state"
-    KeyHexaNonce   = "hexa-nonce"
-    KeyEmail       = "email"
-    KeySubject     = "sub"
-    KeyIdToken     = "idtoken"
-    KeySessionId   = "session-id"
-    HexaCookie     = "hexa-cookie"
-    EnvOidcEnabled = "HEXA_OIDC_ENABLED"
+    KeyHexaState = "hexa-state"
+    KeyHexaNonce = "hexa-nonce"
+    KeyEmail     = "email"
+    KeySubject   = "sub"
+    KeyIdToken   = "idtoken"
+    KeySessionId = "session-id"
+    HexaCookie   = "hexa-cookie"
 )
 
 type SessionInfo struct {
