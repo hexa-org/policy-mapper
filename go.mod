@@ -12,6 +12,7 @@ require (
 	github.com/alecthomas/assert/v2 v2.6.0
 	github.com/alecthomas/kong v0.9.0
 	github.com/alecthomas/participle/v2 v2.1.1
+	github.com/alexedwards/scs/v2 v2.8.0
 	github.com/aws/aws-sdk-go-v2 v1.30.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.21
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.21
@@ -21,6 +22,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.56.1
 	github.com/aws/aws-sdk-go-v2/service/verifiedpermissions v1.16.1
 	github.com/chzyer/readline v1.5.1
+	github.com/coreos/go-oidc/v3 v3.10.0
 	github.com/envoyproxy/go-control-plane v0.12.0
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/gofrs/flock v0.8.1
@@ -68,6 +70,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.4 // indirect
+	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
