@@ -52,7 +52,7 @@ var disabledHandler = &OidcClientHandler{Enabled: false}
 func NewOidcClientHandler(sessionHandler sessionSupport.SessionManager, resources fs.FS) (*OidcClientHandler, error) {
 
     enabled := os.Getenv(EnvOidcEnabled)
-    if !strings.EqualFold(enabled[0:1], "t") {
+    if enabled == "" || !strings.EqualFold(enabled[0:1], "t") {
         log.Warn(fmt.Sprintf("OIDC Authentication (%s) is not enabled", EnvOidcEnabled))
         return disabledHandler, nil
     }
