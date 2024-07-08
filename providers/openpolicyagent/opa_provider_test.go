@@ -15,8 +15,8 @@ import (
     "github.com/hexa-org/policy-mapper/api/policyprovider"
     "github.com/hexa-org/policy-mapper/pkg/hexapolicy"
     "github.com/hexa-org/policy-mapper/pkg/hexapolicysupport"
+    "github.com/hexa-org/policy-mapper/pkg/mockOidcSupport"
     "github.com/hexa-org/policy-mapper/pkg/oauth2support"
-    "github.com/hexa-org/policy-mapper/pkg/oidctestsupport"
     "github.com/hexa-org/policy-mapper/pkg/websupport"
     "github.com/hexa-org/policy-mapper/sdk"
     "golang.org/x/oauth2"
@@ -516,7 +516,7 @@ func TestMakeDefaultBundle(t *testing.T) {
 
 func TestOpaHttpOauth2Client(t *testing.T) {
     fmt.Println("Starting Mock Token Authorization Server...")
-    mockAuth := oidctestsupport.NewMockAuthServer("clientId", "secret", map[string]interface{}{})
+    mockAuth := mockOidcSupport.NewMockAuthServer("clientId", "secret", map[string]interface{}{})
 
     mockJwksUrl, _ := url.JoinPath(mockAuth.Server.URL, "/jwks")
     mockTokenUrl, _ := url.JoinPath(mockAuth.Server.URL, "/token")
@@ -590,8 +590,8 @@ func TestOpaHttpOauth2Client(t *testing.T) {
 
 }
 
-func shutdownServers(s1 *oidctestsupport.MockAuthServer, s2 *http.Server) {
-    s2.Shutdown(context.Background())
+func shutdownServers(s1 *mockOidcSupport.MockAuthServer, s2 *http.Server) {
+    _ = s2.Shutdown(context.Background())
     s1.Shutdown()
 }
 

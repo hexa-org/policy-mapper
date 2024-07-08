@@ -1,0 +1,41 @@
+{{- define "base"}}
+    {{- $resource := index .Map "resource"}}
+    {{- $resource_link := index .Map "resource_link"}}
+    {{- $userInfo := index .Map "session"}}
+
+    <!doctype html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport"
+              content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Hexa Policy Admin</title>
+    </head>
+    <body>
+
+    <nav class="top-nav top-bar">
+        <h1 class="hexa-title">Policy Administrator</h1>
+        <div class="gray">
+            {{- if (ne $userInfo.Email "") }}
+            {{ $userInfo.Email }}
+            {{ end }}
+        </div>
+    </nav>
+
+    <header class="top-bar">
+        <div class="menu">
+            <h1>{{ capitalize $resource }}</h1>
+        </div>
+
+    </header>
+    <main>
+
+        <div class="content">
+            {{- template "main" .}}
+        </div>
+    </main>
+
+    </body>
+    </html>
+{{- end}}
