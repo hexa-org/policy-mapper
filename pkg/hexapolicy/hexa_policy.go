@@ -17,7 +17,7 @@ const (
     SBasicAuth string = "basic"
     SJwtAuth   string = "jwt"
     SSamlAuth  string = "saml"
-    SCidr      string = "net"
+    // SCidr      string = "net"
 
     IdqlVersion string = "0.6"
 )
@@ -53,7 +53,7 @@ type PolicyInfo struct {
     Actions   []ActionInfo              `json:"actions" validate:"required"` // Actions holds one or moe action uris
     Object    ObjectInfo                `json:"object" validate:"required"`  // Object the resource, application, or system to which a policy applies
     Condition *conditions.ConditionInfo `json:",omitempty"`                  // Condition is optional // Condition is an IDQL filter condition (e.g. ABAC rule) which must also be met
-    Scope     *ScopeInfo                `json:"scope,omitempty"`             // Scope represents obligations returned to a PEP (e.g attributes, where clause)
+    Scope     *ScopeInfo                `json:"scope,omitempty"`             // Scope represents obligations returned to a PEP (e.g. attributes, where clause)
 }
 
 func (p *PolicyInfo) String() string {
@@ -245,7 +245,7 @@ func (o *ObjectInfo) equals(object *ObjectInfo) bool {
 // ScopeInfo represents obligations passed to a PEP. For example a `Filter` is used to constrain the rows of a database.
 // `Attributes` lists the columns or attributes that may be returned. Scopes are NOT used in determining which policy is applied.
 type ScopeInfo struct {
-    Filter     *string  `json:"filter,omitempty"`     // Filter is a urn like value that starts with either sql: or idql: to indicate the filter is either a SQL statement or an IDQL Filter/Condition expression
+    Filter     *string  `json:"filter,omitempty"`     // Filter urn like value that starts with either sql: or idql: to indicate the filter is either a SQL statement or an IDQL Filter/Condition expression
     Attributes []string `json:"attributes,omitempty"` // Attributes is a list of columns or attributes that may be returned by the PEP
 }
 
@@ -327,7 +327,7 @@ type PolicyDif struct {
     PolicyId      string
     Hash          string
     DifTypes      []string
-    PolicyExist   *[]PolicyInfo // for n to 1
+    PolicyExist   []PolicyInfo // for n to 1
     PolicyCompare *PolicyInfo
 }
 
@@ -378,15 +378,17 @@ func (p *Policies) ReconcilePolicies(comparePolicies []PolicyInfo, diffsOnly boo
 
         exists := false
         var sourcePolicy PolicyInfo
+        sourcePolicy = PolicyInfo{}
         var policyId string
         if meta.PolicyId != nil {
             policyId = *meta.PolicyId
             sourcePolicy, exists = policyIdMap[policyId]
         }
-
+        pExisting := []PolicyInfo{sourcePolicy}
         // A policy was matched based on policyId
         if exists {
             differenceTypes := comparePolicy.Compare(sourcePolicy)
+
             if slices.Contains(differenceTypes, CompareEqual) {
                 if !diffsOnly {
                     // policy matches, only return an equal difference if diffsOnly is false
@@ -394,7 +396,7 @@ func (p *Policies) ReconcilePolicies(comparePolicies []PolicyInfo, diffsOnly boo
                         Type:          ChangeTypeEqual,
                         PolicyId:      *sourcePolicy.Meta.PolicyId,
                         DifTypes:      differenceTypes,
-                        PolicyExist:   &[]PolicyInfo{sourcePolicy},
+                        PolicyExist:   pExisting,
                         PolicyCompare: &newPolicy,
                     }
                     res = append(res, dif)
@@ -408,7 +410,7 @@ func (p *Policies) ReconcilePolicies(comparePolicies []PolicyInfo, diffsOnly boo
                 Type:          ChangeTypeUpdate,
                 PolicyId:      *sourcePolicy.Meta.PolicyId,
                 DifTypes:      differenceTypes,
-                PolicyExist:   &[]PolicyInfo{sourcePolicy},
+                PolicyExist:   pExisting,
                 PolicyCompare: &newPolicy,
             }
             res = append(res, dif)
@@ -418,15 +420,16 @@ func (p *Policies) ReconcilePolicies(comparePolicies []PolicyInfo, diffsOnly boo
 
         // Check for a match based on hash
         sourcePolicy, hashExists := policyEtagMap[comparePolicy.CalculateEtag()]
+        pExisting = []PolicyInfo{sourcePolicy}
         if hashExists {
             if !diffsOnly {
-                // Because it is a hash compare, the policies must be equal (even though meta data may be different)
+                // Because it is a hash compare, the policies must be equal (even though metadata may be different)
                 // policy matches
                 dif := PolicyDif{
                     Type:          ChangeTypeEqual,
                     Hash:          sourcePolicy.Meta.Etag,
                     DifTypes:      []string{CompareEqual},
-                    PolicyExist:   &[]PolicyInfo{sourcePolicy},
+                    PolicyExist:   pExisting,
                     PolicyCompare: &newPolicy,
                 }
                 res = append(res, dif)
@@ -456,7 +459,7 @@ func (p *Policies) ReconcilePolicies(comparePolicies []PolicyInfo, diffsOnly boo
                 Type:          ChangeTypeDelete,
                 PolicyId:      *policy.Meta.PolicyId,
                 DifTypes:      nil,
-                PolicyExist:   &[]PolicyInfo{policy},
+                PolicyExist:   []PolicyInfo{policy},
                 PolicyCompare: nil,
             }
             res = append(res, dif)
@@ -470,7 +473,7 @@ func (p *Policies) ReconcilePolicies(comparePolicies []PolicyInfo, diffsOnly boo
                 Type:          ChangeTypeDelete,
                 Hash:          policy.Meta.Etag,
                 DifTypes:      nil,
-                PolicyExist:   &[]PolicyInfo{pol},
+                PolicyExist:   []PolicyInfo{pol},
                 PolicyCompare: nil,
             }
             res = append(res, dif)
