@@ -113,10 +113,10 @@ func TestOidcLogin(t *testing.T) {
     log.Info("Redirecting to root /")
     resp, body = ts.execute(t, location.String())
     assert.Equal(t, http.StatusOK, resp.StatusCode)
-    assert.Contains(t, body, "<a href=\"/login\" class=\"login\">Login using OIDC</a>")
+    assert.Contains(t, body, "<a href=\"/authorize\" class=\"login\">Login using OIDC</a>")
 
-    log.Info("Attempting to access /login")
-    resp, body = ts.execute(t, "/login")
+    log.Info("Attempting to access /authorize")
+    resp, body = ts.execute(t, "/authorize")
     assert.Equal(t, http.StatusFound, resp.StatusCode)
 
     authorizeLocation, err := resp.Location()
@@ -229,7 +229,7 @@ func TestOidcNegative(t *testing.T) {
 
     // ----------
     log.Info("Authorization Req Flow - Code error")
-    resp, _ := ts.execute(t, "/login")
+    resp, _ := ts.execute(t, "/authorize")
     assert.Equal(t, http.StatusFound, resp.StatusCode)
 
     authorizeLocation, err := resp.Location()
@@ -257,7 +257,7 @@ func TestOidcNegative(t *testing.T) {
 
     // ----------
     log.Info("Authorization Req Flow - Nonce error")
-    resp, _ = ts.execute(t, "/login")
+    resp, _ = ts.execute(t, "/authorize")
     assert.Equal(t, http.StatusFound, resp.StatusCode)
 
     authorizeLocation, err = resp.Location()
@@ -281,7 +281,7 @@ func TestOidcNegative(t *testing.T) {
 
     // ----------
     log.Info("Authorization Req Flow - Invalid Aud")
-    resp, _ = ts.execute(t, "/login")
+    resp, _ = ts.execute(t, "/authorize")
     assert.Equal(t, http.StatusFound, resp.StatusCode)
 
     authorizeLocation, err = resp.Location()
@@ -305,7 +305,7 @@ func TestOidcNegative(t *testing.T) {
 
     // ----------
     log.Info("Authorization Req Flow - Invalid Code")
-    resp, _ = ts.execute(t, "/login")
+    resp, _ = ts.execute(t, "/authorize")
     assert.Equal(t, http.StatusFound, resp.StatusCode)
     mockAuth.TriggerError = mockOidcSupport.ErrorBadCode
 
@@ -327,7 +327,7 @@ func TestOidcNegative(t *testing.T) {
 
     // ----------
     log.Info("Authorization Req Flow - Invalid Session")
-    resp, _ = ts.execute(t, "/login")
+    resp, _ = ts.execute(t, "/authorize")
     assert.Equal(t, http.StatusFound, resp.StatusCode)
 
     authorizeLocation, err = resp.Location()
@@ -357,7 +357,7 @@ func TestOidcNegative(t *testing.T) {
 
     // ----------
     log.Info("Authorization Req Flow - Missing token")
-    resp, _ = ts.execute(t, "/login")
+    resp, _ = ts.execute(t, "/authorize")
     assert.Equal(t, http.StatusFound, resp.StatusCode)
 
     authorizeLocation, err = resp.Location()
@@ -379,7 +379,7 @@ func TestOidcNegative(t *testing.T) {
 
     // ----------
     log.Info("Authorization Req Flow - Token parse error")
-    resp, _ = ts.execute(t, "/login")
+    resp, _ = ts.execute(t, "/authorize")
     assert.Equal(t, http.StatusFound, resp.StatusCode)
 
     authorizeLocation, err = resp.Location()
@@ -401,7 +401,7 @@ func TestOidcNegative(t *testing.T) {
 
     // ----------
     log.Info("Authorization Req Flow - Unauthorized")
-    resp, _ = ts.execute(t, "/login")
+    resp, _ = ts.execute(t, "/authorize")
     assert.Equal(t, http.StatusFound, resp.StatusCode)
 
     authorizeLocation, err = resp.Location()
@@ -431,7 +431,7 @@ func TestOidcNegative(t *testing.T) {
 
     // ----------
     log.Info("Authorization Req Flow - Forbidden")
-    resp, _ = ts.execute(t, "/login")
+    resp, _ = ts.execute(t, "/authorize")
     assert.Equal(t, http.StatusFound, resp.StatusCode)
 
     authorizeLocation, err = resp.Location()

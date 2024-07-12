@@ -8,6 +8,7 @@ import (
     "io"
     "io/fs"
     "net/http"
+    "net/url"
     "os"
     "strings"
 
@@ -27,6 +28,12 @@ const (
     EnvOidcClientSecret = "HEXA_OIDC_CLIENT_SECRET"
     EnvOidcProviderUrl  = "HEXA_OIDC_PROVIDER_URL"
     EnvOidcRedirectUrl  = "HEXA_OIDC_REDIRECT_URL"
+    EnvOidcLoginPath    = "HEXA_OIDC_LOGIN_PATH"  // HEXA_OIDC_LOGIN_URL is the handler path that will be used to start a login flow to the OIDC provider (default: /login)
+    EnvOidcLogoutPath   = "HEXA_OIDC_LOGOUT_PATH" // HEXA_OIDC_LOGOUT_PATH is the path used to cancel the local session (default: /logout)
+    DefOidcProviderName = "OpenID Login"
+    DefOidcRedirectPath = "/redirect"
+    DefOidcLoginPath    = "/"
+    DefOidcLogoutPath   = "/logout"
 )
 
 type Handler func(http.ResponseWriter, *http.Request) error
@@ -36,11 +43,14 @@ type OidcClientHandler struct {
     OidcConfig     *oidc.Config
     Verifier       *oidc.IDTokenVerifier
     Provider       *oidc.Provider
-    EndSessionUrl  string
+    LogoutPath     string
+    LoginPath      string
+    AuthPath       string
     Enabled        bool
     SessionHandler sessionSupport.SessionManager
     Middleware     func(handler Handler) Handler
     ErrorHandler   func(handler func(w http.ResponseWriter, r *http.Request) error) http.Handler
+    MainPage       string
     ProviderName   string
     Resources      fs.FS
 }
@@ -60,6 +70,17 @@ func NewOidcClientHandler(sessionHandler sessionSupport.SessionManager, resource
     clientSecret := os.Getenv(EnvOidcClientSecret)
     providerUrl := os.Getenv(EnvOidcProviderUrl)
     redirectUrl := os.Getenv(EnvOidcRedirectUrl)
+    if redirectUrl == "" {
+        redirectUrl = DefOidcRedirectPath
+    }
+    loginUrl := os.Getenv(EnvOidcLoginPath)
+    if loginUrl == "" {
+        loginUrl = DefOidcLoginPath
+    }
+    logoutUrl := os.Getenv(EnvOidcLogoutPath)
+    if logoutUrl == "" {
+        logoutUrl = DefOidcLogoutPath
+    }
 
     if clientId == "" {
         clientId = os.Getenv(oauth2support.EnvOAuthClientId)
@@ -82,7 +103,7 @@ func NewOidcClientHandler(sessionHandler sessionSupport.SessionManager, resource
 
     providerName := os.Getenv(EnvOidcProviderName)
     if providerName == "" {
-        providerName = "OIDC Identity Provider"
+        providerName = DefOidcProviderName
     }
     // http: // 127.0.0.1:8080/realms/Hexa-Orchestrator-Realm/.well-known/openid-configuration
     provider, err := oidc.NewProvider(context.Background(), providerUrl)
@@ -90,6 +111,8 @@ func NewOidcClientHandler(sessionHandler sessionSupport.SessionManager, resource
         return disabledHandler, err
     }
     if redirectUrl == "" {
+        log.Warn("OIDC Redirect URL not configured, defaulting to relative path: " + DefOidcRedirectPath)
+        log.Warn("Using relative redirect URL would need to configured with a wildcard mask which carries additional risk!")
         redirectUrl = "/redirect"
     }
     log.Info("OIDC Configured", "providerUrl", providerUrl, "clientId", clientId, "redirecturl", redirectUrl)
@@ -107,11 +130,13 @@ func NewOidcClientHandler(sessionHandler sessionSupport.SessionManager, resource
     verifier := provider.Verifier(oidcConfig)
 
     o := &OidcClientHandler{ClientConfig: clientConfig,
-        OidcConfig: oidcConfig,
-        Verifier:   verifier,
-        Provider:   provider,
-        Enabled:    true,
-
+        OidcConfig:     oidcConfig,
+        Verifier:       verifier,
+        Provider:       provider,
+        Enabled:        true,
+        LoginPath:      loginUrl,
+        AuthPath:       "/authorize",
+        LogoutPath:     logoutUrl,
         ProviderName:   providerName,
         Resources:      resources,
         SessionHandler: sessionHandler,
@@ -152,10 +177,14 @@ func (o *OidcClientHandler) InitHandlers(router *mux.Router) {
         handleFunc := func(path string, handler Handler) {
             router.Handle(path, o.ErrorHandler(handler))
         }
-        handleFunc("/", o.HandleRoot)
-        handleFunc("/login", o.HandleLogin)
-        handleFunc("/logout", o.HandleLogout)
-        handleFunc("/redirect", o.HandleOAuth2Callback)
+        handleFunc(o.LoginPath, o.HandleLogin)
+        handleFunc(o.AuthPath, o.HandleAuthorize)
+        handleFunc(o.LogoutPath, o.HandleLogout)
+        redirectUrl, err := url.Parse(o.ClientConfig.RedirectURL)
+        if err != nil {
+            panic(err)
+        }
+        handleFunc(redirectUrl.Path, o.HandleOAuth2Callback)
     }
 }
 
@@ -167,16 +196,17 @@ func (o *OidcClientHandler) HandleSessionScope(next http.HandlerFunc, _ []string
                 // TODO Check scopes
                 next.ServeHTTP(w, r)
             }
+            http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
         } else {
             next.ServeHTTP(w, r)
         }
     }
 }
 
-// HandleRoot is a Handler that shows a login button. In production, if the frontend is served / generated
+// HandleLogin is a Handler that shows a login button. In production, if the frontend is served / generated
 // by Go, it should use html/template to prevent XSS attacks.
-func (o *OidcClientHandler) HandleRoot(w http.ResponseWriter, _ *http.Request) (err error) {
-    model := websupport.Model{Map: map[string]interface{}{"resource": "login", "humanError": "", "error": ""}}
+func (o *OidcClientHandler) HandleLogin(w http.ResponseWriter, _ *http.Request) (err error) {
+    model := websupport.Model{Map: map[string]interface{}{"resource": "login", "authurl": o.AuthPath, "humanError": "", "error": ""}}
     _ = websupport.ModelAndView(w, o.Resources, "login", model)
 
     return
@@ -194,15 +224,15 @@ func (o *OidcClientHandler) HandleLogout(w http.ResponseWriter, r *http.Request)
     return
 }
 
-// HandleLogin is a Handler that redirects the user to Twitch for login, and provides the 'state'
+// HandleAuthorize is a Handler that redirects the user to Twitch for login, and provides the 'state'
 // parameter which protects against login CSRF.
-func (o *OidcClientHandler) HandleLogin(w http.ResponseWriter, r *http.Request) (err error) {
+func (o *OidcClientHandler) HandleAuthorize(w http.ResponseWriter, r *http.Request) (err error) {
     state := randString(16)
     nonce := randString(16)
     sessionVal := o.SessionHandler.StartLogin(state, nonce, r)
 
     log.Info("Initiating login", "session", sessionVal)
-    http.Redirect(w, r, o.ClientConfig.AuthCodeURL(state, oidc.Nonce(nonce), oauth2.SetAuthURLParam("claims", `{"id_token":{"email":null}}`), oauth2.SetAuthURLParam("prompt", "login")), http.StatusFound)
+    http.Redirect(w, r, o.ClientConfig.AuthCodeURL(state, oidc.Nonce(nonce), oauth2.SetAuthURLParam("claims", `{"id_token":{"email":null,"roles":null}}`), oauth2.SetAuthURLParam("prompt", "login")), http.StatusFound)
 
     return
 }
@@ -292,9 +322,23 @@ func (o *OidcClientHandler) HandleOAuth2Callback(w http.ResponseWriter, r *http.
 
     log.Info("Session started", "session", sessionVal, "email", claims.Email, "sub", claims.Sub)
 
-    http.Redirect(w, r, "/integrations", http.StatusTemporaryRedirect)
+    mainPage := o.MainPage
+    if mainPage == "" {
+        mainPage = "/integrations"
+    }
+    http.Redirect(w, r, mainPage, http.StatusTemporaryRedirect)
 
     return
+}
+
+// ParseIdTokenClaims parses a raw token into a claims struct specified by claims
+func (o *OidcClientHandler) ParseIdTokenClaims(rawIDToken string, claims interface{}) (err error) {
+    idToken, err := o.Verifier.Verify(context.Background(), rawIDToken)
+    if err != nil {
+        return err
+    }
+
+    return idToken.Claims(&claims)
 }
 
 // HumanReadableError represents error information

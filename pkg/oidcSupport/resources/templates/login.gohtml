@@ -3,9 +3,10 @@
 {{- define "main"}}
     {{- $errortext := index .Map "error"}}
     {{- $humanerr := index .Map "humanerror"}}
+    {{- $authUrl := index .Map "authurl"}}
     <div class="content">
 
-            <a href="/login" class="login">Login using OIDC</a>
+            <a href="{{$authUrl}}" class="login">Login using OIDC</a>
 
     </div>
 
