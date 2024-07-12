@@ -71,6 +71,9 @@ func NewOidcClientHandler(sessionHandler sessionSupport.SessionManager, resource
     providerUrl := os.Getenv(EnvOidcProviderUrl)
     redirectUrl := os.Getenv(EnvOidcRedirectUrl)
     if redirectUrl == "" {
+        log.Warn("OIDC Redirect URL not configured, defaulting to relative path: " + DefOidcRedirectPath)
+        log.Warn("Using relative redirect URL would need to configured with a wildcard mask which carries additional risk!")
+
         redirectUrl = DefOidcRedirectPath
     }
     loginUrl := os.Getenv(EnvOidcLoginPath)
@@ -110,11 +113,7 @@ func NewOidcClientHandler(sessionHandler sessionSupport.SessionManager, resource
     if err != nil {
         return disabledHandler, err
     }
-    if redirectUrl == "" {
-        log.Warn("OIDC Redirect URL not configured, defaulting to relative path: " + DefOidcRedirectPath)
-        log.Warn("Using relative redirect URL would need to configured with a wildcard mask which carries additional risk!")
-        redirectUrl = "/redirect"
-    }
+
     log.Info("OIDC Configured", "providerUrl", providerUrl, "clientId", clientId, "redirecturl", redirectUrl)
 
     clientConfig := &oauth2.Config{
@@ -148,7 +147,7 @@ func NewOidcClientHandler(sessionHandler sessionSupport.SessionManager, resource
     errorHandling := func(handler func(w http.ResponseWriter, r *http.Request) error) http.Handler {
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
             if err := handler(w, r); err != nil {
-                var errorString string = "Something went wrong! Please try again."
+                var errorString = "Something went wrong! Please try again."
                 // var errorCode int = 500
 
                 if v, ok := err.(HumanReadableError); ok {
@@ -237,7 +236,7 @@ func (o *OidcClientHandler) HandleAuthorize(w http.ResponseWriter, r *http.Reque
     return
 }
 
-// HandleOauth2Callback is a Handler for oauth's 'redirect_uri' endpoint;
+// HandleOAuth2Callback is a Handler for oauth's 'redirect_uri' endpoint;
 // it validates the state token and retrieves an OAuth token from the request parameters.
 func (o *OidcClientHandler) HandleOAuth2Callback(w http.ResponseWriter, r *http.Request) (err error) {
     sessionVal, state, nonce := o.SessionHandler.GetState(r)
@@ -245,7 +244,7 @@ func (o *OidcClientHandler) HandleOAuth2Callback(w http.ResponseWriter, r *http.
     if sessionVal == "" || state == "" || nonce == "" {
         log.Warn("State cookie not found", "session", sessionVal)
         return AnnotateError(
-            fmt.Errorf("Session state missing on redirect"),
+            fmt.Errorf("session state missing on redirect"),
             "Invalid session state/nonce detected, check cookie settings and try again.",
             http.StatusBadRequest,
         )
@@ -254,7 +253,7 @@ func (o *OidcClientHandler) HandleOAuth2Callback(w http.ResponseWriter, r *http.
     if queryState != state {
         log.Warn("State mismatch on redirect", "session", sessionVal)
         return AnnotateError(
-            fmt.Errorf("Session state and request state mismatch on redirect"),
+            fmt.Errorf("session state and request state mismatch on redirect"),
             "Invalid session state detected, please try again.",
             http.StatusBadRequest,
         )

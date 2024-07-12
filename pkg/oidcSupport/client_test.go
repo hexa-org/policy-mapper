@@ -251,7 +251,7 @@ func TestOidcNegative(t *testing.T) {
 
     log.Debug("Attempting to access callback: " + redirectLocation.String())
     resp, body := ts.execute(t, redirectLocation.String())
-    assert.Contains(t, body, "Session state and request state mismatch")
+    assert.Contains(t, body, "session state and request state mismatch")
     fmt.Println(body)
     assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
