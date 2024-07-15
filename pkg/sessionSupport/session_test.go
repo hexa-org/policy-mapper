@@ -7,6 +7,7 @@ import (
     "net/http"
     "net/http/cookiejar"
     "net/http/httptest"
+    "os"
     "strings"
     "testing"
 
@@ -56,6 +57,8 @@ func extractTokenFromCookie(c string) string {
 }
 
 func TestSession(t *testing.T) {
+    _ = os.Setenv(EnvOidcEnabled, "true")
+
     mgr := NewSessionManager()
 
     router := mux.NewRouter()
@@ -111,6 +114,98 @@ func TestSession(t *testing.T) {
         session, err := mgr.Session(r)
         assert.Nil(t, session)
         assert.Error(t, err, fmt.Sprintf("session id %s not found", KeySessionId))
+        w.WriteHeader(http.StatusOK)
+    })
+
+    ts := newTestServer(t, router)
+    defer ts.Close()
+
+    header, body := ts.execute(t, "/login")
+    token1 := extractTokenFromCookie(header.Get("Set-Cookie"))
+    fmt.Println("Token1\n" + token1)
+
+    fmt.Printf("Body:\n%s\n", body)
+
+    _, body = ts.execute(t, "/checkstate")
+
+    ctx, err := mgr.GetScs().Load(context.Background(), token1)
+    assert.NoError(t, err)
+    assert.NotNil(t, ctx)
+    session := mgr.GetScs().GetString(ctx, KeySessionId)
+    assert.NotEmpty(t, session)
+
+    header2, _ := ts.execute(t, "/checksession")
+    token2 := extractTokenFromCookie(header2.Get("Set-Cookie"))
+    ctx2, err := mgr.GetScs().Load(context.Background(), token2)
+    assert.NoError(t, err)
+    email := mgr.GetScs().GetString(ctx2, KeyEmail)
+    assert.Equal(t, "suzy@example.com", email)
+
+    _, _ = ts.execute(t, "/checklogout")
+
+    header3, _ := ts.execute(t, "/checkloggedout")
+    headerValue := header3.Get("Set-Cookie")
+    assert.Empty(t, headerValue)
+}
+
+func TestSessionNoOidc(t *testing.T) {
+    _ = os.Setenv(EnvOidcEnabled, "false")
+
+    mgr := NewSessionManager()
+
+    router := mux.NewRouter()
+
+    mgr.SetSessionMiddleware(router)
+
+    router.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+        log.Info("Checking login start")
+        mgr.StartLogin("astate", "anonce", r)
+        _, _ = w.Write([]byte("values encoded"))
+        w.WriteHeader(http.StatusOK)
+    })
+
+    router.HandleFunc("/checkstate", func(w http.ResponseWriter, r *http.Request) {
+        log.Info("Checking state")
+        sid, state, nonce := mgr.GetState(r)
+        assert.NotEmpty(t, sid)
+        assert.Equal(t, "astate", state)
+        assert.Equal(t, "anonce", nonce)
+
+        mgr.StoreLoginSession("abc123", "suzy@example.com", "12345", r)
+        w.WriteHeader(http.StatusOK)
+    })
+
+    router.HandleFunc("/checksession", func(w http.ResponseWriter, r *http.Request) {
+        log.Info("Checking login session")
+        session, err := mgr.Session(r)
+        assert.NoError(t, err)
+        assert.NotNil(t, session)
+        _, state, _ := mgr.GetState(r)
+        assert.Empty(t, state)
+        assert.Equal(t, "suzy@example.com", session.Email)
+        assert.Equal(t, "12345", session.Sub)
+        assert.Equal(t, "abc123", session.RawToken)
+
+        assert.True(t, mgr.ValidateSession(w, r))
+        w.WriteHeader(http.StatusOK)
+    })
+
+    router.HandleFunc("/checklogout", func(w http.ResponseWriter, r *http.Request) {
+        log.Info("Performing logout")
+        assert.True(t, mgr.ValidateSession(w, r))
+
+        err := mgr.Logout(r)
+        assert.NoError(t, err, "Check logout ok")
+        // w.WriteHeader(http.StatusOK)
+    })
+
+    router.HandleFunc("/checkloggedout", func(w http.ResponseWriter, r *http.Request) {
+        log.Info("Confirm logged out")
+
+        session, err := mgr.Session(r)
+        assert.Nil(t, session)
+        assert.Error(t, err, fmt.Sprintf("session id %s not found", KeySessionId))
+
         w.WriteHeader(http.StatusOK)
     })
 

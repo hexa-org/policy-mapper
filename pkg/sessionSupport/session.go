@@ -3,6 +3,8 @@ package sessionSupport
 import (
     "fmt"
     "net/http"
+    "os"
+    "strings"
     "time"
 
     "github.com/alexedwards/scs/v2"
@@ -13,13 +15,14 @@ import (
 )
 
 const (
-    KeyHexaState = "hexa-state"
-    KeyHexaNonce = "hexa-nonce"
-    KeyEmail     = "email"
-    KeySubject   = "sub"
-    KeyIdToken   = "idtoken"
-    KeySessionId = "session-id"
-    HexaCookie   = "hexa-cookie"
+    EnvOidcEnabled = "HEXA_OIDC_ENABLED"
+    KeyHexaState   = "hexa-state"
+    KeyHexaNonce   = "hexa-nonce"
+    KeyEmail       = "email"
+    KeySubject     = "sub"
+    KeyIdToken     = "idtoken"
+    KeySessionId   = "session-id"
+    HexaCookie     = "hexa-cookie"
 )
 
 type SessionInfo struct {
@@ -30,7 +33,8 @@ type SessionInfo struct {
 }
 
 type sessionManager struct {
-    manager *scs.SessionManager
+    manager      *scs.SessionManager
+    loginEnabled bool
 }
 
 type SessionManager interface {
@@ -53,7 +57,13 @@ func NewSessionManager() SessionManager {
     manager.Cookie.Name = HexaCookie
     manager.Cookie.SameSite = http.SameSiteLaxMode
 
-    return &sessionManager{manager: manager}
+    // If login is not enabled, we do not want to redirect back to root
+    loginEnabled := true
+    enabled := os.Getenv(EnvOidcEnabled)
+    if enabled == "" || !strings.EqualFold(enabled[0:1], "t") {
+        loginEnabled = false
+    }
+    return &sessionManager{manager: manager, loginEnabled: loginEnabled}
 }
 
 // GetScs is intended for testing purposes only
@@ -68,14 +78,19 @@ func (s *sessionManager) ValidateSession(w http.ResponseWriter, r *http.Request)
     // If sub is not set, we assume the session was not authenticated
     // Note the value of sessionId is just a unique ID for logging purposes
     log.Debug("ValidateSession called")
-    sub := s.manager.GetString(r.Context(), KeySubject)
-    if sub == "" {
-        http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-        return false
+
+    if s.loginEnabled {
+        sub := s.manager.GetString(r.Context(), KeySubject)
+        if sub == "" {
+            http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+            return false
+        }
     }
     return true
 }
 
+// StartLogin is used by OIDC to start the login authorization flow and store the state and nonce for
+// future validation
 func (s *sessionManager) StartLogin(state string, nonce string, r *http.Request) string {
 
     sessionUuid, _ := uuid.NewV7()
@@ -88,7 +103,7 @@ func (s *sessionManager) StartLogin(state string, nonce string, r *http.Request)
 }
 
 func (s *sessionManager) Session(r *http.Request) (session *SessionInfo, err error) {
-    sessionId := s.manager.GetString(r.Context(), KeySessionId)
+    sessionId := s.getSessionIdSafe(r)
     if sessionId == "" {
         return nil, fmt.Errorf("session id %s not found", KeySessionId)
     }
@@ -101,6 +116,17 @@ func (s *sessionManager) Session(r *http.Request) (session *SessionInfo, err err
         Session:  sessionId,
         RawToken: rawToken,
     }, nil
+}
+
+// getSessionIdSafe returns the Hexa SessionId but traps the panic from SCS if no session exists and returns an empty string if no session
+func (s *sessionManager) getSessionIdSafe(r *http.Request) string {
+    defer func() {
+        if err := recover(); err != nil {
+            return
+        }
+    }()
+    sessionId := s.manager.GetString(r.Context(), KeySessionId)
+    return sessionId
 }
 
 func (s *sessionManager) GetState(r *http.Request) (session string, state string, nonce string) {
