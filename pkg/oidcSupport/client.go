@@ -57,13 +57,15 @@ type OidcClientHandler struct {
 
 var log = slog.Default().With("module", "oidcClient")
 
-var disabledHandler = &OidcClientHandler{Enabled: false}
+var disabledHandler = &OidcClientHandler{Enabled: false, SessionHandler: sessionSupport.NewSessionManager()}
 
 func NewOidcClientHandler(sessionHandler sessionSupport.SessionManager, resources fs.FS) (*OidcClientHandler, error) {
-
     enabled := os.Getenv(EnvOidcEnabled)
     if enabled == "" || !strings.EqualFold(enabled[0:1], "t") {
         log.Warn(fmt.Sprintf("OIDC Authentication (%s) is not enabled", EnvOidcEnabled))
+        if sessionHandler != nil {
+            disabledHandler.SessionHandler = sessionHandler
+        }
         return disabledHandler, nil
     }
     clientId := os.Getenv(EnvOidcClientId)
@@ -169,9 +171,10 @@ func NewOidcClientHandler(sessionHandler sessionSupport.SessionManager, resource
     return o, nil
 }
 
+// InitHandlers initalizes the SessionHandler middleware and configures the login/logout/authorize endpoints if enabled
 func (o *OidcClientHandler) InitHandlers(router *mux.Router) {
+    o.SessionHandler.SetSessionMiddleware(router)
     if o.Enabled {
-        o.SessionHandler.SetSessionMiddleware(router)
 
         handleFunc := func(path string, handler Handler) {
             router.Handle(path, o.ErrorHandler(handler))
