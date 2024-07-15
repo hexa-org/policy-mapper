@@ -72,7 +72,9 @@ TestExistKey starts the server with a new key directory but allows ca keys from 
 func TestExistKey(t *testing.T) {
     dir, err := os.MkdirTemp("", "certs-*")
     assert.Nil(t, err, "Should be no error on temp dir create")
-    defer os.RemoveAll(dir)
+    defer func(path string) {
+        _ = os.RemoveAll(path)
+    }(dir)
 
     t.Setenv(EnvCertDirectory, dir)
     t.Setenv(EnvCertCaPubKey, filepath.Join(dirTest1, "ca-cert.pem"))
@@ -118,7 +120,9 @@ func TestExistKey(t *testing.T) {
 
 // TestAnotherServer checks that more than one server can share the same certificate directory (shared CA key)
 func TestAnotherServer(t *testing.T) {
-    defer os.RemoveAll(dirTest1)
+    defer func(path string) {
+        _ = os.RemoveAll(path)
+    }(dirTest1)
     t.Setenv(EnvCertDirectory, dirTest1)
     t.Setenv(EnvCertCaPubKey, filepath.Join(dirTest1, "ca-cert.pem"))
     t.Setenv(EnvCertCaPrivKey, filepath.Join(dirTest1, "ca-key.pem"))
@@ -161,7 +165,9 @@ func checkCertDns(path string, dnsname string) error {
     derBlock, _ := pem.Decode(pemBytes)
 
     cert, err := x509.ParseCertificate(derBlock.Bytes)
-
+    if err != nil {
+        return err
+    }
     names := cert.DNSNames
     if names != nil {
         for _, name := range names {
@@ -179,7 +185,9 @@ func TestCheckCaInstalled(t *testing.T) {
     var err error
     dirTest, err := os.MkdirTemp("", "certs-*")
     assert.Nil(t, err, "Should be no error on temp dir create")
-    defer os.RemoveAll(dirTest)
+    defer func(path string) {
+        _ = os.RemoveAll(path)
+    }(dirTest)
 
     t.Setenv(EnvCertDirectory, dirTest)
     t.Setenv(EnvCertCaPubKey, "")
@@ -220,7 +228,9 @@ func startTestServer(keyconfig *KeyConfig) *http.Server {
 func TestLocks(t *testing.T) {
     dirTest, err := os.MkdirTemp("", "certs-*")
     assert.Nil(t, err, "Should be no error on temp dir create")
-    defer os.RemoveAll(dirTest)
+    defer func(path string) {
+        _ = os.RemoveAll(path)
+    }(dirTest)
 
     t.Setenv(EnvCertDirectory, dirTest)
     t.Setenv(EnvCertCaPubKey, "")
@@ -264,7 +274,9 @@ func TestLocks(t *testing.T) {
 func doWork(dir string, t *testing.T) {
     fileHandle, err := os.OpenFile(filepath.Join(dir, "test.txt"), os.O_RDWR|os.O_CREATE, 0755)
     assert.NoError(t, err)
-    defer fileHandle.Close()
+    defer func(fileHandle *os.File) {
+        _ = fileHandle.Close()
+    }(fileHandle)
 
     line := lastLine(fileHandle)
     newline := 1
@@ -276,7 +288,7 @@ func doWork(dir string, t *testing.T) {
     outline := fmt.Sprintf("%v\n", newline)
     stat, _ := fileHandle.Stat()
     filesize := stat.Size()
-    fileHandle.WriteAt([]byte(outline), filesize)
+    _, _ = fileHandle.WriteAt([]byte(outline), filesize)
 }
 
 func lastLine(fileHandle *os.File) string {
@@ -287,10 +299,10 @@ func lastLine(fileHandle *os.File) string {
     if filesize > 0 {
         for {
             cursor -= 1
-            fileHandle.Seek(cursor, io.SeekEnd)
+            _, _ = fileHandle.Seek(cursor, io.SeekEnd)
 
             char := make([]byte, 1)
-            fileHandle.Read(char)
+            _, _ = fileHandle.Read(char)
 
             if cursor != -1 && (char[0] == 10 || char[0] == 13) { // stop if we find a line
                 break
