@@ -52,6 +52,9 @@ type MockAuthServer struct {
     Nonce        string
     TriggerError string
     T            *testing.T
+    TestRoles    []string
+    TestSubj     string
+    TestEmail    string
 }
 
 type SigningKey struct {
@@ -192,7 +195,7 @@ func (as *MockAuthServer) handleToken(rw http.ResponseWriter, r *http.Request) {
         }
 
         log.Info(fmt.Sprintf("Issuing token/authorize response to: %s", r.RemoteAddr))
-        token, err = as.BuildJWT(2, nil, []string{"orchestrator", as.clientID}, as.Nonce, false)
+        token, err = as.BuildJWT(60, nil, []string{"orchestrator", as.clientID}, as.Nonce, false)
     }
 
     if err != nil {
@@ -265,9 +268,10 @@ func (as *MockAuthServer) Jwks() []byte {
 
 type AccessTokenData struct {
     *jwt.RegisteredClaims
-    Scope string `json:"scope"`
-    Nonce string `json:"nonce"`
-    Email string `json:"email"`
+    Scope string   `json:"scope"`
+    Nonce string   `json:"nonce"`
+    Email string   `json:"email"`
+    Roles []string `json:"roles,omitempty"`
 }
 
 type MalformedTokenData struct {
@@ -280,7 +284,7 @@ type MalformedTokenData struct {
 func (as *MockAuthServer) BuildJWT(expireSecs int64, scopes []string, audience []string, nonce string, malformed bool) (string, error) {
     issuedAt := time.Now()
     if expireSecs == 0 {
-        expireSecs = 60
+        expireSecs = 120
     }
 
     expiresAt := issuedAt.Add(time.Duration(expireSecs) * time.Second)
@@ -318,6 +322,14 @@ func (as *MockAuthServer) BuildJWT(expireSecs int64, scopes []string, audience [
             "alice@example.com",
         }
     } else {
+        email := as.TestEmail
+        if email == "" {
+            email = "alice@example.com"
+        }
+        sub := as.TestSubj
+        if sub == "" {
+            sub = as.clientID
+        }
         setNonce := nonce
         if as.CheckTest(ErrorNonce) {
             setNonce = "badNonceValue"
@@ -330,7 +342,7 @@ func (as *MockAuthServer) BuildJWT(expireSecs int64, scopes []string, audience [
             &jwt.RegisteredClaims{
                 Issuer:    as.Issuer,
                 Audience:  setAudience,
-                Subject:   as.clientID,
+                Subject:   sub,
                 ExpiresAt: jwt.NewNumericDate(expiresAt),
                 IssuedAt:  jwt.NewNumericDate(issuedAt),
                 ID:        uuid.NewString(),
@@ -338,7 +350,8 @@ func (as *MockAuthServer) BuildJWT(expireSecs int64, scopes []string, audience [
 
             scopeString,
             setNonce,
-            "alice@example.com",
+            email,
+            as.TestRoles,
         }
 
     }
