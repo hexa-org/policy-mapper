@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "meta": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "title": "IDQL Policy Version",
+          "description": "Version of IDQL policy used.",
+          "examples": ["0.6.15"],
+          "default": "0.6.15"
+        },
+        "sourceData": {
+          "type": "object",
+          "properties": {},
+          "title": "Map of attributes particular to a provider (e.g. template id)"
+        },
+        "description": {
+          "type": "string",
+          "title": "Description of the policy (e.g. what it is for or does)"
+        },
+        "created": {
+          "type": "string",
+          "title": "Creation date",
+          "description": "Timestamp formatted in RFC3339 with nanosecond precision.",
+          "examples": ["1985-04-12T23:20:50.52Z"]
+        },
+        "modified": {
+          "type": "string",
+          "title": "Last modified date",
+          "description": "Timestamp formatted in RFC3339 with nanosecond precision.",
+          "examples": ["1985-04-12T23:20:50.52Z"]
+        },
+        "etag": {
+          "type": "string",
+          "title": "ETag Hash",
+          "description": "Calculated ETag hash value of the policy excluding meta information. Used for policy comparision / equality / change detection",
+          "readOnly": true
+        },
+        "policyId": {
+          "type": "string",
+          "title": "Policy Identifier",
+          "description": "A unique identifier for the policy"
+        },
+        "papId": {
+          "type": "string",
+          "title": "Policy Application Point Identifier"
+        },
+        "providerType": {
+          "type": "string",
+          "title": "Hexa Provider type code",
+          "examples": "iap, avp"
+        }
+      },
+      "title": "Meta information about policy"
+    },
+    "subject": {
+      "type": "object",
+      "properties": {
+        "members": {
+          "type": "array",
+          "title": "Member subjects",
+          "items": {"type": "string"},
+          "description": "One or more members values to be matched to the policy",
+          "examples": ["user:gerry@example.com"]
+        }
+      },
+      "title": ""
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "actionUri": {
+            "type": "string",
+            "title": "actionUri",
+            "description": "The actions permitted by the policy. Typically a URI",
+            "examples": [
+              "addTodo",
+              "https:GET:/humanresources"
+            ]
+          }
+        }
+      }
+    },
+    "object": {
+      "type": "object",
+      "properties": {
+        "resource_id": {
+          "type": "string",
+          "title": "Resource Identifier",
+          "description": "Identifier for the resource against which the policy applies."
+        }
+      },
+      "required": ["true"]
+    },
+    "condition": {
+      "type": "object",
+      "properties": {
+        "Rule": {"type": "string"},
+        "Action": {"type": "string"}
+      }
+    },
+    "scope": {
+      "type": "object",
+      "properties": {
+        "filter": {"type": "string"},
+        "attributes": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    }
+  },
+  "title": "IDQL Policy",
+  "description": "JSON Schema Definition of IDQL Policy"
+}
