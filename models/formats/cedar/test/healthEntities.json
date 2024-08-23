@@ -1,0 +1,67 @@
+[
+  {
+    "uid": {
+      "type": "HealthCareApp::User",
+      "id": "Victor"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "HealthCareApp::Role",
+        "id": "admin"
+      }
+    ]
+  },
+  {"a": "b"},
+  {
+    "uid": {
+      "type": "Unknown::User",
+      "id": "Gerry"
+    },
+    "attrs": {
+      "first_name": "Gerry"
+    }
+  },
+  {
+    "uid": {
+      "type": "HealthCareApp::Info",
+      "id": "apointment003"
+    },
+    "attrs": {
+      "provider": {
+        "__entity": {
+          "type": "HealthCareApp::User",
+          "id": "DrSeuz"
+        }
+      },
+      "patient": {
+        "__entity": {
+          "type": "HealthCareApp::User",
+          "id": "Victor"
+        }
+      }
+    },
+    "parents": [
+      {
+        "type": "HealthCareApp::InfoType",
+        "id": "appointment"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "HealthCareApp::InfoType",
+      "id": "appointment"
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "HealthCareApp::Role",
+      "id": "admin"
+    },
+    "attrs": {},
+    "parents": []
+  }
+]

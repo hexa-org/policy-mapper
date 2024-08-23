@@ -1,0 +1,57 @@
+[
+  {
+    "uid": {
+      "type": "PhotoApp::User",
+      "id": "alice"
+    },
+    "attrs": {
+      "userId": "897345789237492878",
+      "personInformation": {
+        "age": 25,
+        "name": "alice"
+      }
+    },
+    "parents": [
+      {
+        "type": "PhotoApp::UserGroup",
+        "id": "alice_friends"
+      },
+      {
+        "type": "PhotoApp::UserGroup",
+        "id": "AVTeam"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "PhotoApp::Photo",
+      "id": "vacationPhoto.jpg"
+    },
+    "attrs": {
+      "private": false,
+      "account": {
+        "__entity": {
+          "type": "PhotoApp::Account",
+          "id": "ahmad"
+        }
+      }
+    },
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "PhotoApp::UserGroup",
+      "id": "alice_friends"
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "PhotoApp::UserGroup",
+      "id": "AVTeam"
+    },
+    "attrs": {},
+    "parents": []
+  }
+]
