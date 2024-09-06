@@ -1,11 +1,11 @@
 package hexaPolicy
 
-# Rego Hexa Policy Interpreter v0.6.9
+# Rego Hexa Policy Interpreter v0.7.0
 import rego.v1
 
 import data.bundle.policies
 
-hexa_rego_version := "0.6.15"
+hexa_rego_version := "0.7.0"
 
 policies_evaluated := count(policies)
 
@@ -50,13 +50,13 @@ allow if {
 }
 
 subject_match(psubject, _, _) if {
-	# Match if no members value specified
-	not psubject.members
+	# Match if no value specified - treat as wildcard
+	not psubject
 }
 
 subject_match(psubject, insubject, req) if {
-	# Match if no members value specified
-	some member in psubject.members
+	# Match if a member matches
+	some member in psubject
 	subject_member_match(member, insubject, req)
 }
 

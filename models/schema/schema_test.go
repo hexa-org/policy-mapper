@@ -4,8 +4,10 @@ import (
     "os"
     "path/filepath"
     "runtime"
+    "strings"
     "testing"
 
+    "github.com/santhosh-tekuri/jsonschema/v6"
     "github.com/stretchr/testify/assert"
 )
 
@@ -68,4 +70,39 @@ func TestParseHealthSchema(t *testing.T) {
     assert.NotNil(t, context)
     assert.Equal(t, "Record", context.Type)
     assert.Equal(t, "User", context.Attributes["referrer"].Name)
+}
+
+func TestJsonSchemaIdql(t *testing.T) {
+    _, file, _, _ := runtime.Caller(0)
+    idqlSchemaBytes, err := os.ReadFile(filepath.Join(file, "..", "resources", "idql.jschema"))
+    assert.NoError(t, err)
+    assert.NotNil(t, idqlSchemaBytes)
+    schema, err := jsonschema.UnmarshalJSON(strings.NewReader(string(idqlSchemaBytes)))
+
+    assert.NoError(t, err)
+    assert.NotNil(t, schema)
+
+    healthPath := filepath.Join(file, "..", "test", "healthSchema.json")
+    healthSchemaBytes, err := os.ReadFile(healthPath)
+    assert.NoError(t, err)
+    assert.NotNil(t, healthSchemaBytes)
+
+    healthSchema, err := jsonschema.UnmarshalJSON(strings.NewReader(string(healthSchemaBytes)))
+    assert.NoError(t, err)
+    assert.NotNil(t, healthSchema)
+
+    c := jsonschema.NewCompiler()
+    err = c.AddResource(healthPath, healthSchema)
+    assert.NoError(t, err)
+
+    sch, err := c.Compile(healthPath)
+    assert.NoError(t, err)
+    assert.NotNil(t, sch)
+
+    healthEntitiesPath := filepath.Join(file, "..", "test", "healthEntities.json")
+    healthDataBytes, err := os.ReadFile(healthEntitiesPath)
+    assert.NoError(t, err)
+    healthInst, err := jsonschema.UnmarshalJSON(strings.NewReader(string(healthDataBytes)))
+    err = sch.Validate(healthInst)
+    assert.NoError(t, err)
 }
