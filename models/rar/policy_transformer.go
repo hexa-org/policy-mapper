@@ -21,7 +21,7 @@ func BuildPolicies(resourceActionRolesList []ResourceActionRoles) []hexapolicy.P
         slices.Sort(roles)
         policies = append(policies, hexapolicy.PolicyInfo{
             Meta:     hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion, ProviderType: "RARmodel"},
-            Actions:  []hexapolicy.ActionInfo{{ActionUriPrefix + httpMethod}},
+            Actions:  []hexapolicy.ActionInfo{hexapolicy.ActionInfo(ActionUriPrefix + httpMethod)},
             Subjects: roles,
             Object:   hexapolicy.ObjectInfo{ResourceID: one.Resource},
         })
@@ -41,11 +41,11 @@ func FlattenPolicy(origPolicies []hexapolicy.PolicyInfo) []hexapolicy.PolicyInfo
             continue
         }
         for _, act := range pol.Actions {
-            if strings.TrimSpace(act.ActionUri) == "" {
+            if strings.TrimSpace(string(act)) == "" {
                 log.Warn("FlattenPolicy Skipping policy without actionUri", "resource", resource)
                 continue
             }
-            lookupKey := act.ActionUri + resource
+            lookupKey := string(act) + resource
             matchingPolicy, found := resActionPolicyMap[lookupKey]
             var existingMembers []string
             if found {
@@ -54,7 +54,7 @@ func FlattenPolicy(origPolicies []hexapolicy.PolicyInfo) []hexapolicy.PolicyInfo
             newMembers := CompactMembers(existingMembers, pol.Subjects)
             newPol := hexapolicy.PolicyInfo{
                 Meta:     hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
-                Actions:  []hexapolicy.ActionInfo{{ActionUri: act.ActionUri}},
+                Actions:  []hexapolicy.ActionInfo{act},
                 Subjects: newMembers,
                 Object:   hexapolicy.ObjectInfo{ResourceID: resource},
             }
@@ -75,18 +75,16 @@ func FlattenPolicy(origPolicies []hexapolicy.PolicyInfo) []hexapolicy.PolicyInfo
 func CompactActions(existing, new []hexapolicy.ActionInfo) []hexapolicy.ActionInfo {
     actionUris := make([]string, 0)
     for _, act := range existing {
-        actionUris = append(actionUris, act.ActionUri)
+        actionUris = append(actionUris, string(act))
     }
     for _, act := range new {
-        actionUris = append(actionUris, act.ActionUri)
+        actionUris = append(actionUris, string(act))
     }
     actionUris = functionalsupport.SortCompact(actionUris)
 
     actionInfos := make([]hexapolicy.ActionInfo, 0)
     for _, uri := range actionUris {
-        actionInfos = append(actionInfos, hexapolicy.ActionInfo{
-            ActionUri: uri,
-        })
+        actionInfos = append(actionInfos, hexapolicy.ActionInfo(uri))
     }
     return actionInfos
 }
@@ -101,7 +99,7 @@ func CompactMembers(existing, new []string) []string {
 func sortPolicies(policies []hexapolicy.PolicyInfo) {
     sort.SliceStable(policies, func(i, j int) bool {
         resComp := strings.Compare(policies[i].Object.ResourceID, policies[j].Object.ResourceID)
-        actComp := strings.Compare(policies[i].Actions[0].ActionUri, policies[j].Actions[0].ActionUri)
+        actComp := strings.Compare(string(policies[i].Actions[0]), string(policies[j].Actions[0]))
         switch resComp {
         case 0:
             return actComp <= 0

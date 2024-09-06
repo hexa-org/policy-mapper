@@ -110,7 +110,7 @@ func Test_SetPolicy_live(t *testing.T) {
         actions := policy.Actions
         present := false
         for i, action := range actions {
-            if action.ActionUri == "cedar:hexa_avp::Action::\"UpdateAccount\"" {
+            if action == "cedar:hexa_avp::Action::\"UpdateAccount\"" {
                 actions = append(actions[:i], actions[i+1:]...)
                 present = true
                 fmt.Println("This test run will remove UpdateAccount action")
@@ -118,7 +118,7 @@ func Test_SetPolicy_live(t *testing.T) {
         }
         if !present {
             fmt.Println("This run will add UpdateAccount action")
-            actions = append(actions, hexapolicy.ActionInfo{ActionUri: "cedar:hexa_avp::Action::\"UpdateAccount\""})
+            actions = append(actions, "cedar:hexa_avp::Action::\"UpdateAccount\"")
         }
         policies[0].Actions = actions
 
@@ -240,7 +240,7 @@ func TestAvp_3_Reconcile(t *testing.T) {
     policy := policies[0]
     actions := policy.Actions
 
-    actions = append(actions, hexapolicy.ActionInfo{ActionUri: "cedar:hexa_avp::Action::\"UpdateAccount\""})
+    actions = append(actions, "cedar:hexa_avp::Action::\"UpdateAccount\"")
 
     policies[0].Actions = actions
 
@@ -325,7 +325,7 @@ func TestAvp_4_SetPolicies(t *testing.T) {
     actions := policy.Actions
     present := false
     for i, action := range actions {
-        if action.ActionUri == "cedar:hexa_avp::Action::\"UpdateAccount\"" {
+        if action == "cedar:hexa_avp::Action::\"UpdateAccount\"" {
             actions = append(actions[:i], actions[i+1:]...)
             present = true
             fmt.Println("This test run will remove UpdateAccount action")
@@ -333,7 +333,7 @@ func TestAvp_4_SetPolicies(t *testing.T) {
     }
     if !present {
         fmt.Println("This run will add UpdateAccount action")
-        actions = append(actions, hexapolicy.ActionInfo{ActionUri: "cedar:hexa_avp::Action::\"UpdateAccount\""})
+        actions = append(actions, "cedar:hexa_avp::Action::\"UpdateAccount\"")
     }
     policies[0].Actions = actions
 

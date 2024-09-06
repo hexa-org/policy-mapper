@@ -183,7 +183,7 @@ func (p *PolicyInfo) actionEquals(actions []ActionInfo) bool {
     for _, action := range p.Actions {
         isMatch := false
         for _, caction := range actions {
-            if strings.EqualFold(action.ActionUri, caction.ActionUri) {
+            if action.Equals(caction) {
                 isMatch = true
                 break
             }
@@ -207,8 +207,14 @@ type MetaInfo struct {
     ProviderType string                 `json:"providerType,omitempty"`                // ProviderType is the SDK provider type indicating the source of the policy
 }
 
-type ActionInfo struct {
-    ActionUri string `json:"actionUri" validate:"required"`
+type ActionInfo string
+
+func (a ActionInfo) String() string {
+    return string(a)
+}
+
+func (a ActionInfo) Equals(action ActionInfo) bool {
+    return strings.EqualFold(string(a), string(action))
 }
 
 type SubjectInfo []string

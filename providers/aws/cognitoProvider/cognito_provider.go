@@ -56,7 +56,7 @@ func (a *CognitoProvider) GetPolicyInfo(info policyprovider.IntegrationInfo, app
                 Version:      hexapolicy.IdqlVersion,
                 ProviderType: ProviderTypeAwsCognito,
             },
-            Actions:  []hexapolicy.ActionInfo{{groupName}},
+            Actions:  []hexapolicy.ActionInfo{hexapolicy.ActionInfo(groupName)},
             Subjects: members,
             Object: hexapolicy.ObjectInfo{
                 ResourceID: applicationInfo.Name,
@@ -88,7 +88,7 @@ func (a *CognitoProvider) SetPolicyInfo(info policyprovider.IntegrationInfo, app
         return http.StatusInternalServerError, err
     }
     for _, pol := range policyInfos {
-        groupName := pol.Actions[0].ActionUri
+        groupName := string(pol.Actions[0])
         _, exists := allGroups[groupName]
         if !exists {
             continue

@@ -137,7 +137,7 @@ func (m *GooglePolicyMapper) MapPoliciesToBindings(policies []hexapolicy.PolicyI
 
 func convertActionToRole(policy hexapolicy.PolicyInfo) string {
     for _, v := range policy.Actions {
-        action := v.ActionUri
+        action := string(v)
         if strings.HasPrefix(action, "gcp:") {
             return action[4:]
         }
@@ -150,7 +150,8 @@ func convertRoleToAction(role string) []hexapolicy.ActionInfo {
     if role == "" {
         return nil
     }
-    return []hexapolicy.ActionInfo{{"gcp:" + role}}
+    var ret []hexapolicy.ActionInfo
+    return append(ret, hexapolicy.ActionInfo("gcp:"+role))
 }
 
 func (m *GooglePolicyMapper) convertCelToCondition(expr *iam.Expr) (conditions.ConditionInfo, error) {

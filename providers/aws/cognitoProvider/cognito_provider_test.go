@@ -154,7 +154,7 @@ func TestSetPolicy_withInvalidArguments(t *testing.T) {
         policyprovider.ApplicationInfo{Name: "anAppName", Description: "anAppId"},
         []hexapolicy.PolicyInfo{{
             Meta:     hexapolicy.MetaInfo{Version: "0"},
-            Actions:  []hexapolicy.ActionInfo{{"azure:anAppRoleId"}},
+            Actions:  []hexapolicy.ActionInfo{"azure:anAppRoleId"},
             Subjects: []string{"aPrincipalId:aPrincipalDisplayName", "yetAnotherPrincipalId:yetAnotherPrincipalDisplayName", "andAnotherPrincipalId:andAnotherPrincipalDisplayName"},
             Object: hexapolicy.ObjectInfo{
                 ResourceID: "anObjectId",
@@ -169,7 +169,7 @@ func TestSetPolicy_withInvalidArguments(t *testing.T) {
         policyprovider.ApplicationInfo{ObjectID: "anObjectId", Name: "anAppName", Description: "aDescription"},
         []hexapolicy.PolicyInfo{{
             Meta:     hexapolicy.MetaInfo{Version: "0"},
-            Actions:  []hexapolicy.ActionInfo{{"azure:anAppRoleId"}},
+            Actions:  []hexapolicy.ActionInfo{"azure:anAppRoleId"},
             Subjects: []string{"aPrincipalId:aPrincipalDisplayName", "yetAnotherPrincipalId:yetAnotherPrincipalDisplayName", "andAnotherPrincipalId:andAnotherPrincipalDisplayName"},
             Object:   hexapolicy.ObjectInfo{},
         }})

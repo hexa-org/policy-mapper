@@ -122,7 +122,7 @@ func (c *CedarPolicyMapper) mapActions(actions []hexapolicy.ActionInfo) *ActionE
     case 0:
         return nil
     case 1:
-        action := mapActionUri(actions[0].ActionUri)
+        action := mapActionUri(string(actions[0]))
 
         return &ActionExpression{
             Operator: EQUALS,
@@ -132,7 +132,7 @@ func (c *CedarPolicyMapper) mapActions(actions []hexapolicy.ActionInfo) *ActionE
     default:
         cActions := make([]ActionItem, len(actions))
         for k, v := range actions {
-            actionIden := mapActionUri(v.ActionUri)
+            actionIden := mapActionUri(string(v))
             cActions[k].Item = actionIden
         }
         return &ActionExpression{
@@ -343,10 +343,10 @@ func (c *CedarPolicyMapper) MapCedarPolicyToIdql(policy *CedarPolicy) (*hexapoli
     actions := make([]hexapolicy.ActionInfo, 0)
     if policy.Head.Actions != nil {
         if policy.Head.Actions.Action != "" {
-            actions = append(actions, hexapolicy.ActionInfo{ActionUri: mapActionItemToUri(policy.Head.Actions.Action)})
+            actions = append(actions, hexapolicy.ActionInfo(mapActionItemToUri(policy.Head.Actions.Action)))
         } else {
             for _, v := range policy.Head.Actions.Actions {
-                actions = append(actions, hexapolicy.ActionInfo{ActionUri: mapActionItemToUri(v.Item)})
+                actions = append(actions, hexapolicy.ActionInfo(mapActionItemToUri(v.Item)))
             }
         }
     }

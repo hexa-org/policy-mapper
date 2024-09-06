@@ -95,7 +95,7 @@ func (s *testSuite) Test3_Reconcile() {
     policy := policies[0]
     actions := policy.Actions
 
-    actions = append(actions, hexapolicy.ActionInfo{ActionUri: "cedar:hexa_avp::Action::UpdateAccount"})
+    actions = append(actions, "cedar:hexa_avp::Action::UpdateAccount")
 
     policies[0].Actions = actions
 
@@ -158,7 +158,7 @@ func (s *testSuite) Test4_SetPolicies() {
     // This section will cause an update since only action changed
     policy := policies[0]
     actions := policy.Actions
-    actions = append(actions, hexapolicy.ActionInfo{ActionUri: "cedar:hexa_avp::Action::UpdateAccount"})
+    actions = append(actions, "cedar:hexa_avp::Action::UpdateAccount")
 
     policies[0].Actions = actions
 

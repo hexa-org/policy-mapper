@@ -2,19 +2,14 @@
   "policies": [
     {
       "meta": {
-        "version": "0.6"
+        "version": "0.7"
       },
       "actions": [
-        {
-          "actionUri": "http:GET:/"
-        }
+        "http:GET:/"
       ],
-      "subject": {
-        "members": [
-          "allusers",
-          "allauthenticated"
-        ]
-      },
+      "subjects": [
+        "any"
+      ],
       "condition": {
         "rule": "req.ip sw 127 and req.method eq POST",
         "action": "allow"
@@ -25,44 +20,32 @@
     },
     {
       "meta": {
-        "version": "0.6"
+        "version": "0.7"
       },
       "actions": [
-        {
-          "actionUri": "http:GET:/sales"
-        },
-        {
-          "actionUri": "http:GET:/marketing"
-        }
+        "http:GET:/sales",
+        "http:GET:/marketing"
       ],
-      "subject": {
-        "members": [
-          "allauthenticated",
-          "sales@hexaindustries.io",
-          "marketing@hexaindustries.io"
-        ]
-      },
+      "subjects": [
+        "anyauthenticated",
+        "user:sales@hexaindustries.io",
+        "user:marketing@hexaindustries.io"
+      ],
       "object": {
         "resource_id": "aResourceId"
       }
     },
     {
       "meta": {
-        "version": "0.6"
+        "version": "0.7"
       },
       "actions": [
-        {
-          "actionUri": "http:GET:/accounting"
-        },
-        {
-          "actionUri": "http:POST:/accounting"
-        }
+        "http:GET:/accounting",
+        "http:POST:/accounting"
       ],
-      "subject": {
-        "members": [
-          "accounting@hexaindustries.io"
-        ]
-      },
+      "subjects": [
+        "user:accounting@hexaindustries.io"
+      ],
       "condition": {
         "rule": "req.ip sw 127 and req.method eq POST",
         "action": "allow"
@@ -73,18 +56,14 @@
     },
     {
       "meta": {
-        "version": "0.6"
+        "version": "0.7"
       },
       "actions": [
-        {
-          "actionUri": "http:GET:/humanresources"
-        }
+        "http:GET:/humanresources"
       ],
-      "subject": {
-        "members": [
-          "humanresources@hexaindustries.io"
-        ]
-      },
+      "subjects": [
+        "user:humanresources@hexaindustries.io"
+      ],
       "object": {
         "resource_id": "aResourceId"
       }

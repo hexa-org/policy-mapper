@@ -5,9 +5,7 @@
         "Version": "0.7"
       },
       "Actions": [
-        {
-          "ActionUri": "cedar:Action::view"
-        }
+        "cedar:Action::view"
       ],
       "Subjects": [
         "User:stacey"
@@ -25,12 +23,8 @@
         "version": "0.7"
       },
       "actions": [
-        {
-          "actionUri": "cedar:Action::ReadFile"
-        },
-        {
-          "actionuri": "cedar:Action::ListFiles"
-        }
+        "cedar:Action::ReadFile",
+        "cedar:Action::ListFiles"
       ],
       "subjects": [
         "any"
@@ -48,9 +42,7 @@
         "version": "0.7"
       },
       "actions": [
-        {
-          "actionUri": "cedar:Action::writeFile"
-        }
+        "cedar:Action::writeFile"
       ],
       "subjects": [
         "anyAuthenticated",
@@ -66,12 +58,8 @@
         "version": "0.7"
       },
       "actions": [
-        {
-          "actionUri": "cedar:Action::ReadFile"
-        },
-        {
-          "actionUri": "cedar:Action::ListFiles"
-        }
+        "cedar:Action::ReadFile",
+        "cedar:Action::ListFiles"
       ],
       "subjects": [
         "User:accounting@hexaindustries.io"
@@ -88,10 +76,8 @@
       "Meta": {
         "Version": "0.7"
       },
-      "Actions": [
-        {
-          "ActionUri": "cedar:Action::view"
-        }
+      "actions": [
+        "cedar:Action::view"
       ],
       "subjects": [
         "User:alice"

@@ -97,11 +97,7 @@ permit (
  "subjects": [
   "any"
  ],
- "actions": [
-  {
-   "actionUri": "action"
-  }
- ],
+ "actions": [ "action" ],
  "object": {
   "resource_id": ""
  }
@@ -117,11 +113,7 @@ permit (
  "subjects": [
    "User:alice"
   ],
- "actions": [
-  {
-   "actionUri": "viewPhoto"
-  }
- ],
+ "actions": [ "viewPhoto" ],
  "object": {
   "resource_id": "Photo::\"VacationPhoto.jpg\""
  }
@@ -136,15 +128,9 @@ permit (
    "Group:\"AVTeam\".(User)"
   ],
  "actions": [
-  {
-   "actionUri": "PhotoOp::\"view\""
-  },
-  {
-   "actionUri": "PhotoOp::\"edit\""
-  },
-  {
-   "actionUri": "PhotoOp::\"delete\""
-  }
+    "PhotoOp::\"view\"",
+    "PhotoOp::\"edit\"",
+    "PhotoOp::\"delete\""
  ],
  "object": {
   "resource_id": "Photo::\"VacationPhoto.jpg\""
@@ -162,11 +148,7 @@ unless { principal has parents };`,
  "subjects": [
    "Group:UserGroup::\"AVTeam\""
   ],
- "actions": [
-  {
-   "actionUri": "viewPhoto"
-  }
- ],
+ "actions": [ "viewPhoto" ],
  "object": {
   "resource_id": "Type:Photo"
  },
@@ -185,11 +167,7 @@ when { resource in PhotoShop::"Photo" };`, `{
  "subjects": [
    "Type:User"
   ],
- "actions": [
-  {
-   "actionUri": "viewPhoto"
-  }
- ],
+ "actions": [ "viewPhoto" ],
  "object": {
   "resource_id": ""
  },

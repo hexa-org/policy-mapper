@@ -105,7 +105,7 @@ func (a *AzureProvider) SetPolicyInfo(integrationInfo policyprovider.Integration
     for _, policyInfo := range policyInfos {
         var assignments []azad.AzureAppRoleAssignment
 
-        actionUri := strings.TrimPrefix(policyInfo.Actions[0].ActionUri, "azure:")
+        actionUri := strings.TrimPrefix(string(policyInfo.Actions[0]), "azure:")
         appRoleId, found := appRoleValueToId[actionUri]
         if !found {
             log.Println("No Azure AppRoleAssignment found for policy action", actionUri)

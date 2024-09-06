@@ -24,7 +24,7 @@ func CalcResourceActionRolesForUpdate(existing []ResourceActionRoles, policyInfo
 
     for _, pol := range newPolicies {
         polResource := pol.Object.ResourceID
-        polAction := pol.Actions[0].ActionUri
+        polAction := string(pol.Actions[0])
         polRoles := pol.Subjects
 
         newRarKey := MakeRarKeyForPolicy(polAction, polResource)

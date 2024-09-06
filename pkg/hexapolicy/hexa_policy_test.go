@@ -12,19 +12,15 @@ import (
 var testPolicy1 = `
 {
       "meta": {
-        "version": "0.6"
+        "version": "0.7"
       },
       "actions": [
-        {
-          "actionUri": "http:GET:/accounting"
-        },
-        {
-          "actionUri": "http:POST:/accounting"
-        }
+         "http:GET:/accounting",
+         "http:POST:/accounting"
       ],
       "subjects": [
-          "accounting@hexaindustries.io"
-        ],
+          "user:accounting@hexaindustries.io"
+      ],
       "condition": {
         "rule": "req.ip sw 127 and req.method eq POST",
         "action": "allow"
@@ -41,15 +37,13 @@ var testPolicy1 = `
 var testPolicy2 = `
 {
       "meta": {
-        "version": "0.6"
+        "version": "0.7"
       },
       "actions": [
-        {
-          "actionUri": "http:GET:/humanresources"
-        }
+        "http:GET:/humanresources"
       ],
       "subjects": [
-          "humanresources@hexaindustries.io"
+          "user:humanresources@hexaindustries.io"
       ],
       "object": {
         "resource_id": "aResourceId"
@@ -95,7 +89,7 @@ func TestSubjectInfo_equals(t *testing.T) {
     assert.False(t, p1.Subjects.equals(p2.Subjects))
     p3 := p1
     // check case sensitivity
-    p3.Subjects = []string{"Accounting@Hexaindustries.io"}
+    p3.Subjects = []string{"user:Accounting@Hexaindustries.io"}
     assert.True(t, p1.Subjects.equals(p3.Subjects))
 }
 
@@ -114,11 +108,11 @@ func TestPolicyInfo_actionEquals(t *testing.T) {
     assert.True(t, p1.actionEquals(p3.Actions))
 
     // Check that equivalence works out of order
-    p3.Actions = []ActionInfo{{ActionUri: "http:POST:/accounting"}, {ActionUri: "http:GET:/accounting"}}
+    p3.Actions = []ActionInfo{"http:POST:/accounting", "http:GET:/accounting"}
 
     assert.True(t, p1.actionEquals(p3.Actions))
 
-    p3.Actions = []ActionInfo{{ActionUri: "http:POST:/accounting"}}
+    p3.Actions = []ActionInfo{"http:POST:/accounting"}
 
     assert.False(t, p1.actionEquals(p3.Actions))
 }
@@ -236,7 +230,7 @@ func TestPolicyInfo_Equals(t *testing.T) {
 
     p3 := policies.Policies[0]
     // This will be used to make sure subject is case insensitive
-    p3.Subjects = []string{"Accounting@Hexaindustries.io"}
+    p3.Subjects = []string{"User:Accounting@Hexaindustries.io"}
 
     type fields struct {
         testPolicy PolicyInfo
@@ -282,7 +276,7 @@ func TestPolicyInfo_Compare(t *testing.T) {
 
     p3 := policies.Policies[0]
     // This will be used to make sure subject is case insensitive
-    p3.Subjects = []string{"Accounting@Hexaindustries.io"}
+    p3.Subjects = []string{"User:Accounting@Hexaindustries.io"}
 
     type fields struct {
         hexaPolicy PolicyInfo
@@ -349,7 +343,7 @@ func TestPolicyDif_Report(t *testing.T) {
     testPolicy := PolicyInfo{
         Meta:      MetaInfo{PolicyId: &pid},
         Subjects:  []string{"user1"},
-        Actions:   []ActionInfo{{ActionUri: "actionUri"}},
+        Actions:   []ActionInfo{"actionUri"},
         Object:    ObjectInfo{ResourceID: "aresource"},
         Condition: nil,
     }
@@ -462,16 +456,14 @@ func TestPolicyInfo_String(t *testing.T) {
     pid := "abc"
     policyString := `{
  "meta": {
-  "etag": "20-03ce8ba19fe5a7a2ea9daf6e4c9645716d1dff39",
+  "etag": "20-e3f1663e6b8664347598121df047911cbacd961b",
   "policyId": "abc"
  },
  "subjects": [
   "user1"
  ],
  "actions": [
-  {
-   "actionUri": "actionUri"
-  }
+  "actionUri"
  ],
  "object": {
   "resource_id": "aresource"
@@ -480,7 +472,7 @@ func TestPolicyInfo_String(t *testing.T) {
     testPolicy := PolicyInfo{
         Meta:      MetaInfo{PolicyId: &pid},
         Subjects:  []string{"user1"},
-        Actions:   []ActionInfo{{ActionUri: "actionUri"}},
+        Actions:   []ActionInfo{"actionUri"},
         Object:    ObjectInfo{ResourceID: "aresource"},
         Condition: nil,
     }
@@ -538,7 +530,7 @@ func TestReconcilePolicies(t *testing.T) {
             PolicyId: &npid,
         },
         Subjects: []string{"phil.hunt@independentid.com"},
-        Actions:  []ActionInfo{{ActionUri: "http:GET:/admin"}, {ActionUri: "http:POST:/admin"}},
+        Actions:  []ActionInfo{"http:GET:/admin", "http:POST:/admin"},
         Object:   ObjectInfo{ResourceID: "hexaindustries"},
     }
     newPolicy.CalculateEtag()
