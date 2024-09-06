@@ -24,7 +24,7 @@ func TestAzurePolicyMapper_ToIDQL(t *testing.T) {
     for _, pol := range actPolicies {
         assert.Equal(t, 1, len(pol.Actions))
         assert.Equal(t, sps.List[0].Name, pol.Object.ResourceID)
-        actActionMembersMap[pol.Actions[0].ActionUri] = pol.Subjects
+        actActionMembersMap[pol.Actions[0].String()] = pol.Subjects
     }
 
     for _, expAction := range []string{policytestsupport.ActionGetHrUs, policytestsupport.ActionGetProfile} {
@@ -57,7 +57,7 @@ func TestAzurePolicyMapper_ToIDQL_NoRoleAssignments(t *testing.T) {
         assert.Equal(t, sps.List[0].Name, pol.Object.ResourceID)
         assert.NotNil(t, pol.Subjects)
         assert.Empty(t, pol.Subjects)
-        actPolicyActionMap[pol.Actions[0].ActionUri] = true
+        actPolicyActionMap[pol.Actions[0].String()] = true
     }
 
     for _, expAction := range []string{policytestsupport.ActionGetHrUs, policytestsupport.ActionGetProfile} {

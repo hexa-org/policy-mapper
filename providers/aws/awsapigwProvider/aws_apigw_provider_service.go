@@ -57,7 +57,7 @@ func (s *AwsApiGatewayProviderService) setPolicyInfoOld(appInfo policyprovider.A
         return http.StatusInternalServerError, err
     }
     for _, pol := range policyInfos {
-        groupName := pol.Actions[0].ActionUri
+        groupName := string(pol.Actions[0])
         _, exists := allGroups[groupName]
         if !exists {
             continue

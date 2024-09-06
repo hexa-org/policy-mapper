@@ -26,9 +26,7 @@ const expectedBundleData = `{
         "version": "0.7"
       },
       "actions": [
-        {
-          "actionUri": "http:GET:/"
-        }
+        "http:GET:/"
       ],
       "subjects:": [
         "any",
@@ -43,12 +41,8 @@ const expectedBundleData = `{
         "version": "0.7"
       },
       "actions": [
-        {
-          "actionUri": "http:GET:/sales"
-        },
-        {
-          "actionUri": "http:GET:/marketing"
-        }
+        "http:GET:/sales",
+        "http:GET:/marketing"
       ],
       "subjects:": [
         "anyauthenticated",
@@ -64,12 +58,8 @@ const expectedBundleData = `{
         "version": "0.7"
       },
       "actions": [
-        {
-          "actionUri": "http:GET:/accounting"
-        },
-        {
-          "actionUri": "http:POST:/accounting"
-        }
+        "http:GET:/accounting",
+        "http:POST:/accounting"
       ],
       "subjects:": [
         "accounting@hexaindustries.io"
@@ -83,9 +73,7 @@ const expectedBundleData = `{
         "version": "0.7"
       },
       "actions": [
-        {
-          "actionUri": "http:GET:/humanresources"
-        }
+        "http:GET:/humanresources"
       ],
       "subjects:": [
         "humanresources@hexaindustries.io"

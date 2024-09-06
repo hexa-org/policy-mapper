@@ -5,15 +5,11 @@
         "Version": "0.6"
       },
       "Actions": [
-        {
-          "ActionUri": "cedar:Action::view"
-        }
+        "cedar:Action::view"
       ],
-      "Subject": {
-        "Members": [
-          "User:\"alice\""
-        ]
-      },
+      "Subjects": [
+        "User:\"alice\""
+      ],
       "Object": {
         "resource_id": "cedar:Photo::\"VacationPhoto94.jpg\""
       }
@@ -23,15 +19,11 @@
         "Version": "0.6"
       },
       "Actions": [
-        {
-          "ActionUri": "cedar:Action::\"view\""
-        }
+        "cedar:Action::\"view\""
       ],
-      "Subject": {
-        "Members": [
-          "User:\"stacey\""
-        ]
-      },
+      "Subjects": [
+        "User:\"stacey\""
+      ],
       "Object": {
         "resource_id": ""
       },

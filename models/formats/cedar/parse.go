@@ -260,16 +260,16 @@ func (pp *PolicyPair) mapCedarAction() {
     var aInfo []hexapolicy.ActionInfo
     switch action.Type {
     case cedarParser.MatchEquals:
-        aInfo = append(aInfo, hexapolicy.ActionInfo{ActionUri: mapCedarEntityName(action.Entities[0])})
+        aInfo = append(aInfo, hexapolicy.ActionInfo(mapCedarEntityName(action.Entities[0])))
     case cedarParser.MatchIn:
-        aInfo = append(aInfo, hexapolicy.ActionInfo{ActionUri: "Role:" + mapCedarEntityName(action.Entities[0])})
+        aInfo = append(aInfo, hexapolicy.ActionInfo("Role:"+mapCedarEntityName(action.Entities[0])))
     case cedarParser.MatchInList:
         for _, entity := range action.Entities {
-            aInfo = append(aInfo, hexapolicy.ActionInfo{ActionUri: mapCedarEntityName(entity)})
+            aInfo = append(aInfo, hexapolicy.ActionInfo(mapCedarEntityName(entity)))
         }
     default:
         fmt.Println(fmt.Sprintf("Unexpected action type: %T, value: %s", action, action.String()))
-        aInfo = append(aInfo, hexapolicy.ActionInfo{ActionUri: action.String()})
+        aInfo = append(aInfo, hexapolicy.ActionInfo(action.String()))
     }
 
     pp.HexaPolicy.Actions = aInfo
@@ -282,7 +282,7 @@ func (pp *PolicyPair) mapHexaAction() string {
     }
     if len(actions) == 1 {
         // if action has a prefix of "Role" then the value is action in xxx
-        value := actions[0].ActionUri
+        value := string(actions[0])
         if strings.HasPrefix(strings.ToLower(value), "role:") {
             return fmt.Sprintf("action in %s,", value[5:])
         }
@@ -294,7 +294,7 @@ func (pp *PolicyPair) mapHexaAction() string {
         if i > 0 {
             sb.WriteString(",")
         }
-        sb.WriteString(e.ActionUri)
+        sb.WriteString(string(e))
     }
     sb.WriteString("],")
     return sb.String()

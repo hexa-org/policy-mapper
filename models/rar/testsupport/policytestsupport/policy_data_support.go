@@ -82,7 +82,7 @@ func MakeRoleSubjectTestPolicies(actionMembers map[string][]string) []hexapolicy
 func MakeRoleSubjectTestPolicy(resourceId string, action string, roles []string) hexapolicy.PolicyInfo {
     return hexapolicy.PolicyInfo{
         Meta:     hexapolicy.MetaInfo{Version: "0.5"},
-        Actions:  []hexapolicy.ActionInfo{{action}},
+        Actions:  []hexapolicy.ActionInfo{hexapolicy.ActionInfo(action)},
         Subjects: roles,
         Object: hexapolicy.ObjectInfo{
             ResourceID: resourceId,
@@ -93,7 +93,7 @@ func MakeRoleSubjectTestPolicy(resourceId string, action string, roles []string)
 func MakeTestPolicy(resourceId string, action string, actionMembers ActionMembers) hexapolicy.PolicyInfo {
     return hexapolicy.PolicyInfo{
         Meta:     hexapolicy.MetaInfo{Version: "0.5"},
-        Actions:  []hexapolicy.ActionInfo{{action}},
+        Actions:  []hexapolicy.ActionInfo{hexapolicy.ActionInfo(action)},
         Subjects: MakePolicyTestUsers(actionMembers),
         Object: hexapolicy.ObjectInfo{
             ResourceID: resourceId,

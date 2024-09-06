@@ -305,7 +305,7 @@ func TestSetPolicyInfo(t *testing.T) {
         policyprovider.IntegrationInfo{Name: openpolicyagent.ProviderTypeOpa, Key: key},
         policyprovider.ApplicationInfo{ObjectID: "anotherResourceId"},
         []hexapolicy.PolicyInfo{
-            {Meta: hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion}, Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subjects: []string{"allusers"}, Object: hexapolicy.ObjectInfo{
+            {Meta: hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion}, Actions: []hexapolicy.ActionInfo{"http:GET"}, Subjects: []string{"allusers"}, Object: hexapolicy.ObjectInfo{
                 ResourceID: "aResourceId",
             }},
         },
@@ -336,7 +336,7 @@ func TestSetPolicyInfo(t *testing.T) {
     meta := policies[0].Meta
     modified := meta.Modified
     assert.True(t, now.Before(*modified))
-    actionURi := policies[0].Actions[0].ActionUri
+    actionURi := policies[0].Actions[0].String()
     assert.Equal(t, "http:GET", actionURi)
     assert.Equal(t, "aResourceId", policies[0].Object.ResourceID)
     // assert.JSONEq(t, `{"policies":[{"meta":{"version":"0.5"},"actions":[{"actionUri":"http:GET"}],"subject":{"members":["allusers"]},"object":{"resource_id":"anotherResourceId"}}]}`, string(readFile))
@@ -368,7 +368,7 @@ func TestSetPolicyInfo_withInvalidArguments(t *testing.T) {
         policyprovider.ApplicationInfo{ObjectID: "aResourceId"},
         []hexapolicy.PolicyInfo{
             {
-                Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subjects: []string{"allusers"}, Object: hexapolicy.ObjectInfo{
+                Actions: []hexapolicy.ActionInfo{"http:GET"}, Subjects: []string{"allusers"}, Object: hexapolicy.ObjectInfo{
                 ResourceID: "aResourceId",
             }},
         },
@@ -422,7 +422,7 @@ func TestSetPolicyInfo_WithHTTPSBundleServer(t *testing.T) {
         policyprovider.IntegrationInfo{Name: openpolicyagent.ProviderTypeOpa, Key: key},
         policyprovider.ApplicationInfo{ObjectID: "aResourceId"},
         []hexapolicy.PolicyInfo{
-            {Meta: hexapolicy.MetaInfo{Version: "0.5"}, Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subjects: []string{"allusers"}, Object: hexapolicy.ObjectInfo{
+            {Meta: hexapolicy.MetaInfo{Version: "0.5"}, Actions: []hexapolicy.ActionInfo{"http:GET"}, Subjects: []string{"allusers"}, Object: hexapolicy.ObjectInfo{
                 ResourceID: "aResourceId",
             }},
         },
@@ -439,9 +439,7 @@ func TestMakeDefaultBundle(t *testing.T) {
       "meta": {
 		"version": "0.6"
       },
-      "actions": [{
-        "actionUri": "ietf:http:GET"
-	  }],
+      "actions": [ "ietf:http:GET" ],
       "subject": {
         "members": [
           "anyauthenticated"
@@ -483,7 +481,7 @@ func TestMakeDefaultBundle(t *testing.T) {
     assert.Len(t, policies, 1, "Should be 1 policy")
     meta := policies[0].Meta
 
-    actionURi := policies[0].Actions[0].ActionUri
+    actionURi := policies[0].Actions[0].String()
     assert.Equal(t, "ietf:http:GET", actionURi)
     assert.Equal(t, "aResourceId", policies[0].Object.ResourceID)
     // assert.JSONEq(t, `{"policies":[{"meta":{"version":"0.5"},"actions":[{"actionUri":"http:GET"}],"subject":{"members":["allusers"]},"object":{"resource_id":"anotherResourceId"}}]}`, string(readFile))

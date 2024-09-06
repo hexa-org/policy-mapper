@@ -41,7 +41,7 @@ action_rights contains name if {
 	policy.meta.policyId in allow_set
 
 	some action in policy.actions
-	name := sprintf("%s:%s", [policy.meta.policyId, action.actionUri])
+	name := sprintf("%s:%s", [policy.meta.policyId, action])
 }
 
 # Returns whether the current operation is allowed
@@ -111,15 +111,15 @@ actions_match(actions, req) if {
 
 action_match(action, req) if {
 	# Check for match based on ietf http
-	check_http_match(action.actionUri, req)
+	check_http_match(action, req)
 }
 
 action_match(action, req) if {
-	action.actionUri # check for an action
+	action # check for an action
 	count(req.actionUris) > 0
 
 	# Check for a match based on req.ActionUris and actionUri
-	check_urn_match(action.actionUri, req.actionUris)
+	check_urn_match(action, req.actionUris)
 }
 
 check_urn_match(policyUri, actionUris) if {

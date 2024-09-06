@@ -326,7 +326,7 @@ func (suite *testSuite) Test05_SetPolicies() {
 
     // 2nd policy has a different action
     policy := testPolicyMods[0]
-    newAction := hexapolicy.ActionInfo{ActionUri: "http:POST:/update"}
+    newAction := hexapolicy.ActionInfo("http:POST:/update")
     testPolicyMods[0].Actions = append(policy.Actions, newAction)
 
     // 3rd policy has a different subject

@@ -56,7 +56,7 @@ func MakePolicies(actionMembers map[string][]string, resourceId string) []hexapo
 
         pol := hexapolicy.PolicyInfo{
             Meta:     hexapolicy.MetaInfo{Version: "0.5"},
-            Actions:  []hexapolicy.ActionInfo{{action}},
+            Actions:  []hexapolicy.ActionInfo{hexapolicy.ActionInfo(action)},
             Subjects: members,
             Object: hexapolicy.ObjectInfo{
                 ResourceID: resourceId,
@@ -73,7 +73,7 @@ func sortAction(orig []hexapolicy.ActionInfo) []hexapolicy.ActionInfo {
     sorted := make([]hexapolicy.ActionInfo, 0)
     sorted = append(sorted, orig...)
     sort.Slice(sorted, func(i, j int) bool {
-        return sorted[i].ActionUri <= sorted[j].ActionUri
+        return sorted[i] <= sorted[j]
     })
     return sorted
 }

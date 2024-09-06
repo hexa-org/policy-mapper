@@ -1,7 +1,7 @@
 package rar_test
 
 import (
-    rar "github.com/hexa-org/policy-mapper/models/rar"
+    "github.com/hexa-org/policy-mapper/models/rar"
     "github.com/hexa-org/policy-mapper/models/rar/testsupport/policytestsupport"
     "github.com/hexa-org/policy-mapper/pkg/hexapolicy"
 
@@ -32,14 +32,14 @@ func TestBuildPolicies(t *testing.T) {
 
     actPol := policies[0]
     assert.Equal(t, policytestsupport.ResourceHrUs, actPol.Object.ResourceID)
-    assert.Equal(t, "http:GET", actPol.Actions[0].ActionUri)
+    assert.Equal(t, "http:GET", actPol.Actions[0].String())
     var res []string
     res = actPol.Subjects
     assert.Equal(t, []string{"1-some-hr-role", "2-some-hr-role"}, res)
 
     actPol = policies[1]
     assert.Equal(t, policytestsupport.ResourceProfile, actPol.Object.ResourceID)
-    assert.Equal(t, "http:GET", actPol.Actions[0].ActionUri)
+    assert.Equal(t, "http:GET", actPol.Actions[0].String())
     res = actPol.Subjects
     assert.Equal(t, []string{"1-some-profile-role", "2-some-profile-role"}, res)
 }
@@ -67,7 +67,7 @@ func TestCompactActions_NilEmpty(t *testing.T) {
 
 func TestCompactActions_AllWhitespace(t *testing.T) {
     arr1 := []hexapolicy.ActionInfo{
-        {ActionUri: ""}, {ActionUri: "   "}, {ActionUri: " "},
+        hexapolicy.ActionInfo(""), hexapolicy.ActionInfo("   "), hexapolicy.ActionInfo(" "),
     }
     compacted := rar.CompactActions(arr1, arr1)
     assert.NotNil(t, compacted)
@@ -76,49 +76,49 @@ func TestCompactActions_AllWhitespace(t *testing.T) {
 
 func TestCompactActions_DuplicatesAndWhitespace(t *testing.T) {
     arr1 := []hexapolicy.ActionInfo{
-        {ActionUri: ""}, {ActionUri: "1one"}, {ActionUri: " "}, {ActionUri: "2two"}, {ActionUri: "3three"},
+        hexapolicy.ActionInfo(""), hexapolicy.ActionInfo("1one"), hexapolicy.ActionInfo(" "), hexapolicy.ActionInfo("2two"), hexapolicy.ActionInfo("3three"),
     }
     arr2 := []hexapolicy.ActionInfo{
-        {ActionUri: ""}, {ActionUri: "1one"}, {ActionUri: " "}, {ActionUri: "2two"}, {ActionUri: "3three"},
+        hexapolicy.ActionInfo(""), hexapolicy.ActionInfo("1one"), hexapolicy.ActionInfo(" "), hexapolicy.ActionInfo("2two"), hexapolicy.ActionInfo("3three"),
     }
 
     compacted := rar.CompactActions(arr1, arr2)
     assert.NotNil(t, compacted)
     assert.Equal(t, []hexapolicy.ActionInfo{
-        {ActionUri: "1one"}, {ActionUri: "2two"}, {ActionUri: "3three"},
+        "1one", "2two", "3three",
     }, compacted)
 }
 
 func TestCompactActions_UniqueAndWhitespace(t *testing.T) {
     arr1 := []hexapolicy.ActionInfo{
-        {ActionUri: ""}, {ActionUri: "1one"}, {ActionUri: " "}, {ActionUri: "2two"}, {ActionUri: "3three"},
+        hexapolicy.ActionInfo(""), hexapolicy.ActionInfo("1one"), hexapolicy.ActionInfo(" "), hexapolicy.ActionInfo("2two"), hexapolicy.ActionInfo("3three"),
     }
     arr2 := []hexapolicy.ActionInfo{
-        {ActionUri: ""}, {ActionUri: "4four"}, {ActionUri: " "}, {ActionUri: "5five"},
+        hexapolicy.ActionInfo(""), hexapolicy.ActionInfo("4four"), hexapolicy.ActionInfo(" "), hexapolicy.ActionInfo("5five"),
     }
 
     compacted := rar.CompactActions(arr1, arr2)
     assert.NotNil(t, compacted)
     assert.Equal(t, []hexapolicy.ActionInfo{
-        {ActionUri: "1one"}, {ActionUri: "2two"}, {ActionUri: "3three"}, {ActionUri: "4four"}, {ActionUri: "5five"},
+        "1one", "2two", "3three", "4four", "5five",
     }, compacted)
 }
 
 func TestCompactActions_OneEmptyNil(t *testing.T) {
     arr := []hexapolicy.ActionInfo{
-        {ActionUri: ""}, {ActionUri: "1one"}, {ActionUri: " "}, {ActionUri: "2two"}, {ActionUri: "3three"},
+        hexapolicy.ActionInfo(""), hexapolicy.ActionInfo("1one"), hexapolicy.ActionInfo(" "), hexapolicy.ActionInfo("2two"), hexapolicy.ActionInfo("3three"),
     }
 
     compacted := rar.CompactActions(arr, nil)
     assert.NotNil(t, compacted)
     assert.Equal(t, []hexapolicy.ActionInfo{
-        {ActionUri: "1one"}, {ActionUri: "2two"}, {ActionUri: "3three"},
+        "1one", "2two", "3three",
     }, compacted)
 
     compacted = rar.CompactActions(nil, arr)
     assert.NotNil(t, compacted)
     assert.Equal(t, []hexapolicy.ActionInfo{
-        {ActionUri: "1one"}, {ActionUri: "2two"}, {ActionUri: "3three"},
+        "1one", "2two", "3three",
     }, compacted)
 }
 
@@ -185,7 +185,7 @@ func TestFlattenPolicy_DupResourceDupMembers(t *testing.T) {
     pol1 := hexapolicy.PolicyInfo{
         Meta: hexapolicy.MetaInfo{Version: "0.5"},
         Actions: []hexapolicy.ActionInfo{
-            {ActionUri: ""}, {ActionUri: "1act"}, {ActionUri: " "}, {ActionUri: "2act"}},
+            hexapolicy.ActionInfo(""), hexapolicy.ActionInfo("1act"), hexapolicy.ActionInfo(" "), hexapolicy.ActionInfo("2act")},
         Subjects: []string{"1mem", "", "2mem"},
         Object:   hexapolicy.ObjectInfo{ResourceID: "resource1"},
     }
@@ -193,7 +193,7 @@ func TestFlattenPolicy_DupResourceDupMembers(t *testing.T) {
     pol2 := hexapolicy.PolicyInfo{
         Meta: hexapolicy.MetaInfo{Version: "0.5"},
         Actions: []hexapolicy.ActionInfo{
-            {ActionUri: ""}, {ActionUri: "3act"}, {ActionUri: " "}, {ActionUri: "4act"}},
+            hexapolicy.ActionInfo(""), hexapolicy.ActionInfo("3act"), hexapolicy.ActionInfo(" "), hexapolicy.ActionInfo("4act")},
         Subjects: []string{"1mem", "", "2mem"},
         Object:   hexapolicy.ObjectInfo{ResourceID: "resource1"},
     }
@@ -209,7 +209,7 @@ func TestFlattenPolicy_DupResourceDupMembers(t *testing.T) {
 
     for i, actPol := range actPolicies {
         assert.Equal(t, expResource, actPol.Object.ResourceID)
-        assert.Equal(t, expActions[i], actPol.Actions[0].ActionUri)
+        assert.Equal(t, expActions[i], actPol.Actions[0].String())
         assert.Equal(t, expMembers, actPol.Subjects.String())
     }
 }
@@ -217,12 +217,12 @@ func TestFlattenPolicy_DupResourceDupMembers(t *testing.T) {
 func TestFlattenPolicy_NoResource(t *testing.T) {
     pol1 := hexapolicy.PolicyInfo{
         Meta:     hexapolicy.MetaInfo{Version: "0.5"},
-        Actions:  []hexapolicy.ActionInfo{{ActionUri: "1act"}, {ActionUri: "2act"}},
+        Actions:  []hexapolicy.ActionInfo{hexapolicy.ActionInfo("1act"), hexapolicy.ActionInfo("2act")},
         Subjects: []string{"1mem", "", "2mem"},
     }
     pol2 := hexapolicy.PolicyInfo{
         Meta:     hexapolicy.MetaInfo{Version: "0.5"},
-        Actions:  []hexapolicy.ActionInfo{{ActionUri: "1act"}},
+        Actions:  []hexapolicy.ActionInfo{hexapolicy.ActionInfo("1act")},
         Subjects: []string{"1mem", "2mem"},
         Object:   hexapolicy.ObjectInfo{ResourceID: "resource1"},
     }
@@ -269,7 +269,7 @@ func TestFlattenPolicy_NoActions(t *testing.T) {
 func TestFlattenPolicy_NoMembers(t *testing.T) {
     pol1 := hexapolicy.PolicyInfo{
         Meta:    hexapolicy.MetaInfo{Version: "0.5"},
-        Actions: []hexapolicy.ActionInfo{{ActionUri: "1act"}, {ActionUri: "2act"}},
+        Actions: []hexapolicy.ActionInfo{hexapolicy.ActionInfo("1act"), hexapolicy.ActionInfo("2act")},
         Object:  hexapolicy.ObjectInfo{ResourceID: "resource1"},
     }
     orig := []hexapolicy.PolicyInfo{pol1}
@@ -280,7 +280,7 @@ func TestFlattenPolicy_NoMembers(t *testing.T) {
     expActions := []string{"1act", "2act"}
     for i, actPol := range actPolicies {
         assert.Equal(t, "resource1", actPol.Object.ResourceID)
-        assert.Equal(t, expActions[i], actPol.Actions[0].ActionUri)
+        assert.Equal(t, expActions[i], actPol.Actions[0].String())
         assert.NotNil(t, actPol.Subjects)
         assert.Equal(t, []string{}, actPol.Subjects.String())
     }
@@ -290,7 +290,7 @@ func TestFlattenPolicy_MergeSameResourceAction(t *testing.T) {
     pol1a := hexapolicy.PolicyInfo{
         Meta: hexapolicy.MetaInfo{Version: "0.5"},
         Actions: []hexapolicy.ActionInfo{
-            {ActionUri: "1act"}, {ActionUri: "2act"}},
+            hexapolicy.ActionInfo("1act"), hexapolicy.ActionInfo("2act")},
         Subjects: []string{"1mem", "2mem"},
         Object:   hexapolicy.ObjectInfo{ResourceID: "resource1"},
     }
@@ -298,7 +298,7 @@ func TestFlattenPolicy_MergeSameResourceAction(t *testing.T) {
     pol1b := hexapolicy.PolicyInfo{
         Meta: hexapolicy.MetaInfo{Version: "0.5"},
         Actions: []hexapolicy.ActionInfo{
-            {ActionUri: "1act"}, {ActionUri: "2act"}},
+            hexapolicy.ActionInfo("1act"), hexapolicy.ActionInfo("2act")},
         Subjects: []string{"3mem", "4mem"},
         Object:   hexapolicy.ObjectInfo{ResourceID: "resource1"},
     }
@@ -306,7 +306,7 @@ func TestFlattenPolicy_MergeSameResourceAction(t *testing.T) {
     pol2 := hexapolicy.PolicyInfo{
         Meta: hexapolicy.MetaInfo{Version: "0.5"},
         Actions: []hexapolicy.ActionInfo{
-            {ActionUri: "3act"}, {ActionUri: "4act"}},
+            hexapolicy.ActionInfo("3act"), hexapolicy.ActionInfo("4act")},
         Subjects: []string{"1mem", "2mem"},
         Object:   hexapolicy.ObjectInfo{ResourceID: "resource2"},
     }
@@ -324,7 +324,7 @@ func TestFlattenPolicy_MergeSameResourceAction(t *testing.T) {
         actPol := actPolicies[i]
         assert.NotNil(t, actPol)
         assert.Equal(t, expResource, actPol.Object.ResourceID)
-        assert.Equal(t, expActions[i], actPol.Actions[0].ActionUri)
+        assert.Equal(t, expActions[i], actPol.Actions[0].String())
         assert.Equal(t, expMembers, actPol.Subjects.String())
     }
 
@@ -335,7 +335,7 @@ func TestFlattenPolicy_MergeSameResourceAction(t *testing.T) {
         actPol := actPolicies[i+2]
         assert.NotNil(t, actPol)
         assert.Equal(t, expResource, actPol.Object.ResourceID)
-        assert.Equal(t, expActions[i], actPol.Actions[0].ActionUri)
+        assert.Equal(t, expActions[i], actPol.Actions[0].String())
         assert.Equal(t, expMembers, actPol.Subjects.String())
     }
 }

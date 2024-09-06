@@ -104,7 +104,7 @@ func TestGoogleProvider_GetPolicy(t *testing.T) {
 
 func TestGoogleProvider_SetPolicy(t *testing.T) {
     policy := hexapolicy.PolicyInfo{
-        Meta: hexapolicy.MetaInfo{Version: "aVersion"}, Actions: []hexapolicy.ActionInfo{{"anAction"}}, Subjects: []string{"aUser"}, Object: hexapolicy.ObjectInfo{
+        Meta: hexapolicy.MetaInfo{Version: "aVersion"}, Actions: []hexapolicy.ActionInfo{"anAction"}, Subjects: []string{"aUser"}, Object: hexapolicy.ObjectInfo{
             ResourceID: "anObjectId",
         },
     }
@@ -119,7 +119,7 @@ func TestGoogleProvider_SetPolicy(t *testing.T) {
 
 func TestGoogleProvider_SetPolicy_withInvalidArguments(t *testing.T) {
     missingMeta := hexapolicy.PolicyInfo{
-        Actions: []hexapolicy.ActionInfo{{"anAction"}}, Subjects: []string{"aUser"}, Object: hexapolicy.ObjectInfo{
+        Actions: []hexapolicy.ActionInfo{"anAction"}, Subjects: []string{"aUser"}, Object: hexapolicy.ObjectInfo{
             ResourceID: "anObjectId",
         },
     }
