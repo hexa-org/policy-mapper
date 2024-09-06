@@ -20,10 +20,10 @@ func BuildPolicies(resourceActionRolesList []ResourceActionRoles) []hexapolicy.P
         roles := one.Roles
         slices.Sort(roles)
         policies = append(policies, hexapolicy.PolicyInfo{
-            Meta:    hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion, ProviderType: "RARmodel"},
-            Actions: []hexapolicy.ActionInfo{{ActionUriPrefix + httpMethod}},
-            Subject: hexapolicy.SubjectInfo{Members: roles},
-            Object:  hexapolicy.ObjectInfo{ResourceID: one.Resource},
+            Meta:     hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion, ProviderType: "RARmodel"},
+            Actions:  []hexapolicy.ActionInfo{{ActionUriPrefix + httpMethod}},
+            Subjects: roles,
+            Object:   hexapolicy.ObjectInfo{ResourceID: one.Resource},
         })
     }
 
@@ -49,14 +49,14 @@ func FlattenPolicy(origPolicies []hexapolicy.PolicyInfo) []hexapolicy.PolicyInfo
             matchingPolicy, found := resActionPolicyMap[lookupKey]
             var existingMembers []string
             if found {
-                existingMembers = matchingPolicy.Subject.Members
+                existingMembers = matchingPolicy.Subjects
             }
-            newMembers := CompactMembers(existingMembers, pol.Subject.Members)
+            newMembers := CompactMembers(existingMembers, pol.Subjects)
             newPol := hexapolicy.PolicyInfo{
-                Meta:    hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
-                Actions: []hexapolicy.ActionInfo{{ActionUri: act.ActionUri}},
-                Subject: hexapolicy.SubjectInfo{Members: newMembers},
-                Object:  hexapolicy.ObjectInfo{ResourceID: resource},
+                Meta:     hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
+                Actions:  []hexapolicy.ActionInfo{{ActionUri: act.ActionUri}},
+                Subjects: newMembers,
+                Object:   hexapolicy.ObjectInfo{ResourceID: resource},
             }
 
             resActionPolicyMap[lookupKey] = newPol
@@ -126,16 +126,16 @@ func ResourcePolicyMap(origPolicies []hexapolicy.PolicyInfo) map[string]hexapoli
 		var existingMembers []string
 		if existing, exists := resPolicyMap[resource]; exists {
 			existingActions = existing.Actions
-			existingMembers = existing.Subject.Members
+			existingMembers = existing.Subjects
 		}
 
 		mergedActions := CompactActions(existingActions, pol.Actions)
-		newMembers := CompactMembers(existingMembers, pol.Subject.Members)
+		newMembers := CompactMembers(existingMembers, pol.Subjects)
 
 		newPol := hexapolicy.PolicyInfo{
 			Meta:    hexapolicy.MetaInfo{Version: "0.5"},
 			Actions: mergedActions,
-			Subject: hexapolicy.SubjectInfo{Members: newMembers},
+			Subjects: hexapolicy.SubjectInfo{Members: newMembers},
 			Object:  hexapolicy.ObjectInfo{ResourceID: resource},
 		}
 

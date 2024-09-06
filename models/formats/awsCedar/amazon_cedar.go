@@ -38,7 +38,7 @@ IDQL supports multiple subjects where Cedar is limited to 1 Principal and 1 Reso
 func (c *CedarPolicyMapper) MapPolicyToCedar(idqlPol hexapolicy.PolicyInfo) ([]*CedarPolicy, error) {
     cpolicies := make([]*CedarPolicy, 0)
 
-    if len(idqlPol.Subject.Members) == 0 {
+    if len(idqlPol.Subjects) == 0 {
         cpolicy, err := c.mapSimplePolicyToCedar("", idqlPol)
         if err != nil {
             return nil, err
@@ -48,7 +48,7 @@ func (c *CedarPolicyMapper) MapPolicyToCedar(idqlPol hexapolicy.PolicyInfo) ([]*
         return cpolicies, nil
     }
 
-    for _, v := range idqlPol.Subject.Members {
+    for _, v := range idqlPol.Subjects {
         cpolicy, err := c.mapSimplePolicyToCedar(v, idqlPol)
         if err != nil {
             return nil, err
@@ -222,10 +222,10 @@ func (c *CedarPolicyMapper) mapSimplePolicyToCedar(member string, policy hexapol
 
     var principal *PrincipalExpression
     switch member {
-    case hexapolicy.SAnyUser, "":
+    case hexapolicy.SubjectAnyUser, "":
         principal = nil
 
-    case hexapolicy.SAnyAuth, hexapolicy.SJwtAuth, hexapolicy.SSamlAuth, hexapolicy.SBasicAuth:
+    case hexapolicy.SubjectAnyAuth, hexapolicy.SubjectJwtAuth, hexapolicy.SubjectSamlAuth, hexapolicy.SubjectBasicAuth:
         principal = nil
         cond := ConditionType("context.authenticated == true")
         conds = append(conds, &ConditionalClause{
@@ -335,9 +335,9 @@ func (c *CedarPolicyMapper) MapCedarPolicyToIdql(policy *CedarPolicy) (*hexapoli
 
     var subj hexapolicy.SubjectInfo
     if policy.Head.Principal == nil {
-        subj = hexapolicy.SubjectInfo{Members: []string{hexapolicy.SAnyUser}}
+        subj = []string{hexapolicy.SubjectAnyUser}
     } else {
-        subj = hexapolicy.SubjectInfo{Members: []string{mapPrincipalToMember(policy.Head.Principal.Entity)}}
+        subj = []string{mapPrincipalToMember(policy.Head.Principal.Entity)}
     }
 
     actions := make([]hexapolicy.ActionInfo, 0)
@@ -416,7 +416,7 @@ func (c *CedarPolicyMapper) MapCedarPolicyToIdql(policy *CedarPolicy) (*hexapoli
     ret := hexapolicy.PolicyInfo{
         Meta:      hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
         Actions:   actions,
-        Subject:   subj,
+        Subjects:  subj,
         Object:    obj,
         Condition: condInfo,
     }

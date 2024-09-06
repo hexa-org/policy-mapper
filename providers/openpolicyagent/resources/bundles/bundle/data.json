@@ -2,51 +2,74 @@
   "comment": "Policy data for testing only!",
   "policies": [
     {
-      "meta": {"version": "0.6"},
-      "actions": [{"actionUri": "http:GET:/"}],
-      "subject": {
-        "members": [
-          "allusers", "allauthenticated"
-        ]
+      "meta": {
+        "version": "0.7"
       },
+      "actions": [
+        {
+          "actionUri": "http:GET:/"
+        }
+      ],
+      "subjects:": [
+        "any",
+        "anyauthenticated"
+      ],
       "object": {
         "resource_id": "aResourceId"
       }
     },
     {
-      "meta": {"version": "0.6"},
-      "actions": [{"actionUri": "http:GET:/sales"}, {"actionUri": "http:GET:/marketing"}],
-      "subject": {
-        "members": [
-          "allauthenticated",
-          "sales@hexaindustries.io",
-          "marketing@hexaindustries.io"
-        ]
+      "meta": {
+        "version": "0.7"
       },
+      "actions": [
+        {
+          "actionUri": "http:GET:/sales"
+        },
+        {
+          "actionUri": "http:GET:/marketing"
+        }
+      ],
+      "subjects:": [
+        "anyauthenticated",
+        "sales@hexaindustries.io",
+        "marketing@hexaindustries.io"
+      ],
       "object": {
         "resource_id": "aResourceId"
       }
     },
     {
-      "meta": {"version": "0.6"},
-      "actions": [{"actionUri": "http:GET:/accounting"}, {"actionUri": "http:POST:/accounting"}],
-      "subject": {
-        "members": [
-          "accounting@hexaindustries.io"
-        ]
+      "meta": {
+        "version": "0.7"
       },
+      "actions": [
+        {
+          "actionUri": "http:GET:/accounting"
+        },
+        {
+          "actionUri": "http:POST:/accounting"
+        }
+      ],
+      "subjects:": [
+        "accounting@hexaindustries.io"
+      ],
       "object": {
         "resource_id": "aResourceId"
       }
     },
     {
-      "meta": {"version": "0.6"},
-      "actions": [{"actionUri": "http:GET:/humanresources"}],
-      "subject": {
-        "members": [
-          "humanresources@hexaindustries.io"
-        ]
+      "meta": {
+        "version": "0.7"
       },
+      "actions": [
+        {
+          "actionUri": "http:GET:/humanresources"
+        }
+      ],
+      "subjects:": [
+        "humanresources@hexaindustries.io"
+      ],
       "object": {
         "resource_id": "aResourceId"
       }

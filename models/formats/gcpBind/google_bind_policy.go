@@ -71,17 +71,17 @@ func (m *GooglePolicyMapper) MapBindingToPolicy(objectId string, binding iam.Bin
         policy := hexapolicy.PolicyInfo{
             Meta:      hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
             Actions:   convertRoleToAction(binding.Role),
-            Subject:   hexapolicy.SubjectInfo{Members: binding.Members},
+            Subjects:  binding.Members,
             Object:    hexapolicy.ObjectInfo{ResourceID: objectId},
             Condition: &condition,
         }
         return policy, nil
     }
     policy := hexapolicy.PolicyInfo{
-        Meta:    hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
-        Actions: convertRoleToAction(binding.Role),
-        Subject: hexapolicy.SubjectInfo{Members: binding.Members},
-        Object:  hexapolicy.ObjectInfo{ResourceID: objectId},
+        Meta:     hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
+        Actions:  convertRoleToAction(binding.Role),
+        Subjects: binding.Members,
+        Object:   hexapolicy.ObjectInfo{ResourceID: objectId},
     }
     return policy, nil
 
@@ -102,7 +102,7 @@ func (m *GooglePolicyMapper) MapPolicyToBinding(policy hexapolicy.PolicyInfo) (*
     }
     return &iam.Binding{
         Condition: condExpr,
-        Members:   policy.Subject.Members,
+        Members:   policy.Subjects,
         Role:      convertActionToRole(policy),
     }, nil
 }

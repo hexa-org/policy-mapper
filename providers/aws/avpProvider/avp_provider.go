@@ -10,6 +10,7 @@ import (
     "github.com/aws/aws-sdk-go-v2/service/verifiedpermissions/types"
     "github.com/hexa-org/policy-mapper/api/policyprovider"
     "github.com/hexa-org/policy-mapper/models/formats/awsCedar"
+    "github.com/hexa-org/policy-mapper/models/schema"
     "github.com/hexa-org/policy-mapper/pkg/hexapolicy"
     "github.com/hexa-org/policy-mapper/providers/aws/avpProvider/avpClient"
     "github.com/hexa-org/policy-mapper/providers/aws/awscommon"
@@ -446,7 +447,7 @@ func (a AmazonAvpProvider) prepareDelete(avpMeta hexapolicy.MetaInfo) *verifiedp
 func isTemplate(hexaPolicy hexapolicy.PolicyInfo) bool {
     if hexaPolicy.Meta.SourceData == nil {
         // in the case where a policy is new, but contains template we need to test for ?resource and ?principle
-        if slices.Contains(hexaPolicy.Subject.Members, "?principal") {
+        if slices.Contains(hexaPolicy.Subjects.String(), "?principal") {
             return true
         }
         if strings.Contains(hexaPolicy.Object.ResourceID, "?resource") {
@@ -457,4 +458,22 @@ func isTemplate(hexaPolicy hexapolicy.PolicyInfo) bool {
     }
     policyType, exists := hexaPolicy.Meta.SourceData[ParamPolicyType]
     return exists && policyType == string(types.PolicyTypeTemplateLinked)
+}
+
+func (a AmazonAvpProvider) GetSchema(info policyprovider.IntegrationInfo, applicationInfo policyprovider.ApplicationInfo) (*schema.Namespaces, error) {
+    client, err := a.getAvpClient(info)
+    if err != nil {
+        return nil, err
+    }
+
+    schemaResponse, err := client.GetSchema(applicationInfo)
+    if err != nil {
+        return nil, err
+    }
+    namespaceNames := schemaResponse.Namespaces
+    fmt.Println(fmt.Sprintf("Found namespaces: %v", namespaceNames))
+    cedarSchemaString := schemaResponse.Schema
+
+    return schema.ParseSchemaFile([]byte(*cedarSchemaString))
+
 }

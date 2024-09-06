@@ -305,7 +305,7 @@ func TestSetPolicyInfo(t *testing.T) {
         policyprovider.IntegrationInfo{Name: openpolicyagent.ProviderTypeOpa, Key: key},
         policyprovider.ApplicationInfo{ObjectID: "anotherResourceId"},
         []hexapolicy.PolicyInfo{
-            {Meta: hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion}, Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subject: hexapolicy.SubjectInfo{Members: []string{"allusers"}}, Object: hexapolicy.ObjectInfo{
+            {Meta: hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion}, Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subjects: []string{"allusers"}, Object: hexapolicy.ObjectInfo{
                 ResourceID: "aResourceId",
             }},
         },
@@ -368,7 +368,7 @@ func TestSetPolicyInfo_withInvalidArguments(t *testing.T) {
         policyprovider.ApplicationInfo{ObjectID: "aResourceId"},
         []hexapolicy.PolicyInfo{
             {
-                Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subject: hexapolicy.SubjectInfo{Members: []string{"allusers"}}, Object: hexapolicy.ObjectInfo{
+                Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subjects: []string{"allusers"}, Object: hexapolicy.ObjectInfo{
                 ResourceID: "aResourceId",
             }},
         },
@@ -422,7 +422,7 @@ func TestSetPolicyInfo_WithHTTPSBundleServer(t *testing.T) {
         policyprovider.IntegrationInfo{Name: openpolicyagent.ProviderTypeOpa, Key: key},
         policyprovider.ApplicationInfo{ObjectID: "aResourceId"},
         []hexapolicy.PolicyInfo{
-            {Meta: hexapolicy.MetaInfo{Version: "0.5"}, Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subject: hexapolicy.SubjectInfo{Members: []string{"allusers"}}, Object: hexapolicy.ObjectInfo{
+            {Meta: hexapolicy.MetaInfo{Version: "0.5"}, Actions: []hexapolicy.ActionInfo{{"http:GET"}}, Subjects: []string{"allusers"}, Object: hexapolicy.ObjectInfo{
                 ResourceID: "aResourceId",
             }},
         },

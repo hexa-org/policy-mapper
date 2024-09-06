@@ -2,19 +2,17 @@
   "policies": [
     {
       "meta": {
-        "version": "0.6"
+        "version": "0.7"
       },
       "actions": [
         {
           "actionUri": "http:GET:/"
         }
       ],
-      "subject": {
-        "members": [
-          "allusers",
-          "allauthenticated"
-        ]
-      },
+      "subjects": [
+        "allusers",
+        "allauthenticated"
+      ],
       "condition": {
         "rule": "req.ip sw 127 and req.method eq POST",
         "action": "allow"
@@ -25,7 +23,7 @@
     },
     {
       "meta": {
-        "version": "0.6"
+        "version": "0.7"
       },
       "actions": [
         {
@@ -35,20 +33,18 @@
           "actionUri": "http:GET:/marketing"
         }
       ],
-      "subject": {
-        "members": [
-          "allauthenticated",
-          "sales@hexaindustries.io",
-          "marketing@hexaindustries.io"
-        ]
-      },
+      "subjects": [
+        "allauthenticated",
+        "sales@hexaindustries.io",
+        "marketing@hexaindustries.io"
+      ],
       "object": {
         "resource_id": "bResourceId"
       }
     },
     {
       "meta": {
-        "version": "0.6"
+        "version": "0.7"
       },
       "actions": [
         {
@@ -58,11 +54,9 @@
           "actionUri": "http:POST:/accounting"
         }
       ],
-      "subject": {
-        "members": [
-          "accounting@hexaindustries.io"
-        ]
-      },
+      "subjects": [
+        "accounting@hexaindustries.io"
+      ],
       "condition": {
         "rule": "req.ip sw 127 and req.method eq POST",
         "action": "allow"
@@ -73,31 +67,27 @@
     },
     {
       "meta": {
-        "version": "0.6"
+        "version": "0.7"
       },
       "actions": [
         {
           "actionUri": "http:GET:/humanresources"
         }
       ],
-      "subject": {
-        "members": [
-          "humanresources@hexaindustries.io"
-        ]
-      },
+      "subjects": [
+        "humanresources@hexaindustries.io"
+      ],
       "object": {
         "resource_id": "aResourceId"
       }
     },
     {
       "meta": {
-        "version": "0.6"
+        "version": "0.7"
       },
-      "subject": {
-        "members": [
-          "user:gerry@strata.io"
-        ]
-      },
+      "subjects": [
+        "user:gerry@strata.io"
+      ],
       "actions": [
         {
           "actionUri": "gcp:roles/iap.httpsResourceAccessor"

@@ -25,13 +25,15 @@
           "type": "string",
           "title": "Creation date",
           "description": "Timestamp formatted in RFC3339 with nanosecond precision.",
-          "examples": ["1985-04-12T23:20:50.52Z"]
+          "examples": ["1985-04-12T23:20:50.52Z"],
+          "format": "date-time"
         },
         "modified": {
           "type": "string",
           "title": "Last modified date",
           "description": "Timestamp formatted in RFC3339 with nanosecond precision.",
-          "examples": ["1985-04-12T23:20:50.52Z"]
+          "examples": ["1985-04-12T23:20:50.52Z"],
+          "format": "date-time"
         },
         "etag": {
           "type": "string",
@@ -62,7 +64,54 @@
         "members": {
           "type": "array",
           "title": "Member subjects",
-          "items": {"type": "string"},
+          "items": {
+            "type": "string",
+            "format": "",
+            "anyOf": [
+              {
+                "type": "string",
+                "title": "User Account",
+                "examples": ["user:gerry@hexaindustries.io"],
+                "pattern": "^(user|User):.*"
+              },
+              {
+                "type": "string",
+                "title": "Role",
+                "description": "A role held by a subject",
+                "examples": ["role:customerAccountHolder"],
+                "pattern": "^(role|Role):.*"
+              },
+              {
+                "type": "string",
+                "title": "Domain",
+                "description": "Domain associated with Subject",
+                "examples": [
+                  "hexaindustries.io",
+                  "example.com"
+                ],
+                "pattern": "^(domain|Domain):.*"
+              },
+              {
+                "type": "string",
+                "title": "Network",
+                "description": "A CIDR network mask",
+                "examples": ["net:127.0.0.1/24"],
+                "pattern": "^(net|Net):.*"
+              },
+              {
+                "type": "string",
+                "const": "anyauthenticated",
+                "title": "AnyAuthenticated",
+                "description": "Any authenticated subject"
+              },
+              {
+                "type": "string",
+                "const": "any",
+                "title": "Any",
+                "description": "Allow any subject"
+              }
+            ]
+          },
           "description": "One or more members values to be matched to the policy",
           "examples": ["user:gerry@example.com"]
         }

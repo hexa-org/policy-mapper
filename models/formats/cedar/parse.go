@@ -168,7 +168,7 @@ func (pp *PolicyPair) mapCedarSubject() {
     var subj hexapolicy.SubjectInfo
     switch principal.Type {
     case cedarParser.MatchAny:
-        subj = hexapolicy.SubjectInfo{Members: []string{hexapolicy.SAnyUser}}
+        subj = []string{hexapolicy.SubjectAnyUser}
     case cedarParser.MatchEquals:
         member := principal.Entity.String()
         // This is principal == xxx
@@ -176,35 +176,38 @@ func (pp *PolicyPair) mapCedarSubject() {
             member = fmt.Sprintf("%s:%s", paths[0], strings.Join(paths[1:], "::"))
 
         }
-        subj = hexapolicy.SubjectInfo{Members: []string{member}}
+        subj = []string{member}
     case cedarParser.MatchIs:
         // This is "principal is User"
-        // subj = hexapolicy.SubjectInfo{Members: []string{hexapolicy.SAnyAuth}}
-        subj = hexapolicy.SubjectInfo{Members: []string{fmt.Sprintf("Type:%s", principal.Path.String())}}
+        // subj = []string{hexapolicy.SubjectAnyAuth}
+        subj = []string{fmt.Sprintf("Type:%s", principal.Path.String())}
     case cedarParser.MatchIn:
-        subj = hexapolicy.SubjectInfo{Members: []string{fmt.Sprintf("Group:%s", principal.Entity.String())}}
+        subj = []string{fmt.Sprintf("Group:%s", principal.Entity.String())}
     case cedarParser.MatchIsIn:
         isType := principal.Path.String()
         inEntity := strings.Replace(principal.Entity.String(), "::", ":", 1)
-        subj = hexapolicy.SubjectInfo{Members: []string{fmt.Sprintf("%s.(%s)", inEntity, isType)}}
+        subj = []string{fmt.Sprintf("%s.(%s)", inEntity, isType)}
+    default:
+        fmt.Println(fmt.Sprintf("Unexpected principal type: %T, value: %s", principal, principal.String()))
+        subj = []string{principal.String()}
     }
 
-    pp.HexaPolicy.Subject = subj
+    pp.HexaPolicy.Subjects = subj
 }
 
 func (pp *PolicyPair) HasMultiSubjects() bool {
-    if pp.HexaPolicy != nil && pp.HexaPolicy.Subject.Members != nil {
-        return len(pp.HexaPolicy.Subject.Members) > 0
+    if pp.HexaPolicy != nil && pp.HexaPolicy.Subjects != nil {
+        return len(pp.HexaPolicy.Subjects) > 0
     }
     return false
 }
 
 func (pp *PolicyPair) mapHexaSubjects() []string {
-    if pp.HexaPolicy == nil || pp.HexaPolicy.Subject.Members != nil {
+    if pp.HexaPolicy == nil || pp.HexaPolicy.Subjects != nil {
         return nil
     }
-    members := pp.HexaPolicy.Subject.Members
-    if len(members) == 0 || strings.EqualFold(members[0], hexapolicy.SAnyUser) {
+    members := pp.HexaPolicy.Subjects
+    if len(members) == 0 || strings.EqualFold(members[0], hexapolicy.SubjectAnyUser) {
         return []string{"principal,"}
     }
     res := make([]string, 0)
@@ -264,7 +267,9 @@ func (pp *PolicyPair) mapCedarAction() {
         for _, entity := range action.Entities {
             aInfo = append(aInfo, hexapolicy.ActionInfo{ActionUri: mapCedarEntityName(entity)})
         }
-
+    default:
+        fmt.Println(fmt.Sprintf("Unexpected action type: %T, value: %s", action, action.String()))
+        aInfo = append(aInfo, hexapolicy.ActionInfo{ActionUri: action.String()})
     }
 
     pp.HexaPolicy.Actions = aInfo
@@ -331,6 +336,9 @@ func (pp *PolicyPair) mapCedarResource() {
         pp.HexaPolicy.Object = hexapolicy.ObjectInfo{ResourceID: fmt.Sprintf("[%s].(%s)", resource.Entity.String(), resource.Path.String())}
     case cedarParser.MatchIn:
         pp.HexaPolicy.Object = hexapolicy.ObjectInfo{ResourceID: fmt.Sprintf("[%s]", resource.Entity.String())}
+    default:
+        fmt.Println(fmt.Sprintf("Unexpected resource type: %T, value: %s", resource, resource.String()))
+        pp.HexaPolicy.Object = hexapolicy.ObjectInfo{ResourceID: fmt.Sprintf("[%s]", resource.String())}
     }
 }
 

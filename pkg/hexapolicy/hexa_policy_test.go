@@ -22,11 +22,9 @@ var testPolicy1 = `
           "actionUri": "http:POST:/accounting"
         }
       ],
-      "subject": {
-        "members": [
+      "subjects": [
           "accounting@hexaindustries.io"
-        ]
-      },
+        ],
       "condition": {
         "rule": "req.ip sw 127 and req.method eq POST",
         "action": "allow"
@@ -50,20 +48,21 @@ var testPolicy2 = `
           "actionUri": "http:GET:/humanresources"
         }
       ],
-      "subject": {
-        "members": [
+      "subjects": [
           "humanresources@hexaindustries.io"
-        ]
-      },
+      ],
       "object": {
         "resource_id": "aResourceId"
       }
     }`
 
-func getPolicies() Policies {
+func getPolicies(t *testing.T) Policies {
+    t.Helper()
     var policy1, policy2 PolicyInfo
-    _ = json.Unmarshal([]byte(testPolicy1), &policy1)
-    _ = json.Unmarshal([]byte(testPolicy2), &policy2)
+    err := json.Unmarshal([]byte(testPolicy1), &policy1)
+    assert.NoError(t, err)
+    err = json.Unmarshal([]byte(testPolicy2), &policy2)
+    assert.NoError(t, err)
     pols := &Policies{Policies: []PolicyInfo{policy1, policy2}}
     pols.CalculateEtags()
     return *pols
@@ -73,7 +72,8 @@ func TestReadPolicy(t *testing.T) {
     var policy1, policy2, policy3 PolicyInfo
     err := json.Unmarshal([]byte(testPolicy1), &policy1)
     assert.NoError(t, err, "Check no policy parse error #1")
-
+    assert.NotNil(t, policy1.Subjects, "Subjects should not be nil")
+    assert.Equal(t, 1, len(policy1.Subjects), "Should be one subject")
     err = json.Unmarshal([]byte(testPolicy2), &policy2)
     assert.NoError(t, err, "Check no policy parse error #2")
 
@@ -88,18 +88,19 @@ func TestReadPolicy(t *testing.T) {
 }
 
 func TestSubjectInfo_equals(t *testing.T) {
-    policies := getPolicies()
+    policies := getPolicies(t)
     p1 := policies.Policies[0]
     p2 := policies.Policies[1]
-    assert.False(t, p1.Subject.equals(&p2.Subject))
+    assert.NotNil(t, p1.Subjects, "Subjects should not be nil")
+    assert.False(t, p1.Subjects.equals(p2.Subjects))
     p3 := p1
     // check case sensitivity
-    p3.Subject = SubjectInfo{Members: []string{"Accounting@Hexaindustries.io"}}
-    assert.True(t, p1.Subject.equals(&p3.Subject))
+    p3.Subjects = []string{"Accounting@Hexaindustries.io"}
+    assert.True(t, p1.Subjects.equals(p3.Subjects))
 }
 
 func TestPolicyInfo_actionEquals(t *testing.T) {
-    policies := getPolicies()
+    policies := getPolicies(t)
     p1 := policies.Policies[0]
     p2 := policies.Policies[1]
 
@@ -123,7 +124,7 @@ func TestPolicyInfo_actionEquals(t *testing.T) {
 }
 
 func TestObjectInfo_equals(t *testing.T) {
-    policies := getPolicies()
+    policies := getPolicies(t)
     p1 := policies.Policies[0]
     p2 := policies.Policies[1]
     assert.True(t, p1.Object.equals(&p2.Object))
@@ -133,7 +134,7 @@ func TestObjectInfo_equals(t *testing.T) {
 }
 
 func TestConditionInfo_Equals(t *testing.T) {
-    policies := getPolicies()
+    policies := getPolicies(t)
     p1 := policies.Policies[0]
     p2 := policies.Policies[1]
     assert.False(t, p1.Condition.Equals(p2.Condition))
@@ -144,7 +145,7 @@ func TestConditionInfo_Equals(t *testing.T) {
 }
 
 func TestScope_equals(t *testing.T) {
-    policies := getPolicies()
+    policies := getPolicies(t)
 
     scope1 := policies.Policies[0].Scope
     /*
@@ -216,7 +217,7 @@ func TestPolicies_AddPolicies(t *testing.T) {
 }
 
 func TestPolicyInfo_CalculateEtag(t *testing.T) {
-    policies := getPolicies()
+    policies := getPolicies(t)
 
     p1 := policies.Policies[0]
     etag := p1.CalculateEtag()
@@ -231,11 +232,11 @@ func TestPolicyInfo_CalculateEtag(t *testing.T) {
 }
 
 func TestPolicyInfo_Equals(t *testing.T) {
-    policies := getPolicies()
+    policies := getPolicies(t)
 
     p3 := policies.Policies[0]
     // This will be used to make sure subject is case insensitive
-    p3.Subject = SubjectInfo{Members: []string{"Accounting@Hexaindustries.io"}}
+    p3.Subjects = []string{"Accounting@Hexaindustries.io"}
 
     type fields struct {
         testPolicy PolicyInfo
@@ -262,7 +263,7 @@ func TestPolicyInfo_Equals(t *testing.T) {
             want:   false,
         },
         {
-            name:   "Subject case test",
+            name:   "Subjects case test",
             fields: fields{testPolicy: policies.Policies[0]},
             args:   args{hexaPolicy: p3},
             want:   true,
@@ -277,11 +278,11 @@ func TestPolicyInfo_Equals(t *testing.T) {
 }
 
 func TestPolicyInfo_Compare(t *testing.T) {
-    policies := getPolicies()
+    policies := getPolicies(t)
 
     p3 := policies.Policies[0]
     // This will be used to make sure subject is case insensitive
-    p3.Subject = SubjectInfo{Members: []string{"Accounting@Hexaindustries.io"}}
+    p3.Subjects = []string{"Accounting@Hexaindustries.io"}
 
     type fields struct {
         hexaPolicy PolicyInfo
@@ -308,7 +309,7 @@ func TestPolicyInfo_Compare(t *testing.T) {
             want:   []string{CompareDifSubject, CompareDifAction, CompareDifCondition},
         },
         {
-            name:   "Subject case test",
+            name:   "Subjects case test",
             fields: fields{hexaPolicy: policies.Policies[0]},
             args:   args{hexaPolicy: p3},
             want:   []string{CompareEqual},
@@ -324,34 +325,37 @@ func TestPolicyInfo_Compare(t *testing.T) {
 
 func TestPolicyDif_Report(t *testing.T) {
     pid := "abc"
-    policyString := `
-{
- "meta": {
-  "etag": "20-bf24e8e84dfa3c07c776a4e2ac31d1ca642502a9",
-  "policyId": "abc"
- },
- "subject": {
-  "members": [
-   "user1"
-  ]
- },
- "actions": [
-  {
-   "actionUri": "actionUri"
-  }
- ],
- "object": {
-  "resource_id": "aresource"
- }
-}`
+    /*
+           policyString := `{
+         "meta": {
+           "etag": "20-bf24e8e84dfa3c07c776a4e2ac31d1ca642502a9",
+           "policyId": "abc"
+         },
+         "subjects": [
+           "user1"
+         ],
+         "actions": [
+           {
+             "actionUri": "actionUri"
+           }
+         ],
+         "object": {
+           "resource_id": "aresource"
+         }
+       }`
+
+    */
+
     testPolicy := PolicyInfo{
         Meta:      MetaInfo{PolicyId: &pid},
-        Subject:   SubjectInfo{Members: []string{"user1"}},
+        Subjects:  []string{"user1"},
         Actions:   []ActionInfo{{ActionUri: "actionUri"}},
         Object:    ObjectInfo{ResourceID: "aresource"},
         Condition: nil,
     }
     testPolicy.CalculateEtag()
+
+    policyString := "\n" + testPolicy.String()
 
     type fields struct {
         Type          string
@@ -448,6 +452,7 @@ func TestPolicyDif_Report(t *testing.T) {
                 PolicyCompare: tt.fields.PolicyCompare,
             }
             fmt.Println(d.Report())
+
             assert.Equalf(t, tt.want, d.Report(), "Report()")
         })
     }
@@ -457,14 +462,12 @@ func TestPolicyInfo_String(t *testing.T) {
     pid := "abc"
     policyString := `{
  "meta": {
-  "etag": "20-bf24e8e84dfa3c07c776a4e2ac31d1ca642502a9",
+  "etag": "20-03ce8ba19fe5a7a2ea9daf6e4c9645716d1dff39",
   "policyId": "abc"
  },
- "subject": {
-  "members": [
-   "user1"
-  ]
- },
+ "subjects": [
+  "user1"
+ ],
  "actions": [
   {
    "actionUri": "actionUri"
@@ -476,30 +479,30 @@ func TestPolicyInfo_String(t *testing.T) {
 }`
     testPolicy := PolicyInfo{
         Meta:      MetaInfo{PolicyId: &pid},
-        Subject:   SubjectInfo{Members: []string{"user1"}},
+        Subjects:  []string{"user1"},
         Actions:   []ActionInfo{{ActionUri: "actionUri"}},
         Object:    ObjectInfo{ResourceID: "aresource"},
         Condition: nil,
     }
     testPolicy.CalculateEtag()
-
-    assert.Equal(t, policyString, testPolicy.String(), "String check")
+    result := testPolicy.String()
+    assert.Equal(t, policyString, result, "String check")
 }
 
 func TestReconcilePolicies(t *testing.T) {
-    policies := getPolicies()
+    policies := getPolicies(t)
 
-    matchingPolicies := getPolicies()
+    matchingPolicies := getPolicies(t)
 
     assert.Equal(t, policies.Policies[0].Meta.Etag, matchingPolicies.Policies[0].Meta.Etag)
     assert.Equal(t, policies.Policies[1].Meta.Etag, matchingPolicies.Policies[1].Meta.Etag)
 
-    policiesWithIds := getPolicies()
-    policiesIdSame := getPolicies()
+    policiesWithIds := getPolicies(t)
+    policiesIdSame := getPolicies(t)
 
-    policiesWithChangesIds := getPolicies()
+    policiesWithChangesIds := getPolicies(t)
 
-    policiesWithChangesHash := getPolicies()
+    policiesWithChangesHash := getPolicies(t)
 
     pid := "abc"
     pid2 := "def"
@@ -534,9 +537,9 @@ func TestReconcilePolicies(t *testing.T) {
             Version:  IdqlVersion,
             PolicyId: &npid,
         },
-        Subject: SubjectInfo{Members: []string{"phil.hunt@independentid.com"}},
-        Actions: []ActionInfo{{ActionUri: "http:GET:/admin"}, {ActionUri: "http:POST:/admin"}},
-        Object:  ObjectInfo{ResourceID: "hexaindustries"},
+        Subjects: []string{"phil.hunt@independentid.com"},
+        Actions:  []ActionInfo{{ActionUri: "http:GET:/admin"}, {ActionUri: "http:POST:/admin"}},
+        Object:   ObjectInfo{ResourceID: "hexaindustries"},
     }
     newPolicy.CalculateEtag()
 

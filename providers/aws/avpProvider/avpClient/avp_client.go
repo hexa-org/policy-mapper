@@ -18,6 +18,8 @@ type AvpClient interface {
     CreatePolicy(createPolicyInput *verifiedpermissions.CreatePolicyInput) (*verifiedpermissions.CreatePolicyOutput, error)
     UpdatePolicy(updatePolicy *verifiedpermissions.UpdatePolicyInput) (*verifiedpermissions.UpdatePolicyOutput, error)
     DeletePolicy(deletePolicyInput *verifiedpermissions.DeletePolicyInput) (*verifiedpermissions.DeletePolicyOutput, error)
+    GetSchema(app policyprovider.ApplicationInfo) (*verifiedpermissions.GetSchemaOutput, error)
+    PutSchema(app policyprovider.ApplicationInfo, schema types.SchemaDefinition) (*verifiedpermissions.PutSchemaOutput, error)
 }
 
 type avpClient struct {
@@ -116,4 +118,17 @@ func (c *avpClient) UpdatePolicy(updatePolicy *verifiedpermissions.UpdatePolicyI
 
 func (c *avpClient) DeletePolicy(deletePolicyInput *verifiedpermissions.DeletePolicyInput) (*verifiedpermissions.DeletePolicyOutput, error) {
     return c.client.DeletePolicy(context.TODO(), deletePolicyInput)
+}
+
+func (c *avpClient) GetSchema(app policyprovider.ApplicationInfo) (*verifiedpermissions.GetSchemaOutput, error) {
+    return c.client.GetSchema(context.TODO(), &verifiedpermissions.GetSchemaInput{
+        PolicyStoreId: &app.ObjectID,
+    })
+}
+
+func (c *avpClient) PutSchema(app policyprovider.ApplicationInfo, schema types.SchemaDefinition) (*verifiedpermissions.PutSchemaOutput, error) {
+    return c.client.PutSchema(context.TODO(), &verifiedpermissions.PutSchemaInput{
+        PolicyStoreId: &app.ObjectID,
+        Definition:    schema,
+    })
 }

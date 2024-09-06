@@ -330,7 +330,7 @@ func (suite *testSuite) Test05_SetPolicies() {
     testPolicyMods[0].Actions = append(policy.Actions, newAction)
 
     // 3rd policy has a different subject
-    testPolicyMods[1].Subject.Members = testPolicyMods[1].Subject.Members[1:]
+    testPolicyMods[1].Subjects = testPolicyMods[1].Subjects[1:]
 
     // 4th policy unchanged.
 

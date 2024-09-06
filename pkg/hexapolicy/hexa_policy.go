@@ -12,14 +12,14 @@ import (
 )
 
 const (
-    SAnyUser   string = "any"
-    SAnyAuth   string = "anyAuthenticated"
-    SBasicAuth string = "basic"
-    SJwtAuth   string = "jwt"
-    SSamlAuth  string = "saml"
+    SubjectAnyUser   string = "any"
+    SubjectAnyAuth   string = "anyAuthenticated"
+    SubjectBasicAuth string = "basic"
+    SubjectJwtAuth   string = "jwt"
+    SubjectSamlAuth  string = "saml"
     // SCidr      string = "net"
 
-    IdqlVersion string = "0.6"
+    IdqlVersion string = "0.7"
 )
 
 type Policies struct {
@@ -48,12 +48,12 @@ func (p *Policies) AddPolicies(policies Policies) {
 
 // PolicyInfo holds a single IDQL Policy Statement
 type PolicyInfo struct {
-    Meta      MetaInfo                  `json:"meta" validate:"required"`    // Meta holds additional information about the policy including policy management data
-    Subject   SubjectInfo               `json:"subject" validate:"required"` // Subject holds the subject clause of an IDQL policy
-    Actions   []ActionInfo              `json:"actions" validate:"required"` // Actions holds one or moe action uris
-    Object    ObjectInfo                `json:"object" validate:"required"`  // Object the resource, application, or system to which a policy applies
-    Condition *conditions.ConditionInfo `json:",omitempty"`                  // Condition is optional // Condition is an IDQL filter condition (e.g. ABAC rule) which must also be met
-    Scope     *ScopeInfo                `json:"scope,omitempty"`             // Scope represents obligations returned to a PEP (e.g. attributes, where clause)
+    Meta      MetaInfo                  `json:"meta" validate:"required"`     // Meta holds additional information about the policy including policy management data
+    Subjects  SubjectInfo               `json:"subjects" validate:"required"` // Subjects holds the subject clause of an IDQL policy
+    Actions   []ActionInfo              `json:"actions" validate:"required"`  // Actions holds one or moe action uris
+    Object    ObjectInfo                `json:"object" validate:"required"`   // Object the resource, application, or system to which a policy applies
+    Condition *conditions.ConditionInfo `json:",omitempty"`                   // Condition is optional // Condition is an IDQL filter condition (e.g. ABAC rule) which must also be met
+    Scope     *ScopeInfo                `json:"scope,omitempty"`              // Scope represents obligations returned to a PEP (e.g. attributes, where clause)
 }
 
 func (p *PolicyInfo) String() string {
@@ -62,11 +62,11 @@ func (p *PolicyInfo) String() string {
 }
 
 /*
-CalculateEtag calculates an ETAG hash value for the policy which includes the Subject, Actions, Object, and Conditions objects only
+CalculateEtag calculates an ETAG hash value for the policy which includes the Subjects, Actions, Object, and Conditions objects only
 */
 func (p *PolicyInfo) CalculateEtag() string {
     pderef := *p // this was causing a pointer interaction - so deref
-    subjectBytes, _ := json.Marshal(pderef.Subject)
+    subjectBytes, _ := json.Marshal(pderef.Subjects)
     actionBytes, _ := json.Marshal(pderef.Actions)
     objectBytes, _ := json.Marshal(pderef.Object)
     conditionBytes := make([]byte, 0)
@@ -101,7 +101,7 @@ func (p *PolicyInfo) Equals(hexaPolicy PolicyInfo) bool {
     }
 
     // check for semantic equivalence.
-    if !(p.Subject.equals(&hexaPolicy.Subject) && p.actionEquals(hexaPolicy.Actions) && p.Object.equals(&hexaPolicy.Object)) {
+    if !(p.Subjects.equals(hexaPolicy.Subjects) && p.actionEquals(hexaPolicy.Actions) && p.Object.equals(&hexaPolicy.Object)) {
         return false
     }
 
@@ -149,7 +149,7 @@ func (p *PolicyInfo) Compare(hexaPolicy PolicyInfo) []string {
     var difs = make([]string, 0)
 
     // Now do a semantic compare (e.g. things can be different order but the same)
-    if !p.Subject.equals(&hexaPolicy.Subject) {
+    if !p.Subjects.equals(hexaPolicy.Subjects) {
         difs = append(difs, CompareDifSubject)
     }
 
@@ -211,18 +211,20 @@ type ActionInfo struct {
     ActionUri string `json:"actionUri" validate:"required"`
 }
 
-type SubjectInfo struct {
-    Members []string `json:"members" validate:"required"`
+type SubjectInfo []string
+
+func (s SubjectInfo) String() []string {
+    return s
 }
 
-func (s *SubjectInfo) equals(subject *SubjectInfo) bool {
-    if len(s.Members) != len(subject.Members) {
+func (s SubjectInfo) equals(subjects SubjectInfo) bool {
+    if len(s) != len(subjects) {
         return false
     }
-    for _, member := range s.Members {
+    for _, member := range s {
         isMatch := false
-        for _, cmember := range subject.Members {
-            if strings.EqualFold(member, cmember) {
+        for _, compareMember := range subjects {
+            if strings.EqualFold(member, compareMember) {
                 isMatch = true
                 break
             }

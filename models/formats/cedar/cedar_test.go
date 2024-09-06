@@ -1,9 +1,13 @@
 package cedar
 
 import (
+    "encoding/json"
     "fmt"
     "reflect"
     "testing"
+
+    "github.com/hexa-org/policy-mapper/pkg/hexapolicy"
+    "github.com/stretchr/testify/assert"
 )
 
 const policyCedar = `
@@ -90,12 +94,14 @@ permit (
    }
   }
  },
- "subject": {
-  "members": [
-   "any"
-  ]
- },
- "actions": null,
+ "subjects": [
+  "any"
+ ],
+ "actions": [
+  {
+   "actionUri": "action"
+  }
+ ],
  "object": {
   "resource_id": ""
  }
@@ -108,11 +114,9 @@ permit (
     resource == Photo::"VacationPhoto.jpg"
 );`, `{
  "meta": {},
- "subject": {
-  "members": [
+ "subjects": [
    "User:alice"
-  ]
- },
+  ],
  "actions": [
   {
    "actionUri": "viewPhoto"
@@ -128,11 +132,9 @@ permit (
     resource == Photo::"VacationPhoto.jpg"
 );`, `{
  "meta": {},
- "subject": {
-  "members": [
+ "subjects": [
    "Group:\"AVTeam\".(User)"
-  ]
- },
+  ],
  "actions": [
   {
    "actionUri": "PhotoOp::\"view\""
@@ -157,11 +159,9 @@ when { resource in PhotoApp::Account::"stacey" }
 unless { principal has parents };`,
             `{
  "meta": {},
- "subject": {
-  "members": [
+ "subjects": [
    "Group:UserGroup::\"AVTeam\""
-  ]
- },
+  ],
  "actions": [
   {
    "actionUri": "viewPhoto"
@@ -182,11 +182,9 @@ unless { principal has parents };`,
 )
 when { resource in PhotoShop::"Photo" };`, `{
  "meta": {},
- "subject": {
-  "members": [
+ "subjects": [
    "Type:User"
-  ]
- },
+  ],
  "actions": [
   {
    "actionUri": "viewPhoto"
@@ -211,7 +209,11 @@ when { resource in PhotoShop::"Photo" };`, `{
             testutilEquals(t, tt.err, err != nil)
             idqlOut := result.Policies[0].String()
             fmt.Println("Mapped:\n" + idqlOut)
-            testutilEquals(t, idqlOut, tt.idql)
+            var want hexapolicy.PolicyInfo
+            err = json.Unmarshal([]byte(tt.idql), &want)
+            assert.NoError(t, err)
+            assert.True(t, want.Equals(result.Policies[0]), "Policies should match")
+            // testutilEquals(t, result.Policies[0], want)
 
         })
     }
