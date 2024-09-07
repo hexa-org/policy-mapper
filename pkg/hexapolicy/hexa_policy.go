@@ -242,12 +242,17 @@ func (s SubjectInfo) equals(subjects SubjectInfo) bool {
     return true
 }
 
-type ObjectInfo struct {
-    ResourceID string `json:"resource_id" validate:"required"`
+type ObjectInfo string
+
+func (o *ObjectInfo) String() string {
+    return string(*o)
 }
 
 func (o *ObjectInfo) equals(object *ObjectInfo) bool {
-    return o.ResourceID == object.ResourceID
+    if object == nil {
+        return false
+    }
+    return strings.EqualFold(o.String(), object.String())
 }
 
 // ScopeInfo represents obligations passed to a PEP. For example a `Filter` is used to constrain the rows of a database.

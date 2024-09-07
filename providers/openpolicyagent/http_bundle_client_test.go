@@ -32,9 +32,7 @@ const expectedBundleData = `{
         "any",
         "anyauthenticated"
       ],
-      "object": {
-        "resource_id": "aResourceId"
-      }
+      "object": "aResourceId"
     },
     {
       "meta": {
@@ -49,9 +47,7 @@ const expectedBundleData = `{
         "sales@hexaindustries.io",
         "marketing@hexaindustries.io"
       ],
-      "object": {
-        "resource_id": "aResourceId"
-      }
+      "object": "aResourceId"
     },
     {
       "meta": {
@@ -64,9 +60,7 @@ const expectedBundleData = `{
       "subjects:": [
         "accounting@hexaindustries.io"
       ],
-      "object": {
-        "resource_id": "aResourceId"
-      }
+      "object": "aResourceId"
     },
     {
       "meta": {
@@ -78,9 +72,7 @@ const expectedBundleData = `{
       "subjects:": [
         "humanresources@hexaindustries.io"
       ],
-      "object": {
-        "resource_id": "aResourceId"
-      }
+      "object": "aResourceId"
     }
   ]
 }`

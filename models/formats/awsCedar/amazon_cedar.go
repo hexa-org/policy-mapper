@@ -156,13 +156,11 @@ func isSingular(entityId string) bool {
 func mapResourceToObject(res *ResourceExpression) hexapolicy.ObjectInfo {
     mId := "cedar:" + removeLastQuotes(res.Entity)
 
-    return hexapolicy.ObjectInfo{
-        ResourceID: mId,
-    }
+    return hexapolicy.ObjectInfo(mId)
 }
 
 func mapObjectToResource(object hexapolicy.ObjectInfo) *ResourceExpression {
-    id := object.ResourceID
+    id := object.String()
     if id == "" {
         return nil
     }
@@ -409,7 +407,8 @@ func (c *CedarPolicyMapper) MapCedarPolicyToIdql(policy *CedarPolicy) (*hexapoli
             }
         }
     }
-    obj := hexapolicy.ObjectInfo{}
+
+    var obj hexapolicy.ObjectInfo
     if policy.Head.Resource != nil {
         obj = mapResourceToObject(policy.Head.Resource)
     }

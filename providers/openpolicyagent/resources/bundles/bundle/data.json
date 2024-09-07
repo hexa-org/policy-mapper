@@ -12,9 +12,7 @@
         "any",
         "anyauthenticated"
       ],
-      "object": {
-        "resource_id": "aResourceId"
-      }
+      "object": "aResourceId"
     },
     {
       "meta": {
@@ -29,9 +27,7 @@
         "sales@hexaindustries.io",
         "marketing@hexaindustries.io"
       ],
-      "object": {
-        "resource_id": "aResourceId"
-      }
+      "object": "aResourceId"
     },
     {
       "meta": {
@@ -44,9 +40,7 @@
       "subjects:": [
         "accounting@hexaindustries.io"
       ],
-      "object": {
-        "resource_id": "aResourceId"
-      }
+      "object": "aResourceId"
     },
     {
       "meta": {
@@ -58,9 +52,7 @@
       "subjects:": [
         "humanresources@hexaindustries.io"
       ],
-      "object": {
-        "resource_id": "aResourceId"
-      }
+      "object": "aResourceId"
     }
   ]
 }

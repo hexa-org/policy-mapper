@@ -67,7 +67,7 @@ func (azm *AzurePolicyMapper) appRoleAssignmentToIDQL(assignments []azad.AzureAp
         },
         Actions:  []hexapolicy.ActionInfo{hexapolicy.ActionInfo(role.Value)},
         Subjects: members,
-        Object:   hexapolicy.ObjectInfo{ResourceID: azm.objectId},
+        Object:   hexapolicy.ObjectInfo(azm.objectId),
     }
 }
 

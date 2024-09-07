@@ -67,7 +67,7 @@ func TestGetPolicy_WithoutUserEmail(t *testing.T) {
         assert.True(t, len(pol.Actions) > 0)
         assert.NotEmpty(t, pol.Actions[0].String())
         assert.Equal(t, 0, len(pol.Subjects))
-        assert.Equal(t, policytestsupport.PolicyObjectResourceId, pol.Object.ResourceID)
+        assert.Equal(t, policytestsupport.PolicyObjectResourceId, pol.Object.String())
     }
     mockAzClient.AssertExpectations(t)
 }
@@ -161,26 +161,27 @@ func TestSetPolicy_withInvalidArguments(t *testing.T) {
             Meta:     hexapolicy.MetaInfo{Version: "0"},
             Actions:  []hexapolicy.ActionInfo{"azure:anAppRoleId"},
             Subjects: []string{"aPrincipalId:aPrincipalDisplayName", "yetAnotherPrincipalId:yetAnotherPrincipalDisplayName", "andAnotherPrincipalId:andAnotherPrincipalDisplayName"},
-            Object: hexapolicy.ObjectInfo{
-                ResourceID: "anObjectId",
-            },
+            Object:   "anObjectId",
         }})
 
     assert.Equal(t, http.StatusInternalServerError, status)
     assert.EqualError(t, err, "Key: 'ApplicationInfo.ObjectID' Error:Field validation for 'ObjectID' failed on the 'required' tag")
 
-    status, err = provider.SetPolicyInfo(
-        policyprovider.IntegrationInfo{Name: "azure", Key: key},
-        policyprovider.ApplicationInfo{ObjectID: "anObjectId", Name: "anAppName", Description: "aDescription"},
-        []hexapolicy.PolicyInfo{{
-            Meta:     hexapolicy.MetaInfo{Version: "0"},
-            Actions:  []hexapolicy.ActionInfo{"azure:anAppRoleId"},
-            Subjects: []string{"aPrincipalId:aPrincipalDisplayName", "yetAnotherPrincipalId:yetAnotherPrincipalDisplayName", "andAnotherPrincipalId:andAnotherPrincipalDisplayName"},
-            Object:   hexapolicy.ObjectInfo{},
-        }})
+    /*  Test removed because ResourceID no longer used.
+        status, err = provider.SetPolicyInfo(
+            policyprovider.IntegrationInfo{Name: "azure", Key: key},
+            policyprovider.ApplicationInfo{ObjectID: "anObjectId", Name: "anAppName", Description: "aDescription"},
+            []hexapolicy.PolicyInfo{{
+                Meta:     hexapolicy.MetaInfo{Version: "0"},
+                Actions:  []hexapolicy.ActionInfo{"azure:anAppRoleId"},
+                Subjects: []string{"aPrincipalId:aPrincipalDisplayName", "yetAnotherPrincipalId:yetAnotherPrincipalDisplayName", "andAnotherPrincipalId:andAnotherPrincipalDisplayName"},
+                Object:   hexapolicy.ObjectInfo{},
+            }})
 
-    assert.Equal(t, http.StatusInternalServerError, status)
-    assert.EqualError(t, err, "Key: '[0].Object.ResourceID' Error:Field validation for 'ResourceID' failed on the 'required' tag")
+        assert.Equal(t, http.StatusInternalServerError, status)
+        assert.EqualError(t, err, "Key: '[0].Object.String()' Error:Field validation for 'ResourceID' failed on the 'required' tag")
+
+    */
 }
 
 func TestSetPolicy_IgnoresAllPrincipalIdsNotFound(t *testing.T) {
@@ -202,9 +203,7 @@ func TestSetPolicy_IgnoresAllPrincipalIdsNotFound(t *testing.T) {
             Actions: []hexapolicy.ActionInfo{"azure:" + policytestsupport.ActionGetHrUs},
             Subjects: []string{"user:" + policytestsupport.UserEmailGetHrUs,
                 "user:" + policytestsupport.UserEmailGetProfile},
-            Object: hexapolicy.ObjectInfo{
-                ResourceID: policytestsupport.PolicyObjectResourceId,
-            },
+            Object: policytestsupport.PolicyObjectResourceId,
         }})
 
     assert.NoError(t, err)
@@ -232,9 +231,7 @@ func TestSetPolicy_IgnoresAnyNotFoundPrincipalId(t *testing.T) {
             Actions: []hexapolicy.ActionInfo{"azure:" + policytestsupport.ActionGetHrUs},
             Subjects: []string{"user:" + policytestsupport.UserEmailGetHrUs,
                 "user:" + policytestsupport.UserEmailGetProfile},
-            Object: hexapolicy.ObjectInfo{
-                ResourceID: policytestsupport.PolicyObjectResourceId,
-            },
+            Object: policytestsupport.PolicyObjectResourceId,
         }})
 
     assert.NoError(t, err)
@@ -259,9 +256,7 @@ func TestSetPolicy_AddAssignment_IgnoresInvalidAction(t *testing.T) {
             Subjects: []string{
                 "user:" + policytestsupport.UserEmailGetHrUs,
                 "user:" + policytestsupport.UserEmailGetProfile},
-            Object: hexapolicy.ObjectInfo{
-                ResourceID: policytestsupport.PolicyObjectResourceId,
-            },
+            Object: policytestsupport.PolicyObjectResourceId,
         }})
 
     assert.NoError(t, err)
@@ -286,9 +281,7 @@ func TestSetPolicy(t *testing.T) {
             Meta:     hexapolicy.MetaInfo{Version: "0"},
             Actions:  []hexapolicy.ActionInfo{"azure:" + policytestsupport.ActionGetHrUs},
             Subjects: []string{"user:" + policytestsupport.UserEmailGetHrUs},
-            Object: hexapolicy.ObjectInfo{
-                ResourceID: policytestsupport.PolicyObjectResourceId,
-            },
+            Object:   policytestsupport.PolicyObjectResourceId,
         }})
 
     assert.NoError(t, err)
@@ -313,9 +306,7 @@ func TestSetPolicy_RemovedAllMembers_FromOnePolicy(t *testing.T) {
             Meta:     hexapolicy.MetaInfo{Version: "0"},
             Actions:  []hexapolicy.ActionInfo{"azure:" + policytestsupport.ActionGetHrUs},
             Subjects: []string{},
-            Object: hexapolicy.ObjectInfo{
-                ResourceID: policytestsupport.PolicyObjectResourceId,
-            },
+            Object:   policytestsupport.PolicyObjectResourceId,
         }})
 
     assert.NoError(t, err)
@@ -343,17 +334,13 @@ func TestSetPolicy_RemovedAllMembers_FromAllPolicies(t *testing.T) {
                 Meta:     hexapolicy.MetaInfo{Version: "0"},
                 Actions:  []hexapolicy.ActionInfo{"azure:" + policytestsupport.ActionGetHrUs},
                 Subjects: []string{},
-                Object: hexapolicy.ObjectInfo{
-                    ResourceID: policytestsupport.PolicyObjectResourceId,
-                },
+                Object:   policytestsupport.PolicyObjectResourceId,
             },
             {
                 Meta:     hexapolicy.MetaInfo{Version: "0"},
                 Actions:  []hexapolicy.ActionInfo{"azure:" + policytestsupport.ActionGetProfile},
                 Subjects: []string{},
-                Object: hexapolicy.ObjectInfo{
-                    ResourceID: policytestsupport.PolicyObjectResourceId,
-                },
+                Object:   policytestsupport.PolicyObjectResourceId,
             },
         })
 
@@ -383,17 +370,13 @@ func TestSetPolicy_MultipleAppRolePolicies(t *testing.T) {
                 Meta:     hexapolicy.MetaInfo{Version: "0"},
                 Actions:  []hexapolicy.ActionInfo{"azure:" + policytestsupport.ActionGetHrUs},
                 Subjects: []string{"user:" + policytestsupport.UserEmailGetHrUs},
-                Object: hexapolicy.ObjectInfo{
-                    ResourceID: policytestsupport.PolicyObjectResourceId,
-                },
+                Object:   policytestsupport.PolicyObjectResourceId,
             },
             {
                 Meta:     hexapolicy.MetaInfo{Version: "0"},
                 Actions:  []hexapolicy.ActionInfo{"azure:" + policytestsupport.ActionGetProfile},
                 Subjects: []string{"user:" + policytestsupport.UserEmailGetProfile},
-                Object: hexapolicy.ObjectInfo{
-                    ResourceID: policytestsupport.PolicyObjectResourceId,
-                },
+                Object:   policytestsupport.PolicyObjectResourceId,
             },
         })
 

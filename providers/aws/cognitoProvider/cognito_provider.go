@@ -58,9 +58,7 @@ func (a *CognitoProvider) GetPolicyInfo(info policyprovider.IntegrationInfo, app
             },
             Actions:  []hexapolicy.ActionInfo{hexapolicy.ActionInfo(groupName)},
             Subjects: members,
-            Object: hexapolicy.ObjectInfo{
-                ResourceID: applicationInfo.Name,
-            },
+            Object:   hexapolicy.ObjectInfo(applicationInfo.Name),
         })
     }
 

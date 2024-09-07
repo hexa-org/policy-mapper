@@ -129,8 +129,8 @@ func (o *OpaProvider) SetPolicyInfo(integration policyprovider.IntegrationInfo, 
             // Assign a default policy id based on the resourceId. If not available, use the Pap ObjectID. An alias is appended to ensure uniqueness
             alias := generateAliasOfSize(3)
             resId := *meta.PapId
-            if p.Object.ResourceID != "" {
-                resId = p.Object.ResourceID
+            if p.Object != "" {
+                resId = p.Object.String()
             }
             pid := fmt.Sprintf("%s_%s", resId, alias)
             meta.PolicyId = &pid

@@ -10,9 +10,7 @@
       "Subjects": [
         "User:stacey"
       ],
-      "Object": {
-        "resource_id": ""
-      },
+      "Object": "",
       "Condition": {
         "Rule": "resource in \"Account:stacey\"",
         "Action": "permit"
@@ -33,9 +31,7 @@
         "rule": "action.isReadOperation eq true",
         "action": "allow"
       },
-      "object": {
-        "resource_id": "Folder::3b276b13858d46839d8cbfb45e5c6c2a"
-      }
+      "object": "Folder::3b276b13858d46839d8cbfb45e5c6c2a"
     },
     {
       "meta": {
@@ -49,9 +45,7 @@
         "User:sales@hexaindustries.io",
         "Group:marketing@hexaindustries.io"
       ],
-      "object": {
-        "resource_id": "File::ec37b3b17a1e4ae08a641dcd9d915535"
-      }
+      "object": "File::ec37b3b17a1e4ae08a641dcd9d915535"
     },
     {
       "meta": {
@@ -68,9 +62,7 @@
         "rule": "context.sourceIp eq \"192.158.1.38\" and context.http.method eq GET",
         "action": "allow"
       },
-      "object": {
-        "resource_id": "Folder::900af98fc3ab47cbaa982d94da7c90e3"
-      }
+      "object": "Folder::900af98fc3ab47cbaa982d94da7c90e3"
     },
     {
       "Meta": {
@@ -82,9 +74,7 @@
       "subjects": [
         "User:alice"
       ],
-      "Object": {
-        "resource_id": "cedar:Photo::VacationPhoto94.jpg"
-      }
+      "Object": "cedar:Photo::VacationPhoto94.jpg"
     }
   ]
 }

@@ -15,9 +15,7 @@
         "rule": "req.ip sw 127 and req.method eq POST",
         "action": "allow"
       },
-      "object": {
-        "resource_id": "aResourceId1"
-      }
+      "object": "aResourceId1"
     },
     {
       "meta": {
@@ -32,9 +30,7 @@
         "sales@hexaindustries.io",
         "marketing@hexaindustries.io"
       ],
-      "object": {
-        "resource_id": "aResourceId2"
-      }
+      "object": "aResourceId2"
     },
     {
       "meta": {
@@ -51,9 +47,7 @@
         "rule": "req.ip sw 127 and req.method eq POST",
         "action": "allow"
       },
-      "object": {
-        "resource_id": "aResourceId3"
-      }
+      "object": "aResourceId3"
     },
     {
       "meta": {
@@ -65,9 +59,7 @@
       "subjects": [
         "humanresources@hexaindustries.io"
       ],
-      "object": {
-        "resource_id": "aResourceId1"
-      }
+      "object": "aResourceId1"
     }
   ]
 }

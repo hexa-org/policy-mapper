@@ -98,9 +98,7 @@ permit (
   "any"
  ],
  "actions": [ "action" ],
- "object": {
-  "resource_id": ""
- }
+ "object": ""
 }`,
             err: false,
         },
@@ -114,9 +112,7 @@ permit (
    "User:alice"
   ],
  "actions": [ "viewPhoto" ],
- "object": {
-  "resource_id": "Photo::\"VacationPhoto.jpg\""
- }
+ "object": "Photo::\"VacationPhoto.jpg\""
 }`, false},
         {"Multi-Action", `permit (
     principal is User in Group::"AVTeam",
@@ -132,9 +128,7 @@ permit (
     "PhotoOp::\"edit\"",
     "PhotoOp::\"delete\""
  ],
- "object": {
-  "resource_id": "Photo::\"VacationPhoto.jpg\""
- }
+ "object": "Photo::\"VacationPhoto.jpg\""
 }`, false},
         {"Conditions", `permit (
     principal in UserGroup::"AVTeam",
@@ -149,9 +143,7 @@ unless { principal has parents };`,
    "Group:UserGroup::\"AVTeam\""
   ],
  "actions": [ "viewPhoto" ],
- "object": {
-  "resource_id": "Type:Photo"
- },
+ "object": "Type:Photo",
  "Condition": {
   "Rule": "resource in PhotoApp::Account::\"stacey\" and not (principal.parents pr)",
   "Action": "allow"
@@ -168,9 +160,7 @@ when { resource in PhotoShop::"Photo" };`, `{
    "Type:User"
   ],
  "actions": [ "viewPhoto" ],
- "object": {
-  "resource_id": ""
- },
+ "object": "",
  "Condition": {
   "Rule": "resource in PhotoShop::\"Photo\"",
   "Action": "allow"

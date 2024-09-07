@@ -305,9 +305,11 @@ func TestSetPolicyInfo(t *testing.T) {
         policyprovider.IntegrationInfo{Name: openpolicyagent.ProviderTypeOpa, Key: key},
         policyprovider.ApplicationInfo{ObjectID: "anotherResourceId"},
         []hexapolicy.PolicyInfo{
-            {Meta: hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion}, Actions: []hexapolicy.ActionInfo{"http:GET"}, Subjects: []string{"allusers"}, Object: hexapolicy.ObjectInfo{
-                ResourceID: "aResourceId",
-            }},
+            {
+                Meta:     hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
+                Actions:  []hexapolicy.ActionInfo{"http:GET"},
+                Subjects: []string{"allusers"},
+                Object:   "aResourceId"},
         },
     )
 
@@ -338,7 +340,7 @@ func TestSetPolicyInfo(t *testing.T) {
     assert.True(t, now.Before(*modified))
     actionURi := policies[0].Actions[0].String()
     assert.Equal(t, "http:GET", actionURi)
-    assert.Equal(t, "aResourceId", policies[0].Object.ResourceID)
+    assert.Equal(t, "aResourceId", policies[0].Object.String())
     // assert.JSONEq(t, `{"policies":[{"meta":{"version":"0.5"},"actions":[{"actionUri":"http:GET"}],"subject":{"members":["allusers"]},"object":{"resource_id":"anotherResourceId"}}]}`, string(readFile))
     assert.Equal(t, "anotherResourceId", *meta.PapId)
     assert.Equal(t, hexapolicy.IdqlVersion, meta.Version, "check version")
@@ -368,9 +370,10 @@ func TestSetPolicyInfo_withInvalidArguments(t *testing.T) {
         policyprovider.ApplicationInfo{ObjectID: "aResourceId"},
         []hexapolicy.PolicyInfo{
             {
-                Actions: []hexapolicy.ActionInfo{"http:GET"}, Subjects: []string{"allusers"}, Object: hexapolicy.ObjectInfo{
-                ResourceID: "aResourceId",
-            }},
+                Actions:  []hexapolicy.ActionInfo{"http:GET"},
+                Subjects: []string{"allusers"},
+                Object:   "aResourceId",
+            },
         },
     )
 
@@ -422,9 +425,12 @@ func TestSetPolicyInfo_WithHTTPSBundleServer(t *testing.T) {
         policyprovider.IntegrationInfo{Name: openpolicyagent.ProviderTypeOpa, Key: key},
         policyprovider.ApplicationInfo{ObjectID: "aResourceId"},
         []hexapolicy.PolicyInfo{
-            {Meta: hexapolicy.MetaInfo{Version: "0.5"}, Actions: []hexapolicy.ActionInfo{"http:GET"}, Subjects: []string{"allusers"}, Object: hexapolicy.ObjectInfo{
-                ResourceID: "aResourceId",
-            }},
+            {
+                Meta:     hexapolicy.MetaInfo{Version: "0.5"},
+                Actions:  []hexapolicy.ActionInfo{"http:GET"},
+                Subjects: []string{"allusers"},
+                Object:   "aResourceId",
+            },
         },
     )
     assert.Equal(t, http.StatusCreated, status)
@@ -445,9 +451,7 @@ func TestMakeDefaultBundle(t *testing.T) {
           "anyauthenticated"
         ]
       },
-      "object": {
-        "resource_id": "aResourceId"
-      }
+      "object": "aResourceId"
     }
   ]
 }`)
@@ -483,7 +487,7 @@ func TestMakeDefaultBundle(t *testing.T) {
 
     actionURi := policies[0].Actions[0].String()
     assert.Equal(t, "ietf:http:GET", actionURi)
-    assert.Equal(t, "aResourceId", policies[0].Object.ResourceID)
+    assert.Equal(t, "aResourceId", policies[0].Object.String())
     // assert.JSONEq(t, `{"policies":[{"meta":{"version":"0.5"},"actions":[{"actionUri":"http:GET"}],"subject":{"members":["allusers"]},"object":{"resource_id":"anotherResourceId"}}]}`, string(readFile))
     // assert.Equal(t, "anotherResourceId", *meta.PapId)
     assert.Equal(t, "0.6", meta.Version, "check version")

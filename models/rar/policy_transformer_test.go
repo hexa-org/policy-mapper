@@ -31,14 +31,14 @@ func TestBuildPolicies(t *testing.T) {
     assert.Len(t, policies, 2)
 
     actPol := policies[0]
-    assert.Equal(t, policytestsupport.ResourceHrUs, actPol.Object.ResourceID)
+    assert.Equal(t, policytestsupport.ResourceHrUs, actPol.Object.String())
     assert.Equal(t, "http:GET", actPol.Actions[0].String())
     var res []string
     res = actPol.Subjects
     assert.Equal(t, []string{"1-some-hr-role", "2-some-hr-role"}, res)
 
     actPol = policies[1]
-    assert.Equal(t, policytestsupport.ResourceProfile, actPol.Object.ResourceID)
+    assert.Equal(t, policytestsupport.ResourceProfile, actPol.Object.String())
     assert.Equal(t, "http:GET", actPol.Actions[0].String())
     res = actPol.Subjects
     assert.Equal(t, []string{"1-some-profile-role", "2-some-profile-role"}, res)
@@ -187,7 +187,7 @@ func TestFlattenPolicy_DupResourceDupMembers(t *testing.T) {
         Actions: []hexapolicy.ActionInfo{
             hexapolicy.ActionInfo(""), hexapolicy.ActionInfo("1act"), hexapolicy.ActionInfo(" "), hexapolicy.ActionInfo("2act")},
         Subjects: []string{"1mem", "", "2mem"},
-        Object:   hexapolicy.ObjectInfo{ResourceID: "resource1"},
+        Object:   hexapolicy.ObjectInfo("resource1"),
     }
 
     pol2 := hexapolicy.PolicyInfo{
@@ -195,7 +195,7 @@ func TestFlattenPolicy_DupResourceDupMembers(t *testing.T) {
         Actions: []hexapolicy.ActionInfo{
             hexapolicy.ActionInfo(""), hexapolicy.ActionInfo("3act"), hexapolicy.ActionInfo(" "), hexapolicy.ActionInfo("4act")},
         Subjects: []string{"1mem", "", "2mem"},
-        Object:   hexapolicy.ObjectInfo{ResourceID: "resource1"},
+        Object:   hexapolicy.ObjectInfo("resource1"),
     }
 
     orig := []hexapolicy.PolicyInfo{pol1, pol2}
@@ -208,7 +208,7 @@ func TestFlattenPolicy_DupResourceDupMembers(t *testing.T) {
     expMembers := []string{"1mem", "2mem"}
 
     for i, actPol := range actPolicies {
-        assert.Equal(t, expResource, actPol.Object.ResourceID)
+        assert.Equal(t, expResource, actPol.Object.String())
         assert.Equal(t, expActions[i], actPol.Actions[0].String())
         assert.Equal(t, expMembers, actPol.Subjects.String())
     }
@@ -224,7 +224,7 @@ func TestFlattenPolicy_NoResource(t *testing.T) {
         Meta:     hexapolicy.MetaInfo{Version: "0.5"},
         Actions:  []hexapolicy.ActionInfo{hexapolicy.ActionInfo("1act")},
         Subjects: []string{"1mem", "2mem"},
-        Object:   hexapolicy.ObjectInfo{ResourceID: "resource1"},
+        Object:   hexapolicy.ObjectInfo("resource1"),
     }
 
     tests := []struct {
@@ -258,7 +258,7 @@ func TestFlattenPolicy_NoActions(t *testing.T) {
     pol1 := hexapolicy.PolicyInfo{
         Meta:     hexapolicy.MetaInfo{Version: "0.5"},
         Subjects: []string{"1mem", "", "2mem"},
-        Object:   hexapolicy.ObjectInfo{ResourceID: "resource1"},
+        Object:   hexapolicy.ObjectInfo("resource1"),
     }
     orig := []hexapolicy.PolicyInfo{pol1}
     actPolicies := rar.FlattenPolicy(orig)
@@ -270,7 +270,7 @@ func TestFlattenPolicy_NoMembers(t *testing.T) {
     pol1 := hexapolicy.PolicyInfo{
         Meta:    hexapolicy.MetaInfo{Version: "0.5"},
         Actions: []hexapolicy.ActionInfo{hexapolicy.ActionInfo("1act"), hexapolicy.ActionInfo("2act")},
-        Object:  hexapolicy.ObjectInfo{ResourceID: "resource1"},
+        Object:  hexapolicy.ObjectInfo("resource1"),
     }
     orig := []hexapolicy.PolicyInfo{pol1}
     actPolicies := rar.FlattenPolicy(orig)
@@ -279,7 +279,7 @@ func TestFlattenPolicy_NoMembers(t *testing.T) {
 
     expActions := []string{"1act", "2act"}
     for i, actPol := range actPolicies {
-        assert.Equal(t, "resource1", actPol.Object.ResourceID)
+        assert.Equal(t, "resource1", actPol.Object.String())
         assert.Equal(t, expActions[i], actPol.Actions[0].String())
         assert.NotNil(t, actPol.Subjects)
         assert.Equal(t, []string{}, actPol.Subjects.String())
@@ -292,7 +292,7 @@ func TestFlattenPolicy_MergeSameResourceAction(t *testing.T) {
         Actions: []hexapolicy.ActionInfo{
             hexapolicy.ActionInfo("1act"), hexapolicy.ActionInfo("2act")},
         Subjects: []string{"1mem", "2mem"},
-        Object:   hexapolicy.ObjectInfo{ResourceID: "resource1"},
+        Object:   hexapolicy.ObjectInfo("resource1"),
     }
 
     pol1b := hexapolicy.PolicyInfo{
@@ -300,7 +300,7 @@ func TestFlattenPolicy_MergeSameResourceAction(t *testing.T) {
         Actions: []hexapolicy.ActionInfo{
             hexapolicy.ActionInfo("1act"), hexapolicy.ActionInfo("2act")},
         Subjects: []string{"3mem", "4mem"},
-        Object:   hexapolicy.ObjectInfo{ResourceID: "resource1"},
+        Object:   hexapolicy.ObjectInfo("resource1"),
     }
 
     pol2 := hexapolicy.PolicyInfo{
@@ -308,7 +308,7 @@ func TestFlattenPolicy_MergeSameResourceAction(t *testing.T) {
         Actions: []hexapolicy.ActionInfo{
             hexapolicy.ActionInfo("3act"), hexapolicy.ActionInfo("4act")},
         Subjects: []string{"1mem", "2mem"},
-        Object:   hexapolicy.ObjectInfo{ResourceID: "resource2"},
+        Object:   hexapolicy.ObjectInfo("resource2"),
     }
 
     orig := []hexapolicy.PolicyInfo{pol1a, pol2, pol1b}
@@ -323,7 +323,7 @@ func TestFlattenPolicy_MergeSameResourceAction(t *testing.T) {
     for i := 0; i < len(expActions); i++ {
         actPol := actPolicies[i]
         assert.NotNil(t, actPol)
-        assert.Equal(t, expResource, actPol.Object.ResourceID)
+        assert.Equal(t, expResource, actPol.Object.String())
         assert.Equal(t, expActions[i], actPol.Actions[0].String())
         assert.Equal(t, expMembers, actPol.Subjects.String())
     }
@@ -334,7 +334,7 @@ func TestFlattenPolicy_MergeSameResourceAction(t *testing.T) {
     for i := 0; i < len(expActions); i++ {
         actPol := actPolicies[i+2]
         assert.NotNil(t, actPol)
-        assert.Equal(t, expResource, actPol.Object.ResourceID)
+        assert.Equal(t, expResource, actPol.Object.String())
         assert.Equal(t, expActions[i], actPol.Actions[0].String())
         assert.Equal(t, expMembers, actPol.Subjects.String())
     }

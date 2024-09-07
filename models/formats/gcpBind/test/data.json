@@ -8,16 +8,13 @@
         "http:GET:/"
       ],
       "subjects": [
-        "allusers",
-        "allauthenticated"
+        "any"
       ],
       "condition": {
         "rule": "req.ip sw 127 and req.method eq POST",
         "action": "allow"
       },
-      "object": {
-        "resource_id": "aResourceId"
-      }
+      "object": "aResourceId"
     },
     {
       "meta": {
@@ -28,13 +25,11 @@
         "http:GET:/marketing"
       ],
       "subjects": [
-        "allauthenticated",
-        "sales@hexaindustries.io",
-        "marketing@hexaindustries.io"
+        "anyauthenticated",
+        "user:sales@hexaindustries.io",
+        "group:marketing@hexaindustries.io"
       ],
-      "object": {
-        "resource_id": "bResourceId"
-      }
+      "object": "bResourceId"
     },
     {
       "meta": {
@@ -45,15 +40,13 @@
         "http:POST:/accounting"
       ],
       "subjects": [
-        "accounting@hexaindustries.io"
+        "group:accounting@hexaindustries.io"
       ],
       "condition": {
         "rule": "req.ip sw 127 and req.method eq POST",
         "action": "allow"
       },
-      "object": {
-        "resource_id": "cResourceId"
-      }
+      "object": "cResourceId"
     },
     {
       "meta": {
@@ -63,11 +56,9 @@
         "http:GET:/humanresources"
       ],
       "subjects": [
-        "humanresources@hexaindustries.io"
+        "group:humanresources@hexaindustries.io"
       ],
-      "object": {
-        "resource_id": "aResourceId"
-      }
+      "object": "aResourceId"
     },
     {
       "meta": {
@@ -79,9 +70,7 @@
       "actions": [
         "gcp:roles/iap.httpsResourceAccessor"
       ],
-      "object": {
-        "resource_id": "754290878449499554"
-      }
+      "object": "754290878449499554"
     }
   ]
 }

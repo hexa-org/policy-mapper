@@ -148,10 +148,9 @@ func TestGoogleClient_GetBackendPolicies_withBadJson(t *testing.T) {
 
 func TestGoogleClient_SetAppEnginePolicies(t *testing.T) {
     policy := hexapolicy.PolicyInfo{
-        Meta: hexapolicy.MetaInfo{Version: "aVersion"}, Actions: []hexapolicy.ActionInfo{"roles/iap.httpsResourceAccessor"}, Subjects: []string{"aUser"}, Object: hexapolicy.ObjectInfo{
-            ResourceID: "anObjectId",
-        },
+        Meta: hexapolicy.MetaInfo{Version: "aVersion"}, Actions: []hexapolicy.ActionInfo{"roles/iap.httpsResourceAccessor"}, Subjects: []string{"aUser"}, Object: "anObjectId",
     }
+
     mapper := gcpBind.New(map[string]string{})
     bindPolicy, err := mapper.MapPolicyToBinding(policy)
     assert.NoError(t, err)
@@ -179,9 +178,7 @@ func TestGoogleClient_SetAppEnginePolicies(t *testing.T) {
 
 func TestGoogleClient_SetBackendPolicies(t *testing.T) {
     policy := hexapolicy.PolicyInfo{
-        Meta: hexapolicy.MetaInfo{Version: "aVersion"}, Actions: []hexapolicy.ActionInfo{"gcp:roles/iap.httpsResourceAccessor"}, Subjects: []string{"aUser"}, Object: hexapolicy.ObjectInfo{
-            ResourceID: "anObjectId",
-        },
+        Meta: hexapolicy.MetaInfo{Version: "aVersion"}, Actions: []hexapolicy.ActionInfo{"gcp:roles/iap.httpsResourceAccessor"}, Subjects: []string{"aUser"}, Object: "anObjectId",
     }
     mapper := gcpBind.New(map[string]string{})
     bindPolicy, err := mapper.MapPolicyToBinding(policy)
@@ -206,9 +203,7 @@ func TestGoogleClient_SetBackendPolicies(t *testing.T) {
 
 func TestGoogleClient_SetBackendPolicies_withRequestError(t *testing.T) {
     policy := hexapolicy.PolicyInfo{
-        Meta: hexapolicy.MetaInfo{Version: "aVersion"}, Actions: []hexapolicy.ActionInfo{"gcp:roles/iap.httpsResourceAccessor"}, Subjects: []string{"aUser"}, Object: hexapolicy.ObjectInfo{
-            ResourceID: "anObjectId",
-        },
+        Meta: hexapolicy.MetaInfo{Version: "aVersion"}, Actions: []hexapolicy.ActionInfo{"gcp:roles/iap.httpsResourceAccessor"}, Subjects: []string{"aUser"}, Object: "anObjectId",
     }
     mapper := gcpBind.New(map[string]string{})
     bindPolicy, err := mapper.MapPolicyToBinding(policy)
