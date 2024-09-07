@@ -143,14 +143,14 @@ check_http_match(actionUri, req) if {
 }
 
 object_match(object, _) if {
-	not object.resource_id
+	not object
 }
 
 object_match(object, req) if {
-	object.resource_id
+	object
 
 	some request_uri in req.resourceIds
-	lower(object.resource_id) == lower(request_uri)
+	lower(object) == lower(request_uri)
 }
 
 check_http_method(allowMask, _) if {

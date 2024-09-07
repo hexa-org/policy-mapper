@@ -10,9 +10,7 @@
       "Subjects": [
         "User:\"alice\""
       ],
-      "Object": {
-        "resource_id": "cedar:Photo::\"VacationPhoto94.jpg\""
-      }
+      "Object": "cedar:Photo::\"VacationPhoto94.jpg\""
     },
     {
       "Meta": {
@@ -24,9 +22,7 @@
       "Subjects": [
         "User:\"stacey\""
       ],
-      "Object": {
-        "resource_id": ""
-      },
+      "Object": "",
       "Condition": {
         "Rule": "resource in \"Account:stacey\"",
         "Action": "permit"

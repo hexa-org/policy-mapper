@@ -5,12 +5,9 @@
     },
     "Actions": null,
     "Subjects": [
-      "allusers",
-      "allauthenticated"
+      "any","anyauthenticated"
     ],
-    "Object": {
-      "resource_id": "aResourceId1"
-    },
+    "Object": "aResourceId1",
     "Condition": {
       "Rule": "req.ip sw 127 and req.method eq \"POST\"",
       "Action": "allow"
@@ -22,11 +19,9 @@
     },
     "Actions": null,
     "Subjects": [
-      "humanresources@hexaindustries.io"
+      "group:humanresources@hexaindustries.io"
     ],
-    "Object": {
-      "resource_id": "aResourceId1"
-    }
+    "Object": "aResourceId1"
   },
   {
     "Meta": {
@@ -34,13 +29,11 @@
     },
     "Actions": null,
     "Subjects": [
-      "allauthenticated",
-      "sales@hexaindustries.io",
-      "marketing@hexaindustries.io"
+      "anyauthenticated",
+      "group:sales@hexaindustries.io",
+      "group:marketing@hexaindustries.io"
     ],
-    "Object": {
-      "resource_id": "aResourceId2"
-    }
+    "Object": "aResourceId2"
   },
   {
     "Meta": {
@@ -48,11 +41,9 @@
     },
     "Actions": null,
     "Subjects": [
-      "accounting@hexaindustries.io"
+      "group:accounting@hexaindustries.io"
     ],
-    "Object": {
-      "resource_id": "aResourceId3"
-    },
+    "Object": "aResourceId3",
     "Condition": {
       "Rule": "req.ip sw 127 and req.method eq \"POST\"",
       "Action": "allow"

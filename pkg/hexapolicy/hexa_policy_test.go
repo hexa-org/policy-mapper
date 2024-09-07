@@ -25,9 +25,7 @@ var testPolicy1 = `
         "rule": "req.ip sw 127 and req.method eq POST",
         "action": "allow"
       },
-      "object": {
-        "resource_id": "aResourceId"
-      },
+      "object": "aResourceId",
       "scope": {
         "filter": "idql:username eq smith",
         "attributes": ["username","emails"]
@@ -45,9 +43,7 @@ var testPolicy2 = `
       "subjects": [
           "user:humanresources@hexaindustries.io"
       ],
-      "object": {
-        "resource_id": "aResourceId"
-      }
+      "object": "aResourceId"
     }`
 
 func getPolicies(t *testing.T) Policies {
@@ -123,7 +119,7 @@ func TestObjectInfo_equals(t *testing.T) {
     p2 := policies.Policies[1]
     assert.True(t, p1.Object.equals(&p2.Object))
     p3 := p1
-    p3.Object.ResourceID = "abc"
+    p3.Object = "abc"
     assert.False(t, p1.Object.equals(&p3.Object))
 }
 
@@ -219,7 +215,7 @@ func TestPolicyInfo_CalculateEtag(t *testing.T) {
     assert.Equal(t, etag, p1.Meta.Etag)
 
     pnew := p1
-    pnew.Object.ResourceID = "abc"
+    pnew.Object = "abc"
     etag2 := pnew.CalculateEtag()
 
     assert.NotEqual(t, etag, etag2, "Should be different etags")
@@ -266,7 +262,7 @@ func TestPolicyInfo_Equals(t *testing.T) {
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             p := &tt.fields.testPolicy
-            assert.Equalf(t, tt.want, p.Equals(tt.args.hexaPolicy), "Equals(%v)", tt.args.hexaPolicy)
+            assert.Equalf(t, tt.want, p.Equals(tt.args.hexaPolicy), "equals(%v)", tt.args.hexaPolicy)
         })
     }
 }
@@ -344,7 +340,7 @@ func TestPolicyDif_Report(t *testing.T) {
         Meta:      MetaInfo{PolicyId: &pid},
         Subjects:  []string{"user1"},
         Actions:   []ActionInfo{"actionUri"},
-        Object:    ObjectInfo{ResourceID: "aresource"},
+        Object:    "aresource",
         Condition: nil,
     }
     testPolicy.CalculateEtag()
@@ -456,7 +452,7 @@ func TestPolicyInfo_String(t *testing.T) {
     pid := "abc"
     policyString := `{
  "meta": {
-  "etag": "20-e3f1663e6b8664347598121df047911cbacd961b",
+  "etag": "20-6c1676cb067f5abe504031daef66a110f501a0f3",
   "policyId": "abc"
  },
  "subjects": [
@@ -465,15 +461,13 @@ func TestPolicyInfo_String(t *testing.T) {
  "actions": [
   "actionUri"
  ],
- "object": {
-  "resource_id": "aresource"
- }
+ "object": "aresource"
 }`
     testPolicy := PolicyInfo{
         Meta:      MetaInfo{PolicyId: &pid},
         Subjects:  []string{"user1"},
         Actions:   []ActionInfo{"actionUri"},
-        Object:    ObjectInfo{ResourceID: "aresource"},
+        Object:    "aresource",
         Condition: nil,
     }
     testPolicy.CalculateEtag()
@@ -511,11 +505,11 @@ func TestReconcilePolicies(t *testing.T) {
     policiesWithChangesIds.Policies[1].Meta.PolicyId = &pid2
     assert.Nil(t, policies.Policies[0].Meta.PolicyId)
 
-    policiesWithChangesIds.Policies[0].Object.ResourceID = "changed"
+    policiesWithChangesIds.Policies[0].Object = "changed"
     policiesWithChangesIds.Policies[0].CalculateEtag()
-    assert.NotEqual(t, policiesWithIds.Policies[0].Object.ResourceID, "changed")
+    assert.NotEqual(t, policiesWithIds.Policies[0].Object, "changed")
 
-    policiesWithChangesHash.Policies[0].Object.ResourceID = "anotherchange"
+    policiesWithChangesHash.Policies[0].Object = "anotherchange"
     policiesWithChangesHash.Policies[0].CalculateEtag()
 
     policiesEmpty := Policies{
@@ -531,7 +525,7 @@ func TestReconcilePolicies(t *testing.T) {
         },
         Subjects: []string{"phil.hunt@independentid.com"},
         Actions:  []ActionInfo{"http:GET:/admin", "http:POST:/admin"},
-        Object:   ObjectInfo{ResourceID: "hexaindustries"},
+        Object:   "hexaindustries",
     }
     newPolicy.CalculateEtag()
 

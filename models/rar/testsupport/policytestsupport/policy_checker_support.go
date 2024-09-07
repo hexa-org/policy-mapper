@@ -30,7 +30,7 @@ func HasPolicy(expPolicies []hexapolicy.PolicyInfo, act hexapolicy.PolicyInfo) b
 }
 
 func MatchPolicy(exp hexapolicy.PolicyInfo, act hexapolicy.PolicyInfo) bool {
-    if exp.Object.ResourceID != act.Object.ResourceID {
+    if exp.Object.String() != act.Object.String() {
         return false
     }
 
@@ -58,9 +58,7 @@ func MakePolicies(actionMembers map[string][]string, resourceId string) []hexapo
             Meta:     hexapolicy.MetaInfo{Version: "0.5"},
             Actions:  []hexapolicy.ActionInfo{hexapolicy.ActionInfo(action)},
             Subjects: members,
-            Object: hexapolicy.ObjectInfo{
-                ResourceID: resourceId,
-            },
+            Object:   hexapolicy.ObjectInfo(resourceId),
         }
 
         policies = append(policies, pol)

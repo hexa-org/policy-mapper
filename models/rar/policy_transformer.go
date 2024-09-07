@@ -23,7 +23,7 @@ func BuildPolicies(resourceActionRolesList []ResourceActionRoles) []hexapolicy.P
             Meta:     hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion, ProviderType: "RARmodel"},
             Actions:  []hexapolicy.ActionInfo{hexapolicy.ActionInfo(ActionUriPrefix + httpMethod)},
             Subjects: roles,
-            Object:   hexapolicy.ObjectInfo{ResourceID: one.Resource},
+            Object:   hexapolicy.ObjectInfo(one.Resource),
         })
     }
 
@@ -35,7 +35,7 @@ func FlattenPolicy(origPolicies []hexapolicy.PolicyInfo) []hexapolicy.PolicyInfo
 
     resActionPolicyMap := make(map[string]hexapolicy.PolicyInfo)
     for _, pol := range origPolicies {
-        resource := pol.Object.ResourceID
+        resource := pol.Object
         if resource == "" {
             log.Warn("FlattenPolicy Skipping policy without resource")
             continue
@@ -45,7 +45,7 @@ func FlattenPolicy(origPolicies []hexapolicy.PolicyInfo) []hexapolicy.PolicyInfo
                 log.Warn("FlattenPolicy Skipping policy without actionUri", "resource", resource)
                 continue
             }
-            lookupKey := string(act) + resource
+            lookupKey := string(act) + resource.String()
             matchingPolicy, found := resActionPolicyMap[lookupKey]
             var existingMembers []string
             if found {
@@ -56,7 +56,7 @@ func FlattenPolicy(origPolicies []hexapolicy.PolicyInfo) []hexapolicy.PolicyInfo
                 Meta:     hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
                 Actions:  []hexapolicy.ActionInfo{act},
                 Subjects: newMembers,
-                Object:   hexapolicy.ObjectInfo{ResourceID: resource},
+                Object:   resource,
             }
 
             resActionPolicyMap[lookupKey] = newPol
@@ -98,7 +98,7 @@ func CompactMembers(existing, new []string) []string {
 
 func sortPolicies(policies []hexapolicy.PolicyInfo) {
     sort.SliceStable(policies, func(i, j int) bool {
-        resComp := strings.Compare(policies[i].Object.ResourceID, policies[j].Object.ResourceID)
+        resComp := strings.Compare(policies[i].Object.String(), policies[j].Object.String())
         actComp := strings.Compare(string(policies[i].Actions[0]), string(policies[j].Actions[0]))
         switch resComp {
         case 0:

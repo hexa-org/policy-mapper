@@ -327,23 +327,23 @@ func (pp *PolicyPair) mapCedarResource() {
     resource := pp.CedarPolicy.Resource
     switch resource.Type {
     case cedarParser.MatchEquals:
-        pp.HexaPolicy.Object = hexapolicy.ObjectInfo{ResourceID: resource.Entity.String()}
+        pp.HexaPolicy.Object = hexapolicy.ObjectInfo(resource.Entity.String())
     case cedarParser.MatchAny:
-        pp.HexaPolicy.Object = hexapolicy.ObjectInfo{}
+        pp.HexaPolicy.Object = ""
     case cedarParser.MatchIs:
-        pp.HexaPolicy.Object = hexapolicy.ObjectInfo{ResourceID: fmt.Sprintf("Type:%s", resource.Path.String())}
+        pp.HexaPolicy.Object = hexapolicy.ObjectInfo(fmt.Sprintf("Type:%s", resource.Path.String()))
     case cedarParser.MatchIsIn:
-        pp.HexaPolicy.Object = hexapolicy.ObjectInfo{ResourceID: fmt.Sprintf("[%s].(%s)", resource.Entity.String(), resource.Path.String())}
+        pp.HexaPolicy.Object = hexapolicy.ObjectInfo(fmt.Sprintf("[%s].(%s)", resource.Entity.String(), resource.Path.String()))
     case cedarParser.MatchIn:
-        pp.HexaPolicy.Object = hexapolicy.ObjectInfo{ResourceID: fmt.Sprintf("[%s]", resource.Entity.String())}
+        pp.HexaPolicy.Object = hexapolicy.ObjectInfo(fmt.Sprintf("[%s]", resource.Entity.String()))
     default:
         fmt.Println(fmt.Sprintf("Unexpected resource type: %T, value: %s", resource, resource.String()))
-        pp.HexaPolicy.Object = hexapolicy.ObjectInfo{ResourceID: fmt.Sprintf("[%s]", resource.String())}
+        pp.HexaPolicy.Object = hexapolicy.ObjectInfo(fmt.Sprintf("[%s]", resource.String()))
     }
 }
 
 func (pp *PolicyPair) mapHexaResource() string {
-    resource := pp.HexaPolicy.Object.ResourceID
+    resource := pp.HexaPolicy.Object.String()
     if resource == "" {
         return "resource"
     }

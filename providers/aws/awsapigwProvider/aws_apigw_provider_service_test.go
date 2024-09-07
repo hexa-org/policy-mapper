@@ -105,7 +105,7 @@ func TestGetPolicyInfo(t *testing.T) {
 
     for _, actPol := range actPolicies {
         actMembers := actPol.Subjects.String()
-        actPolRar := rar.NewResourceActionUriRoles(actPol.Object.ResourceID, actPol.Actions[0].String(), actMembers)
+        actPolRar := rar.NewResourceActionUriRoles(actPol.Object.String(), actPol.Actions[0].String(), actMembers)
         actLookupKey := actPolRar.Action + actPolRar.Resource
         expMembers, found := existingActionRoles[actLookupKey]
         assert.True(t, found)

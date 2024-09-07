@@ -23,7 +23,7 @@ func CalcResourceActionRolesForUpdate(existing []ResourceActionRoles, policyInfo
     rarUpdateList := make([]ResourceActionRoles, 0)
 
     for _, pol := range newPolicies {
-        polResource := pol.Object.ResourceID
+        polResource := pol.Object.String()
         polAction := string(pol.Actions[0])
         polRoles := pol.Subjects
 

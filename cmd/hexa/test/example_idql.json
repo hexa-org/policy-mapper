@@ -2,7 +2,7 @@
   "policies": [
     {
       "meta": {
-        "version": "0.6"
+        "version": "0.7"
       },
       "actions": [
         "http:GET:/"
@@ -15,13 +15,11 @@
         "rule": "req.ip sw 127 and req.method eq POST",
         "action": "allow"
       },
-      "object": {
-        "resource_id": "aResourceId1"
-      }
+      "object": "aResourceId1"
     },
     {
       "meta": {
-        "version": "0.6"
+        "version": "0.7"
       },
       "actions": [
         "http:GET:/sales",
@@ -29,45 +27,39 @@
       ],
       "subjects": [
         "allauthenticated",
-        "sales@hexaindustries.io",
-        "marketing@hexaindustries.io"
+        "user:sales@hexaindustries.io",
+        "user:marketing@hexaindustries.io"
       ],
-      "object": {
-        "resource_id": "aResourceId2"
-      }
+      "object": "aResourceId2"
     },
     {
       "meta": {
-        "version": "0.6"
+        "version": "0.7"
       },
       "actions": [
         "http:GET:/accounting",
         "http:POST:/accounting"
       ],
       "subjects": [
-        "accounting@hexaindustries.io"
+        "user:accounting@hexaindustries.io"
       ],
       "condition": {
         "rule": "req.ip sw 127 and req.method eq POST",
         "action": "allow"
       },
-      "object": {
-        "resource_id": "aResourceId3"
-      }
+      "object": "aResourceId3"
     },
     {
       "meta": {
-        "version": "0.6"
+        "version": "0.7"
       },
       "actions": [
         "http:GET:/humanresources"
       ],
       "subjects": [
-        "humanresources@hexaindustries.io"
+        "user:humanresources@hexaindustries.io"
       ],
-      "object": {
-        "resource_id": "aResourceId1"
-      }
+      "object": "aResourceId1"
     }
   ]
 }

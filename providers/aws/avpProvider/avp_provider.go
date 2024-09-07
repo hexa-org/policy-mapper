@@ -450,7 +450,7 @@ func isTemplate(hexaPolicy hexapolicy.PolicyInfo) bool {
         if slices.Contains(hexaPolicy.Subjects.String(), "?principal") {
             return true
         }
-        if strings.Contains(hexaPolicy.Object.ResourceID, "?resource") {
+        if strings.Contains(hexaPolicy.Object.String(), "?resource") {
             return true
         }
 
