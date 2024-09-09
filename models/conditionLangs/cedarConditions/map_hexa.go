@@ -83,7 +83,7 @@ func (mapper *CedarConditionMapper) MapConditionToCedar(condition *conditions.Co
     if err != nil {
         return "", err
     }
-    root := *ast
+    root := ast
 
     err = checkCompatibility(root)
     if err != nil {
@@ -94,7 +94,7 @@ func (mapper *CedarConditionMapper) MapConditionToCedar(condition *conditions.Co
     if condition.Action == conditions.ADeny {
         isUnless = true
     }
-    // This logic needs to decide whether to start with multiple whens/unlesses
+    // This logic needs to decide whether to start with multiple when/unless phrases
 
     // we have a lot of layers of ands/ors need to split into multiple clauses
     switch exp := root.(type) {
@@ -210,7 +210,7 @@ func (mapper *CedarConditionMapper) mapFilterExpression(node hexaParser.Expressi
 
 }
 
-func (mapper *CedarConditionMapper) mapFilterNot(notFilter *hexaParser.NotExpression, isChild bool) string {
+func (mapper *CedarConditionMapper) mapFilterNot(notFilter *hexaParser.NotExpression, _ bool) string {
     subExpression := notFilter.Expression
     var clause string
     switch subFilter := subExpression.(type) {
@@ -224,8 +224,8 @@ func (mapper *CedarConditionMapper) mapFilterNot(notFilter *hexaParser.NotExpres
     return fmt.Sprintf("!( %v )", clause)
 }
 
-func (mapper *CedarConditionMapper) mapFilterPrecedence(pfilter *hexaParser.PrecedenceExpression, isChild bool) string {
-    subExpression := pfilter.Expression
+func (mapper *CedarConditionMapper) mapFilterPrecedence(precedenceExpression *hexaParser.PrecedenceExpression, _ bool) string {
+    subExpression := precedenceExpression.Expression
     var clause string
     switch subFilter := subExpression.(type) {
     case hexaParser.LogicalExpression:

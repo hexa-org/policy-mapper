@@ -101,7 +101,7 @@ func (p *PolicyInfo) Equals(hexaPolicy PolicyInfo) bool {
     }
 
     // check for semantic equivalence.
-    if !(p.Subjects.equals(hexaPolicy.Subjects) && p.actionEquals(hexaPolicy.Actions) && p.Object.equals(&hexaPolicy.Object)) {
+    if !(p.Subjects.Equals(hexaPolicy.Subjects) && p.ActionsEqual(hexaPolicy.Actions) && p.Object.equals(&hexaPolicy.Object)) {
         return false
     }
 
@@ -121,7 +121,7 @@ func (p *PolicyInfo) Equals(hexaPolicy PolicyInfo) bool {
         if hexaPolicy.Scope == nil {
             return false
         }
-        if !p.Scope.equals(hexaPolicy.Scope) {
+        if !p.Scope.Equals(hexaPolicy.Scope) {
             return false
         }
     }
@@ -149,11 +149,11 @@ func (p *PolicyInfo) Compare(hexaPolicy PolicyInfo) []string {
     var difs = make([]string, 0)
 
     // Now do a semantic compare (e.g. things can be different order but the same)
-    if !p.Subjects.equals(hexaPolicy.Subjects) {
+    if !p.Subjects.Equals(hexaPolicy.Subjects) {
         difs = append(difs, CompareDifSubject)
     }
 
-    if !p.actionEquals(hexaPolicy.Actions) {
+    if !p.ActionsEqual(hexaPolicy.Actions) {
         difs = append(difs, CompareDifAction)
     }
 
@@ -176,14 +176,14 @@ func (p *PolicyInfo) Compare(hexaPolicy PolicyInfo) []string {
     return difs
 }
 
-func (p *PolicyInfo) actionEquals(actions []ActionInfo) bool {
-    if len(p.Actions) != len(actions) {
+func (p *PolicyInfo) ActionsEqual(actions []ActionInfo) bool {
+    if actions == nil || len(p.Actions) != len(actions) {
         return false
     }
     for _, action := range p.Actions {
         isMatch := false
-        for _, caction := range actions {
-            if action.Equals(caction) {
+        for _, compareAction := range actions {
+            if action.Equals(compareAction) {
                 isMatch = true
                 break
             }
@@ -223,7 +223,7 @@ func (s SubjectInfo) String() []string {
     return s
 }
 
-func (s SubjectInfo) equals(subjects SubjectInfo) bool {
+func (s SubjectInfo) Equals(subjects SubjectInfo) bool {
     if len(s) != len(subjects) {
         return false
     }
@@ -268,9 +268,9 @@ const (
     ScopeTypeUnassigned string = "na"
 )
 
-// ScopeInfo.equals returns equality based on string compare. This does not lexically compare filters.
+// Equals returns equality based on string compare. This does not lexically compare filters.
 // This function is intended to determine if a policy element has changed.
-func (s *ScopeInfo) equals(scope *ScopeInfo) bool {
+func (s *ScopeInfo) Equals(scope *ScopeInfo) bool {
     if s.Type() != scope.Type() {
         return false
     }

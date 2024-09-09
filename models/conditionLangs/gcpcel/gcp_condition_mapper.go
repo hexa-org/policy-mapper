@@ -46,31 +46,28 @@ func (mapper *GoogleConditionMapper) MapConditionToProvider(condition conditions
 
 }
 
-func (mapper *GoogleConditionMapper) MapFilter(ast *parser.Expression) (string, error) {
-    err := checkCompatibility(*ast)
+func (mapper *GoogleConditionMapper) MapFilter(ast parser.Expression) (string, error) {
+    err := checkCompatibility(ast)
     if err != nil {
         return "", err
     }
     return mapper.mapFilterInternal(ast, false), nil
 }
 
-func (mapper *GoogleConditionMapper) mapFilterInternal(ast *parser.Expression, isChild bool) string {
+func (mapper *GoogleConditionMapper) mapFilterInternal(ast parser.Expression, isChild bool) string {
 
-    // dereference
-    deref := *ast
-
-    switch element := deref.(type) {
+    switch element := ast.(type) {
     case parser.NotExpression:
-        return mapper.mapFilterNot(&element, isChild)
+        return mapper.mapFilterNot(element, isChild)
     case parser.PrecedenceExpression:
-        return mapper.mapFilterPrecedence(&element, true)
+        return mapper.mapFilterPrecedence(element, true)
 
     case parser.LogicalExpression:
-        return mapper.mapFilterLogical(&element, isChild)
+        return mapper.mapFilterLogical(element, isChild)
 
     default:
-        attrExpression := deref.(parser.AttributeExpression)
-        return mapper.mapFilterAttrExpr(&attrExpression)
+        attrExpression := ast.(parser.AttributeExpression)
+        return mapper.mapFilterAttrExpr(attrExpression)
     }
     // return mapTool.mapFilterValuePath(deref.(idqlCondition.ValuePathExpression))
 }
@@ -85,38 +82,38 @@ func (mapTool *GoogleConditionMapper) mapFilterValuePath(vpFilter idqlCondition.
 }
 */
 
-func (mapper *GoogleConditionMapper) mapFilterNot(notFilter *parser.NotExpression, isChild bool) string {
+func (mapper *GoogleConditionMapper) mapFilterNot(notFilter parser.NotExpression, _ bool) string {
     subExpression := notFilter.Expression
     var celFilter string
     switch subFilter := subExpression.(type) {
     case parser.LogicalExpression:
         // For the purpose of a not idqlCondition, the logical expression is not a child
-        celFilter = mapper.mapFilterLogical(&subFilter, false)
+        celFilter = mapper.mapFilterLogical(subFilter, false)
         celFilter = "(" + celFilter + ")"
         break
     default:
-        celFilter = mapper.mapFilterInternal(&subFilter, false)
+        celFilter = mapper.mapFilterInternal(subFilter, false)
     }
 
     return fmt.Sprintf("!%v", celFilter)
 }
 
-func (mapper *GoogleConditionMapper) mapFilterPrecedence(pfilter *parser.PrecedenceExpression, isChild bool) string {
+func (mapper *GoogleConditionMapper) mapFilterPrecedence(pfilter parser.PrecedenceExpression, _ bool) string {
     subExpression := pfilter.Expression
     var celFilter string
     switch subFilter := subExpression.(type) {
     case parser.LogicalExpression:
         // For the purpose of a not idqlCondition, the logical expression is not a child
-        celFilter = mapper.mapFilterLogical(&subFilter, false)
+        celFilter = mapper.mapFilterLogical(subFilter, false)
         celFilter = "(" + celFilter + ")"
         break
     default:
-        celFilter = mapper.mapFilterInternal(&subFilter, false)
+        celFilter = mapper.mapFilterInternal(subFilter, false)
     }
     return fmt.Sprintf("%v", celFilter)
 }
 
-func (mapper *GoogleConditionMapper) mapFilterLogical(logicFilter *parser.LogicalExpression, isChild bool) string {
+func (mapper *GoogleConditionMapper) mapFilterLogical(logicFilter parser.LogicalExpression, isChild bool) string {
     isDouble := false
     var celLeft, celRight string
     switch subFilter := logicFilter.Left.(type) {
@@ -126,9 +123,9 @@ func (mapper *GoogleConditionMapper) mapFilterLogical(logicFilter *parser.Logica
         }
     }
 
-    celLeft = mapper.mapFilterInternal(&logicFilter.Left, !isDouble)
+    celLeft = mapper.mapFilterInternal(logicFilter.Left, !isDouble)
 
-    celRight = mapper.mapFilterInternal(&logicFilter.Right, !isDouble)
+    celRight = mapper.mapFilterInternal(logicFilter.Right, !isDouble)
 
     switch logicFilter.Operator {
     default:
@@ -143,7 +140,7 @@ func (mapper *GoogleConditionMapper) mapFilterLogical(logicFilter *parser.Logica
     }
 }
 
-func (mapper *GoogleConditionMapper) mapFilterAttrExpr(attrExpr *parser.AttributeExpression) string {
+func (mapper *GoogleConditionMapper) mapFilterAttrExpr(attrExpr parser.AttributeExpression) string {
     compareValue := prepareValue(attrExpr)
 
     mapPath := mapper.NameMapper.GetProviderAttributeName(attrExpr.AttributePath)
@@ -179,7 +176,7 @@ func (mapper *GoogleConditionMapper) mapFilterAttrExpr(attrExpr *parser.Attribut
 /*
 If the value type is string, it needs to be quoted.
 */
-func prepareValue(attrExpr *parser.AttributeExpression) string {
+func prepareValue(attrExpr parser.AttributeExpression) string {
     compValue := attrExpr.CompareValue
     if compValue == "" {
         return ""
@@ -206,15 +203,20 @@ func (mapper *GoogleConditionMapper) MapProviderToCondition(expression string) (
     if issues != nil {
         return conditions.ConditionInfo{}, errors.New("CEL Mapping Error: " + issues.String())
     }
-
-    idqlAst, err := mapper.mapCelExpr(celAst.Expr(), false)
+    parsedAst, err := cel.AstToParsedExpr(celAst)
+    if err != nil {
+        return conditions.ConditionInfo{
+            Rule: "",
+        }, errors.New("IDQL condition mapTool error: " + err.Error())
+    }
+    idqlAst, err := mapper.mapCelExpr(parsedAst.GetExpr(), false)
     if err != nil {
         return conditions.ConditionInfo{
             Rule: "",
         }, errors.New("IDQL condition mapTool error: " + err.Error())
     }
 
-    condString := conditions.SerializeExpression(&idqlAst)
+    condString := conditions.SerializeExpression(idqlAst)
 
     return conditions.ConditionInfo{
         Rule:   condString,
@@ -390,7 +392,7 @@ func (mapper *GoogleConditionMapper) mapCelAttrCompare(expressions []*expr.Expr,
     return attrFilter, nil
 }
 
-func (mapper *GoogleConditionMapper) mapCelNot(expressions []*expr.Expr, isChild bool) parser.Expression {
+func (mapper *GoogleConditionMapper) mapCelNot(expressions []*expr.Expr, _ bool) parser.Expression {
 
     expression, _ := mapper.mapCelExpr(expressions[0], false) // ischild is ignored because of not
 
@@ -400,7 +402,7 @@ func (mapper *GoogleConditionMapper) mapCelNot(expressions []*expr.Expr, isChild
     return notFilter
 }
 
-func (mapper *GoogleConditionMapper) mapCelLogical(expressions []*expr.Expr, isAnd bool, isChild bool) (parser.Expression, error) {
+func (mapper *GoogleConditionMapper) mapCelLogical(expressions []*expr.Expr, isAnd bool, _ bool) (parser.Expression, error) {
     filters := make([]parser.Expression, len(expressions))
     var err error
     // collapse n clauses back into a series of nested pairwise and/or clauses
