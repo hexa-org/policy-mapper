@@ -46,6 +46,7 @@ type LogicalOperator string
 type Expression interface {
     exprNode()
     String() string
+    Dif() string
 }
 
 type LogicalExpression struct {
@@ -54,8 +55,12 @@ type LogicalExpression struct {
 }
 
 func (LogicalExpression) exprNode() {}
+
 func (e LogicalExpression) String() string {
     return fmt.Sprintf("%s %s %s", e.Left.String(), e.Operator, e.Right.String())
+}
+func (e LogicalExpression) Dif() string {
+    return string(e.Operator)
 }
 
 type NotExpression struct {
@@ -68,6 +73,16 @@ func (e NotExpression) String() string {
 
 func (NotExpression) exprNode() {}
 
+func (e NotExpression) Dif() string {
+
+    switch exp := e.Expression.(type) {
+    case AttributeExpression, ValuePathExpression:
+        return fmt.Sprintf("not(%s)", exp.String())
+    default:
+        return "not"
+    }
+}
+
 type PrecedenceExpression struct {
     Expression Expression
 }
@@ -76,6 +91,10 @@ func (PrecedenceExpression) exprNode() {}
 
 func (e PrecedenceExpression) String() string {
     return fmt.Sprintf("(%s)", e.Expression.String())
+}
+
+func (PrecedenceExpression) Dif() string {
+    return ""
 }
 
 type AttributeExpression struct {
@@ -113,6 +132,10 @@ func (e AttributeExpression) String() string {
     return fmt.Sprintf("%s %s \"%s\"", e.AttributePath, e.Operator, e.CompareValue)
 }
 
+func (e AttributeExpression) Dif() string {
+    return e.String()
+}
+
 type ValuePathExpression struct {
     Attribute   string
     VPathFilter Expression
@@ -122,3 +145,4 @@ func (ValuePathExpression) exprNode() {}
 func (e ValuePathExpression) String() string {
     return fmt.Sprintf("%s[%s]", e.Attribute, e.VPathFilter.String())
 }
+func (e ValuePathExpression) Dif() string { return e.String() }

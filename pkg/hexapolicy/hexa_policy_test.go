@@ -82,11 +82,11 @@ func TestSubjectInfo_equals(t *testing.T) {
     p1 := policies.Policies[0]
     p2 := policies.Policies[1]
     assert.NotNil(t, p1.Subjects, "Subjects should not be nil")
-    assert.False(t, p1.Subjects.equals(p2.Subjects))
+    assert.False(t, p1.Subjects.Equals(p2.Subjects))
     p3 := p1
     // check case sensitivity
     p3.Subjects = []string{"user:Accounting@Hexaindustries.io"}
-    assert.True(t, p1.Subjects.equals(p3.Subjects))
+    assert.True(t, p1.Subjects.Equals(p3.Subjects))
 }
 
 func TestPolicyInfo_actionEquals(t *testing.T) {
@@ -94,23 +94,23 @@ func TestPolicyInfo_actionEquals(t *testing.T) {
     p1 := policies.Policies[0]
     p2 := policies.Policies[1]
 
-    assert.False(t, p1.actionEquals(p2.Actions))
+    assert.False(t, p1.ActionsEqual(p2.Actions))
 
     p3 := p2
 
     // check that equivalence works with the same elements in the same order
 
     p3.Actions = p1.Actions
-    assert.True(t, p1.actionEquals(p3.Actions))
+    assert.True(t, p1.ActionsEqual(p3.Actions))
 
     // Check that equivalence works out of order
     p3.Actions = []ActionInfo{"http:POST:/accounting", "http:GET:/accounting"}
 
-    assert.True(t, p1.actionEquals(p3.Actions))
+    assert.True(t, p1.ActionsEqual(p3.Actions))
 
     p3.Actions = []ActionInfo{"http:POST:/accounting"}
 
-    assert.False(t, p1.actionEquals(p3.Actions))
+    assert.False(t, p1.ActionsEqual(p3.Actions))
 }
 
 func TestObjectInfo_equals(t *testing.T) {
@@ -153,21 +153,21 @@ func TestScope_equals(t *testing.T) {
     assert.Equal(t, ScopeTypeIDQL, scope1.Type())
     assert.Equal(t, "username eq smith", scope2.Value())
 
-    assert.True(t, scope1.equals(&scope2))
+    assert.True(t, scope1.Equals(&scope2))
 
     filter = filter + "and surname eq smith"
-    assert.False(t, scope1.equals(&scope2))
+    assert.False(t, scope1.Equals(&scope2))
 
     filter = "idql:username eq smith"
 
     scope2.Attributes = []string{"username"}
-    assert.False(t, scope1.equals(&scope2))
+    assert.False(t, scope1.Equals(&scope2))
 
     scope2.Attributes = []string{"emails", "username"}
-    assert.True(t, scope1.equals(&scope2))
+    assert.True(t, scope1.Equals(&scope2))
 
     scope2.Attributes = []string{"emails", "xyz"}
-    assert.False(t, scope1.equals(&scope2))
+    assert.False(t, scope1.Equals(&scope2))
 
     filter = "dummy"
     scope2.Filter = &filter
@@ -177,15 +177,15 @@ func TestScope_equals(t *testing.T) {
     scope2.Filter = nil
     assert.Equal(t, ScopeTypeUnassigned, scope2.Type())
 
-    assert.False(t, scope1.equals(&scope2), "Test one filter is null")
-    assert.False(t, scope2.equals(scope1), "Test one filter is null")
+    assert.False(t, scope1.Equals(&scope2), "Test one filter is null")
+    assert.False(t, scope2.Equals(scope1), "Test one filter is null")
 
     filter = "sQl:where username is \"sam\""
     scope2.Filter = &filter
 
     assert.Equal(t, "where username is \"sam\"", scope2.Value())
     assert.Equal(t, ScopeTypeSQL, scope2.Type())
-    assert.False(t, scope1.equals(&scope2), "Test filters of different types")
+    assert.False(t, scope1.Equals(&scope2), "Test filters of different types")
 
 }
 
@@ -262,7 +262,7 @@ func TestPolicyInfo_Equals(t *testing.T) {
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             p := &tt.fields.testPolicy
-            assert.Equalf(t, tt.want, p.Equals(tt.args.hexaPolicy), "equals(%v)", tt.args.hexaPolicy)
+            assert.Equalf(t, tt.want, p.Equals(tt.args.hexaPolicy), "Equals(%v)", tt.args.hexaPolicy)
         })
     }
 }

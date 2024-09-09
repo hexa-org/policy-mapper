@@ -47,9 +47,9 @@ func TestParseFilter(t *testing.T) {
         t.Run(example[0], func(t *testing.T) {
             var err error
             fmt.Println(fmt.Sprintf("Input:\t%s", example[0]))
-            ast, err := ParseFilter(example[0])
+            element, err := ParseFilter(example[0])
             assert.NoError(t, err, "Example not parsed: "+example[0])
-            element := *ast
+
             out := element.String()
             fmt.Println(fmt.Sprintf("Parsed:\t%s", out))
             match := example[1]

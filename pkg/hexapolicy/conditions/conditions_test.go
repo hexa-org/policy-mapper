@@ -92,3 +92,68 @@ func TestWalker(t *testing.T) {
     back2 := conditions.SerializeExpression(ast)
     fmt.Println(back2)
 }
+
+func TestEquals(t *testing.T) {
+
+    tests := []struct {
+        Name     string
+        R1       string
+        R2       string
+        Expected bool
+    }{
+        {
+            "Same with Not",
+            "level gt 6 and not(expired eq true)",
+            "level gt 6 and not(expired eq true)",
+            true,
+        },
+        {
+            "Same with precedence",
+            "level gt 6 and (expired eq true)",
+            "level gt 6 and expired eq true",
+            true,
+        },
+        {
+            "Same but reverse",
+            "level gt 6 and not(expired eq true)",
+            " not(expired eq true) and level gt 6 ",
+            true,
+        },
+        {
+            "Not same",
+            "level gt 6 and not(expired eq true)",
+            "(expired eq true) and level gt 6",
+            false,
+        },
+        {
+            "Same different not",
+            "level gt 6 and not(expired eq true)",
+            "not(level gt 6) and expired eq true",
+            false,
+        },
+        {
+            "Lots of logical",
+            "(level gt 5 or test eq \"abc\" or level lt 10) and (username sw \"emp\" or username eq \"guest\")",
+            "(username eq \"guest\" or username sw \"emp\") and (level gt 5 or test eq \"abc\" or level lt 10)",
+            true,
+        },
+        {
+            "Switched operator ",
+            "(level gt 5 or test eq \"abc\" or level lt 10) and (username sw \"emp\" or username eq \"guest\")",
+            "(username sw \"emp\" or username eq \"guest\") or (level gt 5 or test eq \"abc\" or level lt 10)",
+            false,
+        },
+    }
+
+    for _, test := range tests {
+        t.Run(test.Name, func(t *testing.T) {
+            fmt.Println(fmt.Sprintf("R1:\t%s", test.R1))
+            fmt.Println(fmt.Sprintf("R2:\t%s", test.R2))
+            condition1 := conditions.ConditionInfo{Rule: test.R1}
+            condition2 := conditions.ConditionInfo{Rule: test.R2}
+
+            assert.Equal(t, test.Expected, condition1.Equals(&condition2), "Check expected result matches: %s", test.Expected)
+        })
+    }
+
+}
