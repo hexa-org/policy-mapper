@@ -9,6 +9,41 @@ hexa_rego_version := "0.7.0"
 
 policies_evaluated := count(policies)
 
+error_idql contains item if {
+	some policy in policies
+	item := diag_error_idundef(policy)
+}
+
+error_idql contains item if {
+	some policy in policies
+	count(policy.subjects) < 1
+	item := {
+		"policyId": policy.meta.policyId,
+		"error": "missing value for subjects",
+	}
+}
+
+error_idql contains item if {
+	some policy in policies
+	item := diag_error_version(policy)
+}
+
+diag_error_idundef(policy) := diag if {
+	not policy.meta.policyId
+	diag := {
+		"policyId": "undefined",
+		"error": "idql policy missing value for meta.policyId",
+	}
+}
+
+diag_error_version(policy) := diag if {
+	policy.meta.version < "0.7"
+	diag := {
+		"policyId": policy.meta.policyId,
+		"error": "Hexa Rego 0.7 requires IDQL version 0.7 or later",
+	}
+}
+
 # Returns the list of matching policy names based on current request
 allow_set contains policy_id if {
 	some policy in policies
@@ -16,23 +51,23 @@ allow_set contains policy_id if {
 	# return id of the policy
 	policy_id := sprintf("%s", [policy.meta.policyId])
 
-	subject_match(policy.subject, input.subject, input.req)
+	subject_match(policy.subjects, input.subject, input.req)
 
 	actions_match(policy.actions, input.req)
 
-	object_match(policy.object, input.req)
+	is_object_match(policy.object, input.req)
 
 	condition_match(policy, input)
 }
 
 scopes contains scope if {
-    some policy in policies
-    policy.meta.policyId in allow_set
+	some policy in policies
+	policy.meta.policyId in allow_set
 
-    scope := {
-        "policyId": policy.meta.policyId,
-        "scope": policy.scope
-    }
+	scope := {
+		"policyId": policy.meta.policyId,
+		"scope": policy.scope,
+	}
 }
 
 # Returns the list of possible actions allowed (e.g. for UI buttons)
@@ -49,15 +84,15 @@ allow if {
 	count(allow_set) > 0
 }
 
-subject_match(psubject, _, _) if {
+subject_match(subject, _, _) if {
 	# Match if no value specified - treat as wildcard
-	not psubject
+	not subject
 }
 
-subject_match(psubject, insubject, req) if {
+subject_match(subject, inputsubject, req) if {
 	# Match if a member matches
-	some member in psubject
-	subject_member_match(member, insubject, req)
+	some member in subject
+	subject_member_match(member, inputsubject, req)
 }
 
 subject_member_match(member, _, _) if {
@@ -65,31 +100,31 @@ subject_member_match(member, _, _) if {
 	lower(member) == "any"
 }
 
-subject_member_match(member, insubj, _) if {
+subject_member_match(member, inputsubject, _) if {
 	# anyAutheticated - A match occurs if input.subject has a value other than anonymous and exists.
-	insubj.sub # check sub exists
+	inputsubject.sub # check sub exists
 	lower(member) == "anyauthenticated"
 }
 
 # Check for match based on user:<sub>
-subject_member_match(member, insubj, _) if {
+subject_member_match(member, inputsubject, _) if {
 	startswith(lower(member), "user:")
 	user := substring(member, 5, -1)
-	lower(user) == lower(insubj.sub)
+	lower(user) == lower(inputsubject.sub)
 }
 
 # Check for match if sub ends with domain
-subject_member_match(member, insubj, _) if {
+subject_member_match(member, inputsubject, _) if {
 	startswith(lower(member), "domain:")
 	domain := lower(substring(member, 7, -1))
-	endswith(lower(insubj.sub), domain)
+	endswith(lower(inputsubject.sub), domain)
 }
 
 # Check for match based on role
-subject_member_match(member, insubj, _) if {
+subject_member_match(member, inputsubject, _) if {
 	startswith(lower(member), "role:")
 	role := substring(member, 5, -1)
-	role in insubj.roles
+	role in inputsubject.roles
 }
 
 subject_member_match(member, _, req) if {
@@ -142,15 +177,15 @@ check_http_match(actionUri, req) if {
 	check_path(path, req)
 }
 
-object_match(object, _) if {
-	not object
+is_object_match(resource, _) if {
+	not resource
 }
 
-object_match(object, req) if {
-	object
+is_object_match(resource, req) if {
+	resource
 
 	some request_uri in req.resourceIds
-	lower(object) == lower(request_uri)
+	lower(resource) == lower(request_uri)
 }
 
 check_http_method(allowMask, _) if {
@@ -170,7 +205,7 @@ check_http_method(allowMask, reqMethod) if {
 
 check_path(path, req) if {
 	path # if path specified it must match
-    glob.match(path, ["*"], req.path)
+	glob.match(path, ["*"], req.path)
 }
 
 check_path(path, _) if {
