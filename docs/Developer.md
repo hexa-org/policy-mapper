@@ -123,7 +123,7 @@ Policies retrieved for shK:
   "policies": [
     {
       "Meta": {
-        "Version": "0.6",
+        "Version": "0.7",
         "SourceData": {
           "policyType": "STATIC",
           "principal": null,
@@ -137,35 +137,22 @@ Policies retrieved for shK:
         "PapId": "K21RFtX...A93DH7z5",
         "ProviderType": "avp"
       },
-      "Subject": {
-        "Members": [
+      "Subjects": [
           "any"
         ]
-      },
+      ,
       "Actions": [
-        {
-          "ActionUri": "cedar:hexa_avp::Action::ReadAccount"
-        },
-        {
-          "ActionUri": "cedar:hexa_avp::Action::Transfer"
-        },
-        {
-          "ActionUri": "cedar:hexa_avp::Action::Deposit"
-        },
-        {
-          "ActionUri": "cedar:hexa_avp::Action::Withdrawl"
-        },
-        {
-          "ActionUri": "cedar:hexa_avp::Action::UpdateAccount"
-        }
+        "cedar:hexa_avp::Action::ReadAccount",
+        "cedar:hexa_avp::Action::Transfer",
+        "cedar:hexa_avp::Action::Deposit",
+        "cedar:hexa_avp::Action::Withdrawl",
+        "cedar:hexa_avp::Action::UpdateAccount"
       ],
-      "Object": {
-        "resource_id": ""
-      }
+      "Object": ""
     },
     {
       "Meta": {
-        "Version": "0.6",
+        "Version": "0.7",
         "SourceData": {
           "policyType": "TEMPLATE_LINKED",
           "principal": {
@@ -185,19 +172,14 @@ Policies retrieved for shK:
         "PapId": "K21RFtX...A93DH7z5",
         "ProviderType": "avp"
       },
-      "Subject": {
-        "Members": [
+      "Subjects": [
           "?principal"
         ]
-      },
+      ,
       "Actions": [
-        {
-          "ActionUri": "cedar:hexa_avp::Action::ReadAccount"
-        }
+        "cedar:hexa_avp::Action::ReadAccount"
       ],
-      "Object": {
-        "resource_id": "cedar:?resource"
-      }
+      "Object": "cedar:?resource"
     }
   ],
   "app": "K21RFtX...A93DH7z5"
@@ -270,47 +252,37 @@ Ignoring AVP policyid UaN2xdjgv1Dhdpuoa3ebRU. Template updates not currently sup
 0: DIF: UPDATE  [ACTION]
 {
  "Meta": {
-  "Version": "0.6",
-  "SourceData": {
-   "policyType": "STATIC",
-   "principal": null,
-   "resource": null
+{
+  "Meta": {
+    "Version": "0.7",
+    "SourceData": {
+      "policyType": "STATIC",
+      "principal": null,
+      "resource": null
+    },
+    "Description": "Hexa demo canary policy",
+    "Created": "2023-12-26T21:45:53.558204Z",
+    "Modified": "2023-12-27T22:20:18.592795Z",
+    "Etag": "20-f2ec1edc53e44c07e4d790d8936ade24b27f04eb",
+    "PolicyId": "KDqUKMRNEg6aEjZ6mz9dJq",
+    "PapId": "K21...93DH7z5",
+    "ProviderType": "avp"
   },
-  "Description": "Hexa demo canary policy",
-  "Created": "2023-12-26T21:45:53.558204Z",
-  "Modified": "2023-12-27T22:20:18.592795Z",
-  "Etag": "20-f2ec1edc53e44c07e4d790d8936ade24b27f04eb",
-  "PolicyId": "KDqUKMRNEg6aEjZ6mz9dJq",
-  "PapId": "K21...93DH7z5",
-  "ProviderType": "avp"
- },
- "Subject": {
-  "Members": [
-   "any"
-  ]
- },
- "Actions": [
-  {
-   "ActionUri": "cedar:hexa_avp::Action::ReadAccount"
-  },
-  {
-   "ActionUri": "cedar:hexa_avp::Action::Transfer"
-  },
-  {
-   "ActionUri": "cedar:hexa_avp::Action::Deposit"
-  },
-  {
-   "ActionUri": "cedar:hexa_avp::Action::Withdrawl"
-  }
- ],
- "Object": {
-  "resource_id": ""
- }
+  "Subjects": [
+    "any"
+  ],
+  "Actions": [
+    "cedar:hexa_avp::Action::ReadAccount",
+    "cedar:hexa_avp::Action::Transfer",
+    "cedar:hexa_avp::Action::Deposit",
+    "cedar:hexa_avp::Action::Withdrawl"
+  ],
+  "Object": ""
 }
 1: DIF: UNSUPPORTED 
 {
  "Meta": {
-  "Version": "0.6",
+  "Version": "0.7",
   "SourceData": {
    "policyType": "TEMPLATE_LINKED",
    "principal": {
@@ -330,19 +302,13 @@ Ignoring AVP policyid UaN2xdjgv1Dhdpuoa3ebRU. Template updates not currently sup
   "PapId": "K21...93DH7z5",
   "ProviderType": "avp"
  },
- "Subject": {
-  "Members": [
+ "Subjects": [
    "?principal"
-  ]
- },
+  ],
  "Actions": [
-  {
-   "ActionUri": "cedar:hexa_avp::Action::ReadAccount"
-  }
+  "cedar:hexa_avp::Action::ReadAccount"
  ],
- "Object": {
-  "resource_id": "cedar:?resource"
- }
+ "Object": "cedar:?resource"
 }
 
 Applying 2 policies to rKO
@@ -405,21 +371,15 @@ or an attribute "policies" which is assigned an array of policies. For example:
   "policies": [
     {
       "Meta": {
-        "Version": "0.6"
+        "Version": "0.7"
       },
       "Actions": [
-        {
-          "ActionUri": "cedar:Action::view"
-        }
+        "cedar:Action::view"
       ],
-      "Subject": {
-        "Members": [
+      "Subjects": [
           "User:\"alice\""
-        ]
-      },
-      "Object": {
-        "resource_id": "cedar:Photo::VacationPhoto94.jpg"
-      }
+        ],
+      "Object": "cedar:Photo::VacationPhoto94.jpg"
     }
   ]
 }

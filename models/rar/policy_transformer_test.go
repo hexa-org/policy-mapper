@@ -183,7 +183,7 @@ func TestFlattenPolicy_ReturnsEmpty(t *testing.T) {
 
 func TestFlattenPolicy_DupResourceDupMembers(t *testing.T) {
     pol1 := hexapolicy.PolicyInfo{
-        Meta: hexapolicy.MetaInfo{Version: "0.5"},
+        Meta: hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
         Actions: []hexapolicy.ActionInfo{
             hexapolicy.ActionInfo(""), hexapolicy.ActionInfo("1act"), hexapolicy.ActionInfo(" "), hexapolicy.ActionInfo("2act")},
         Subjects: []string{"1mem", "", "2mem"},
@@ -191,7 +191,7 @@ func TestFlattenPolicy_DupResourceDupMembers(t *testing.T) {
     }
 
     pol2 := hexapolicy.PolicyInfo{
-        Meta: hexapolicy.MetaInfo{Version: "0.5"},
+        Meta: hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
         Actions: []hexapolicy.ActionInfo{
             hexapolicy.ActionInfo(""), hexapolicy.ActionInfo("3act"), hexapolicy.ActionInfo(" "), hexapolicy.ActionInfo("4act")},
         Subjects: []string{"1mem", "", "2mem"},
@@ -216,12 +216,12 @@ func TestFlattenPolicy_DupResourceDupMembers(t *testing.T) {
 
 func TestFlattenPolicy_NoResource(t *testing.T) {
     pol1 := hexapolicy.PolicyInfo{
-        Meta:     hexapolicy.MetaInfo{Version: "0.5"},
+        Meta:     hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
         Actions:  []hexapolicy.ActionInfo{hexapolicy.ActionInfo("1act"), hexapolicy.ActionInfo("2act")},
         Subjects: []string{"1mem", "", "2mem"},
     }
     pol2 := hexapolicy.PolicyInfo{
-        Meta:     hexapolicy.MetaInfo{Version: "0.5"},
+        Meta:     hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
         Actions:  []hexapolicy.ActionInfo{hexapolicy.ActionInfo("1act")},
         Subjects: []string{"1mem", "2mem"},
         Object:   hexapolicy.ObjectInfo("resource1"),
@@ -256,7 +256,7 @@ func TestFlattenPolicy_NoResource(t *testing.T) {
 
 func TestFlattenPolicy_NoActions(t *testing.T) {
     pol1 := hexapolicy.PolicyInfo{
-        Meta:     hexapolicy.MetaInfo{Version: "0.5"},
+        Meta:     hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
         Subjects: []string{"1mem", "", "2mem"},
         Object:   hexapolicy.ObjectInfo("resource1"),
     }
@@ -268,7 +268,7 @@ func TestFlattenPolicy_NoActions(t *testing.T) {
 
 func TestFlattenPolicy_NoMembers(t *testing.T) {
     pol1 := hexapolicy.PolicyInfo{
-        Meta:    hexapolicy.MetaInfo{Version: "0.5"},
+        Meta:    hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
         Actions: []hexapolicy.ActionInfo{hexapolicy.ActionInfo("1act"), hexapolicy.ActionInfo("2act")},
         Object:  hexapolicy.ObjectInfo("resource1"),
     }
@@ -288,7 +288,7 @@ func TestFlattenPolicy_NoMembers(t *testing.T) {
 
 func TestFlattenPolicy_MergeSameResourceAction(t *testing.T) {
     pol1a := hexapolicy.PolicyInfo{
-        Meta: hexapolicy.MetaInfo{Version: "0.5"},
+        Meta: hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
         Actions: []hexapolicy.ActionInfo{
             hexapolicy.ActionInfo("1act"), hexapolicy.ActionInfo("2act")},
         Subjects: []string{"1mem", "2mem"},
@@ -296,7 +296,7 @@ func TestFlattenPolicy_MergeSameResourceAction(t *testing.T) {
     }
 
     pol1b := hexapolicy.PolicyInfo{
-        Meta: hexapolicy.MetaInfo{Version: "0.5"},
+        Meta: hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
         Actions: []hexapolicy.ActionInfo{
             hexapolicy.ActionInfo("1act"), hexapolicy.ActionInfo("2act")},
         Subjects: []string{"3mem", "4mem"},
@@ -304,7 +304,7 @@ func TestFlattenPolicy_MergeSameResourceAction(t *testing.T) {
     }
 
     pol2 := hexapolicy.PolicyInfo{
-        Meta: hexapolicy.MetaInfo{Version: "0.5"},
+        Meta: hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
         Actions: []hexapolicy.ActionInfo{
             hexapolicy.ActionInfo("3act"), hexapolicy.ActionInfo("4act")},
         Subjects: []string{"1mem", "2mem"},
