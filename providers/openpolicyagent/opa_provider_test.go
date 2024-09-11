@@ -443,14 +443,12 @@ func TestMakeDefaultBundle(t *testing.T) {
   "policies": [
     {
       "meta": {
-		"version": "0.6"
+		"version": "0.7"
       },
-      "actions": [ "ietf:http:GET" ],
-      "subject": {
-        "members": [
+      "actions": [ "http:GET" ],
+      "subjects": [
           "anyauthenticated"
-        ]
-      },
+        ],
       "object": "aResourceId"
     }
   ]
@@ -486,11 +484,11 @@ func TestMakeDefaultBundle(t *testing.T) {
     meta := policies[0].Meta
 
     actionURi := policies[0].Actions[0].String()
-    assert.Equal(t, "ietf:http:GET", actionURi)
+    assert.Equal(t, "http:GET", actionURi)
     assert.Equal(t, "aResourceId", policies[0].Object.String())
     // assert.JSONEq(t, `{"policies":[{"meta":{"version":"0.5"},"actions":[{"actionUri":"http:GET"}],"subject":{"members":["allusers"]},"object":{"resource_id":"anotherResourceId"}}]}`, string(readFile))
     // assert.Equal(t, "anotherResourceId", *meta.PapId)
-    assert.Equal(t, "0.6", meta.Version, "check version")
+    assert.Equal(t, hexapolicy.IdqlVersion, meta.Version, "check version")
 
     /*
        	dcreated, _ := os.ReadFile(filepath.Join(path, "/bundle/data.json"))

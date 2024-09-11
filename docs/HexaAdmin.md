@@ -60,7 +60,7 @@ Policies retrieved for rKO:
   "policies": [
     {
       "Meta": {
-        "Version": "0.6",
+        "Version": "0.7",
         "SourceData": {
           "policyType": "STATIC",
           "principal": null,
@@ -104,7 +104,7 @@ Ignoring AVP policyid UaN2xdjgv1Dhdpuoa3ebRU. Template updates not currently sup
 0: DIF: UPDATE  [ACTION]
 {
  "Meta": {
-  "Version": "0.6",
+  "Version": "0.7",
   "SourceData": {
    "policyType": "STATIC",
    "principal": null,
@@ -118,33 +118,21 @@ Ignoring AVP policyid UaN2xdjgv1Dhdpuoa3ebRU. Template updates not currently sup
   "PapId": "K21...93DH7z5",
   "ProviderType": "avp"
  },
- "Subject": {
-  "Members": [
+ "Subjects": [
    "any"
-  ]
- },
+  ],
  "Actions": [
-  {
-   "ActionUri": "cedar:hexa_avp::Action::\"ReadAccount\""
-  },
-  {
-   "ActionUri": "cedar:hexa_avp::Action::\"Transfer\""
-  },
-  {
-   "ActionUri": "cedar:hexa_avp::Action::\"Deposit\""
-  },
-  {
-   "ActionUri": "cedar:hexa_avp::Action::\"Withdrawl\""
-  }
+    "cedar:hexa_avp::Action::\"ReadAccount\"",
+    "cedar:hexa_avp::Action::\"Transfer\"",
+    "cedar:hexa_avp::Action::\"Deposit\"",
+    "cedar:hexa_avp::Action::\"Withdrawl\""
  ],
- "Object": {
-  "resource_id": ""
- }
+ "Object": ""
 }
 1: DIF: UNSUPPORTED 
 {
  "Meta": {
-  "Version": "0.6",
+  "Version": "0.7",
   "SourceData": {
    "policyType": "TEMPLATE_LINKED",
    "principal": {
@@ -164,19 +152,13 @@ Ignoring AVP policyid UaN2xdjgv1Dhdpuoa3ebRU. Template updates not currently sup
   "PapId": "K21...93DH7z5",
   "ProviderType": "avp"
  },
- "Subject": {
-  "Members": [
+ "Subjects": [
    "?principal"
-  ]
- },
+  ],
  "Actions": [
-  {
-   "ActionUri": "cedar:hexa_avp::Action::\"ReadAccount\""
-  }
+   "cedar:hexa_avp::Action::\"ReadAccount\""
  ],
- "Object": {
-  "resource_id": "cedar:?resource"
- }
+ "Object": "cedar:?resource"
 }
 
 Applying 2 policies to rKO
