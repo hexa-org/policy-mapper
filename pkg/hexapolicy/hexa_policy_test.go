@@ -46,6 +46,33 @@ var testPolicy2 = `
       "object": "aResourceId"
     }`
 
+var oldPolicy1 = `{
+  "Meta": {
+    "Version": "0.6"
+  },
+  "Actions": [
+    {
+      "ActionUri": "cedar:Action::view"
+    }
+  ],
+  "Subject": {
+    "Members": [
+      "User:\"alice\""
+    ]
+  },
+ "condition": {
+        "rule": "req.ip sw 127 and req.method eq POST",
+        "action": "allow"
+      },
+  "Object": {
+    "resource_id": "cedar:Photo::\"VacationPhoto94.jpg\""
+  },
+"scope": {
+        "filter": "idql:username eq smith",
+        "attributes": ["username","emails"]
+      }
+}`
+
 func getPolicies(t *testing.T) Policies {
     t.Helper()
     var policy1, policy2 PolicyInfo
@@ -75,6 +102,17 @@ func TestReadPolicy(t *testing.T) {
     assert.False(t, policy1.Equals(policy2), "Check policies not equal")
     assert.True(t, policy1.Equals(policy3), "Check that policy1 and policy3 are equal")
 
+}
+
+func TestReadOldPolicy(t *testing.T) {
+    var pol PolicyInfo
+    err := json.Unmarshal([]byte(oldPolicy1), &pol)
+    assert.NoError(t, err, "Check no policy parse error on old policy")
+    assert.Equal(t, IdqlVersion, pol.Meta.Version, "policy should have current version")
+    assert.NotNil(t, pol.Subjects, "Subjects should not be nil")
+    assert.Len(t, pol.Subjects, 1, "should be one subject")
+    assert.Len(t, pol.Actions, 1, "should be one action")
+    assert.Equal(t, "cedar:Photo::\"VacationPhoto94.jpg\"", pol.Object.String(), "resource id should be converted")
 }
 
 func TestSubjectInfo_equals(t *testing.T) {

@@ -63,7 +63,7 @@ func MapCedarPolicyBytes(location string, cedarBytes []byte) (*hexapolicy.Polici
 }
 
 func (t *ParseSet) MapCedarPolicy(policy cedarParser.Policy) error {
-    hexaPolicy := hexapolicy.PolicyInfo{}
+    hexaPolicy := hexapolicy.PolicyInfo{Meta: hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion}}
     pair := PolicyPair{
         HexaPolicy:  &hexaPolicy,
         CedarPolicy: &policy,

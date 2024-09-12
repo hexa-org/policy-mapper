@@ -9,6 +9,7 @@ import (
 
     "github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
     "github.com/hhsnopek/etag"
+    log "golang.org/x/exp/slog"
 )
 
 const (
@@ -48,17 +49,96 @@ func (p *Policies) AddPolicies(policies Policies) {
 
 // PolicyInfo holds a single IDQL Policy Statement
 type PolicyInfo struct {
-    Meta      MetaInfo                  `json:"meta" validate:"required"`     // Meta holds additional information about the policy including policy management data
-    Subjects  SubjectInfo               `json:"subjects" validate:"required"` // Subjects holds the subject clause of an IDQL policy
-    Actions   []ActionInfo              `json:"actions" validate:"required"`  // Actions holds one or moe action uris
-    Object    ObjectInfo                `json:"object" validate:"required"`   // Object the resource, application, or system to which a policy applies
-    Condition *conditions.ConditionInfo `json:",omitempty"`                   // Condition is optional // Condition is an IDQL filter condition (e.g. ABAC rule) which must also be met
-    Scope     *ScopeInfo                `json:"scope,omitempty"`              // Scope represents obligations returned to a PEP (e.g. attributes, where clause)
+    Meta      MetaInfo                  `json:"meta" validate:"required"`             // Meta holds additional information about the policy including policy management data
+    Subjects  SubjectInfo               `json:"subjects,subject" validate:"required"` // Subjects holds the subject clause of an IDQL policy
+    Actions   []ActionInfo              `json:"actions" validate:"required"`          // Actions holds one or moe action uris
+    Object    ObjectInfo                `json:"object" validate:"required"`           // Object the resource, application, or system to which a policy applies
+    Condition *conditions.ConditionInfo `json:"condition,omitempty"`                  // Condition is optional // Condition is an IDQL filter condition (e.g. ABAC rule) which must also be met
+    Scope     *ScopeInfo                `json:"scope,omitempty"`                      // Scope represents obligations returned to a PEP (e.g. attributes, where clause)
 }
 
 func (p *PolicyInfo) String() string {
     policyBytes, _ := json.MarshalIndent(p, "", " ")
     return string(policyBytes)
+}
+
+func (p *PolicyInfo) UnmarshalJSON(data []byte) error {
+    if data == nil || len(data) == 0 {
+        return nil
+    }
+    var fieldMap map[string]*json.RawMessage
+    if err := json.Unmarshal(data, &fieldMap); err != nil {
+        return err
+    }
+    var meta MetaInfo
+    var subjects SubjectInfo
+    var actions []ActionInfo
+    var object ObjectInfo
+    var scope *ScopeInfo
+    var condition *conditions.ConditionInfo
+
+    for k, v := range fieldMap {
+        var err error
+        switch k {
+        case "Meta", "meta":
+            err = json.Unmarshal(*v, &meta)
+            if !strings.EqualFold(meta.Version, IdqlVersion) {
+                log.Warn("Auto-upgrading policy to "+IdqlVersion, "PolicyId", meta.PolicyId)
+                meta.Version = IdqlVersion
+            }
+        case "Subjects", "subjects":
+
+            err = json.Unmarshal(*v, &subjects)
+        case "Subject", "subject":
+            var oldSub OldSubjectInfo
+            err = json.Unmarshal(*v, &oldSub)
+            if err == nil {
+                subjects = oldSub.Members
+            }
+        case "Actions", "actions":
+            if v == nil {
+                continue // if null passed to "actions"
+            }
+            err = json.Unmarshal(*v, &actions)
+            if err != nil {
+                // try old action format
+                var oldAction []OldActionInfo
+                err = json.Unmarshal(*v, &oldAction)
+                if err == nil {
+                    var items []ActionInfo
+                    for _, v := range oldAction {
+                        items = append(items, ActionInfo(v.ActionUri))
+                    }
+                    actions = items
+                }
+            }
+        case "Object", "object":
+            err = json.Unmarshal(*v, &object)
+            if err != nil {
+                // try old object
+                var oldObject OldObjectInfo
+                err = json.Unmarshal(*v, &oldObject)
+                if err == nil {
+                    object = ObjectInfo(oldObject.ResourceID)
+                }
+            }
+        case "Scope", "scope":
+            err = json.Unmarshal(*v, &scope)
+        case "Condition", "condition":
+            err = json.Unmarshal(*v, &condition)
+        }
+        if err != nil {
+            return err
+        }
+    }
+
+    p.Meta = meta
+    p.Subjects = subjects
+    p.Actions = actions
+    p.Object = object
+    p.Scope = scope
+    p.Condition = condition
+    return nil
 }
 
 /*
@@ -207,6 +287,10 @@ type MetaInfo struct {
     ProviderType string                 `json:"providerType,omitempty"`                // ProviderType is the SDK provider type indicating the source of the policy
 }
 
+type OldActionInfo struct {
+    ActionUri string `json:"actionUri" validate:"required"`
+}
+
 type ActionInfo string
 
 func (a ActionInfo) String() string {
@@ -215,6 +299,10 @@ func (a ActionInfo) String() string {
 
 func (a ActionInfo) Equals(action ActionInfo) bool {
     return strings.EqualFold(string(a), string(action))
+}
+
+type OldSubjectInfo struct {
+    Members []string `json:"members" validate:"required"`
 }
 
 type SubjectInfo []string
@@ -240,6 +328,10 @@ func (s SubjectInfo) Equals(subjects SubjectInfo) bool {
         }
     }
     return true
+}
+
+type OldObjectInfo struct {
+    ResourceID string `json:"resource_id" validate:"required"`
 }
 
 type ObjectInfo string
