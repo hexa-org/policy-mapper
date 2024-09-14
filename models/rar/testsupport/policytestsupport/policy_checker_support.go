@@ -55,7 +55,7 @@ func MakePolicies(actionMembers map[string][]string, resourceId string) []hexapo
         }
 
         pol := hexapolicy.PolicyInfo{
-            Meta:     hexapolicy.MetaInfo{Version: "0.5"},
+            Meta:     hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
             Actions:  []hexapolicy.ActionInfo{hexapolicy.ActionInfo(action)},
             Subjects: members,
             Object:   hexapolicy.ObjectInfo(resourceId),

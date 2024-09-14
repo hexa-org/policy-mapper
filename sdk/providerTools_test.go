@@ -68,6 +68,7 @@ func (s *testSuite) Test2_GetPolicies() {
     s.mockClient.MockGetPolicyTemplateWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarTemplatePolicyId+"0")
 
     policySet, err := s.Integration.GetPolicies(s.papId)
+    assert.NotNil(s.T(), policySet)
     policies := policySet.Policies
     assert.NoError(s.T(), err)
     assert.NotNil(s.T(), policies)
@@ -85,7 +86,7 @@ func (s *testSuite) Test3_Reconcile() {
     s.mockClient.MockGetPolicyTemplateWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarTemplatePolicyId+"0")
 
     policySet, err := s.Integration.GetPolicies(s.papId)
-
+    assert.NotNil(s.T(), policySet)
     policies := policySet.Policies
 
     assert.True(s.T(), s.mockClient.VerifyCalled())
@@ -115,7 +116,7 @@ func (s *testSuite) Test3_Reconcile() {
     // now append a policy by copying and modifying the first
     newPolicy := policies[0]
     newPolicy.Meta = hexapolicy.MetaInfo{
-        Version:     "0.5",
+        Version:     hexapolicy.IdqlVersion,
         Description: "Test New Policy",
         Created:     &now,
         Modified:    &now,
@@ -152,6 +153,7 @@ func (s *testSuite) Test4_SetPolicies() {
     s.mockClient.MockGetPolicyWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarStaticPolicyId+"0")
     s.mockClient.MockGetPolicyTemplateWithHttpStatus(http.StatusOK, avpTestSupport.TestCedarTemplatePolicyId+"0")
     policySet, err := s.Integration.GetPolicies(s.papId)
+    assert.NotNil(s.T(), policySet)
     policies := policySet.Policies
     assert.True(s.T(), s.mockClient.VerifyCalled())
 

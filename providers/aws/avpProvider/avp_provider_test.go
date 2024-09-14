@@ -260,7 +260,7 @@ func TestAvp_3_Reconcile(t *testing.T) {
     // now append a policy by copying and modifying the first
     newPolicy := policies[0]
     newPolicy.Meta = hexapolicy.MetaInfo{
-        Version:     "0.5",
+        Version:     hexapolicy.IdqlVersion,
         Description: "Test New Policy",
         Created:     &now,
         Modified:    &now,

@@ -73,6 +73,69 @@ var oldPolicy1 = `{
       }
 }`
 
+var oldPolicies = `{
+  "policies": [
+    {
+      "meta": {"version": "0.6"},
+      "actions": [{"actionUri": "http:GET:/"}],
+      "subject": {
+        "members": [
+          "allusers", "allauthenticated"
+        ]
+      },
+      "condition": {
+        "rule": "req.ip sw 127 and req.method eq POST",
+        "action": "allow"
+      },
+      "object": {
+        "resource_id": "aResourceId1"
+      }
+    },
+    {
+      "meta": {"version": "0.6"},
+      "actions": [{"actionUri": "http:GET:/sales"}, {"actionUri": "http:GET:/marketing"}],
+      "subject": {
+        "members": [
+          "allauthenticated",
+          "sales@hexaindustries.io",
+          "marketing@hexaindustries.io"
+        ]
+      },
+      "object": {
+        "resource_id": "aResourceId2"
+      }
+    },
+    {
+      "meta": {"version": "0.6"},
+      "actions": [{"actionUri": "http:GET:/accounting"}, {"actionUri": "http:POST:/accounting"}],
+      "subject": {
+        "members": [
+          "accounting@hexaindustries.io"
+        ]
+      },
+      "condition": {
+        "rule": "req.ip sw 127 and req.method eq POST",
+        "action": "allow"
+      },
+      "object": {
+        "resource_id": "aResourceId3"
+      }
+    },
+    {
+      "meta": {"version": "0.6"},
+      "actions": [{"actionUri": "http:GET:/humanresources"}],
+      "subject": {
+        "members": [
+          "humanresources@hexaindustries.io"
+        ]
+      },
+      "object": {
+        "resource_id": "aResourceId1"
+      }
+    }
+  ]
+}`
+
 func getPolicies(t *testing.T) Policies {
     t.Helper()
     var policy1, policy2 PolicyInfo
@@ -113,6 +176,11 @@ func TestReadOldPolicy(t *testing.T) {
     assert.Len(t, pol.Subjects, 1, "should be one subject")
     assert.Len(t, pol.Actions, 1, "should be one action")
     assert.Equal(t, "cedar:Photo::\"VacationPhoto94.jpg\"", pol.Object.String(), "resource id should be converted")
+
+    var policies Policies
+    err = json.Unmarshal([]byte(oldPolicies), &policies)
+    assert.NoError(t, err, "Check no policy parse error on old policy")
+    assert.Len(t, policies.Policies, 4, "should be 4 policies")
 }
 
 func TestSubjectInfo_equals(t *testing.T) {
