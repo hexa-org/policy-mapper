@@ -426,7 +426,7 @@ func TestSetPolicyInfo_WithHTTPSBundleServer(t *testing.T) {
         policyprovider.ApplicationInfo{ObjectID: "aResourceId"},
         []hexapolicy.PolicyInfo{
             {
-                Meta:     hexapolicy.MetaInfo{Version: "0.5"},
+                Meta:     hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
                 Actions:  []hexapolicy.ActionInfo{"http:GET"},
                 Subjects: []string{"allusers"},
                 Object:   "aResourceId",

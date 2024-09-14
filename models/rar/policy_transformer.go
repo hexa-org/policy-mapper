@@ -131,7 +131,7 @@ func ResourcePolicyMap(origPolicies []hexapolicy.PolicyInfo) map[string]hexapoli
 		newMembers := CompactMembers(existingMembers, pol.Subjects)
 
 		newPol := hexapolicy.PolicyInfo{
-			Meta:    hexapolicy.MetaInfo{Version: "0.5"},
+			Meta:    hexapolicy.MetaInfo{Version: hexapolicy.IdqlVersion},
 			Actions: mergedActions,
 			Subjects: hexapolicy.SubjectInfo{Members: newMembers},
 			Object:  hexapolicy.ObjectInfo{ResourceID: resource},
