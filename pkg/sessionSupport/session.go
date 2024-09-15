@@ -73,7 +73,7 @@ func (s *sessionManager) SetSessionMiddleware(router *mux.Router) {
     router.Use(s.manager.LoadAndSave)
 }
 
-func (s *sessionManager) ValidateSession(w http.ResponseWriter, r *http.Request) bool {
+func (s *sessionManager) ValidateSession(_ http.ResponseWriter, r *http.Request) bool {
 
     // If sub is not set, we assume the session was not authenticated
     // Note the value of sessionId is just a unique ID for logging purposes
@@ -82,7 +82,7 @@ func (s *sessionManager) ValidateSession(w http.ResponseWriter, r *http.Request)
     if s.loginEnabled {
         sub := s.manager.GetString(r.Context(), KeySubject)
         if sub == "" {
-            http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+            // http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
             return false
         }
     }

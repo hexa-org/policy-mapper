@@ -197,6 +197,7 @@ func (o *OidcClientHandler) HandleSessionScope(next http.HandlerFunc, _ []string
             if o.SessionHandler.ValidateSession(w, r) {
                 // TODO Check scopes
                 next.ServeHTTP(w, r)
+                return
             }
             http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
         } else {
