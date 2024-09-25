@@ -1,11 +1,11 @@
 package hexaPolicy
 
-# Rego Hexa Policy Interpreter v0.7.0
+# Rego Hexa Policy Interpreter v0.7.1
 import rego.v1
 
 import data.bundle.policies
 
-hexa_rego_version := "0.7.0"
+hexa_rego_version := "0.7.1"
 
 policies_evaluated := count(policies)
 
@@ -60,6 +60,22 @@ allow_set contains policy_id if {
 	condition_match(policy, input)
 }
 
+# Returns the list of matching policy names based on current request with no actions
+allow_set contains policy_id if {
+	some policy in policies
+
+	# return id of the policy
+	policy_id := sprintf("%s", [policy.meta.policyId])
+
+	subject_match(policy.subjects, input.subject, input.req)
+
+	not policy.actions
+
+	is_object_match(policy.object, input.req)
+
+	condition_match(policy, input)
+}
+
 scopes contains scope if {
 	some policy in policies
 	policy.meta.policyId in allow_set
@@ -77,6 +93,15 @@ action_rights contains name if {
 
 	some action in policy.actions
 	name := sprintf("%s:%s", [policy.meta.policyId, action])
+}
+
+# Returns the list of possible actions where actions is empty
+action_rights contains name if {
+	some policy in policies
+	policy.meta.policyId in allow_set
+
+	count(policy.actions) == 0
+	name := sprintf("%s:*", [policy.meta.policyId])
 }
 
 # Returns whether the current operation is allowed
@@ -136,7 +161,7 @@ subject_member_match(member, _, req) if {
 
 actions_match(actions, _) if {
 	# no actions is a match
-	not actions
+	count(actions) == 0
 }
 
 actions_match(actions, req) if {
@@ -236,4 +261,6 @@ condition_match(policy, inreq) if {
 }
 
 # Evaluate whether the condition is set to allow
-action_allow(val) if lower(val) == "allow"
+action_allow(val) if {
+    lower(val) == "allow"
+}
