@@ -6,6 +6,7 @@ import (
     "strconv"
     "strings"
 
+    "github.com/cedar-policy/cedar-go/types"
     "github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
     hexaParser "github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions/parser"
 )
@@ -266,27 +267,58 @@ func (mapper *CedarConditionMapper) mapFilterLogical(logicFilter *hexaParser.Log
     }
 }
 
+// removeQuotes checks for quotes and removes them if present
+func removeQuotes(val string) string {
+    if strings.HasSuffix(val, "\"") && strings.HasPrefix(val, "\"") {
+        unquote, err := strconv.Unquote(val)
+        if err == nil {
+            return unquote
+        }
+    }
+    return val
+}
+
 func (mapper *CedarConditionMapper) mapFilterAttrExpr(attrExpr *hexaParser.AttributeExpression) string {
     compareValue := prepareValue(attrExpr)
 
     mapPath := mapper.NameMapper.GetProviderAttributeName(attrExpr.AttributePath)
+
+    isDecimal := false
+    format := "%s %s %s"
+    decimalVal, err := types.ParseDecimal(compareValue)
+    if err == nil {
+        isDecimal = true
+        format = "%s.%s(%s)"
+    }
 
     switch attrExpr.Operator {
 
     case hexaParser.NE:
         return mapPath + " != " + compareValue
     case hexaParser.LT:
-        return mapPath + " < " + compareValue
+        if isDecimal {
+            return fmt.Sprintf(format, mapPath, "lessThan", decimalVal.String())
+        }
+        return fmt.Sprintf(format, mapPath, "<", compareValue)
     case hexaParser.LE:
-        return mapPath + " <= " + compareValue
+        if isDecimal {
+            return fmt.Sprintf(format, mapPath, "lessThanOrEqual", decimalVal.String())
+        }
+        return fmt.Sprintf(format, mapPath, "<=", compareValue)
     case hexaParser.GT:
-        return mapPath + " > " + compareValue
+        if isDecimal {
+            return fmt.Sprintf(format, mapPath, "greaterThan", decimalVal.String())
+        }
+        return fmt.Sprintf(format, mapPath, ">", compareValue)
     case hexaParser.GE:
-        return mapPath + " >= " + compareValue
+        if isDecimal {
+            return fmt.Sprintf(format, mapPath, "greaterThanOrEqual", decimalVal.String())
+        }
+        return fmt.Sprintf(format, mapPath, ">=", compareValue)
     case hexaParser.SW:
-        return mapPath + ".startsWith(" + compareValue + ")"
+        return fmt.Sprintf("%s like \"%s*\"", mapPath, removeQuotes(compareValue))
     case hexaParser.EW:
-        return mapPath + ".endsWith(" + compareValue + ")"
+        return fmt.Sprintf("%s like \"*%s\"", mapPath, removeQuotes(compareValue))
     case hexaParser.PR:
         lastIndex := strings.LastIndex(mapPath, ".")
         left := mapPath[0:lastIndex]

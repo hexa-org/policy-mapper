@@ -14,7 +14,7 @@ import (
     "github.com/aws/aws-sdk-go-v2/service/verifiedpermissions"
     "github.com/aws/aws-sdk-go-v2/service/verifiedpermissions/types"
     "github.com/hexa-org/policy-mapper/api/policyprovider"
-    "github.com/hexa-org/policy-mapper/models/formats/awsCedar"
+    "github.com/hexa-org/policy-mapper/models/formats/cedar"
     "github.com/hexa-org/policy-mapper/pkg/hexapolicy"
     "github.com/hexa-org/policy-mapper/providers/aws/avpProvider"
     "github.com/hexa-org/policy-mapper/providers/aws/avpProvider/avpClient"
@@ -61,7 +61,7 @@ func initializeOnlineTests() error {
 
     info := policyprovider.IntegrationInfo{Name: "avp", Key: []byte(str)}
     provider := avpProvider.AmazonAvpProvider{AwsClientOpts: awscommon.AWSClientOptions{DisableRetry: true},
-        CedarMapper: awsCedar.New(map[string]string{})}
+        CedarMapper: cedar.NewCedarMapper(map[string]string{})}
 
     testData = TestInfo{
         Provider: provider,
@@ -161,7 +161,7 @@ func TestAvp_1_ListStores(t *testing.T) {
             HTTPClient:   mockClient,
             DisableRetry: true,
         },
-        CedarMapper: awsCedar.New(map[string]string{})}
+        CedarMapper: cedar.NewCedarMapper(map[string]string{})}
 
     info := avpTestSupport.IntegrationInfo()
     apps, err := p.DiscoverApplications(info)
@@ -186,7 +186,7 @@ func TestAvp_2_GetPolicies(t *testing.T) {
             HTTPClient:   mockClient,
             DisableRetry: true,
         },
-        CedarMapper: awsCedar.New(map[string]string{})}
+        CedarMapper: cedar.NewCedarMapper(map[string]string{})}
 
     mockClient.MockListStores()
     info := avpTestSupport.IntegrationInfo()
@@ -212,7 +212,7 @@ func TestAvp_3_Reconcile(t *testing.T) {
             HTTPClient:   mockClient,
             DisableRetry: true,
         },
-        CedarMapper: awsCedar.New(map[string]string{})}
+        CedarMapper: cedar.NewCedarMapper(map[string]string{})}
 
     mockClient.MockListStores()
     info := avpTestSupport.IntegrationInfo()
@@ -306,7 +306,7 @@ func TestAvp_4_SetPolicies(t *testing.T) {
             HTTPClient:   mockClient,
             DisableRetry: true,
         },
-        CedarMapper: awsCedar.New(map[string]string{})}
+        CedarMapper: cedar.NewCedarMapper(map[string]string{})}
 
     mockClient.MockListStores()
     info := avpTestSupport.IntegrationInfo()

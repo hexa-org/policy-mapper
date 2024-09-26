@@ -22,12 +22,17 @@ func ParsePolicyFile(path string) ([]hexapolicy.PolicyInfo, error) {
 func ParsePolicies(policyBytes []byte) ([]hexapolicy.PolicyInfo, error) {
     var policies hexapolicy.Policies
     err := json.Unmarshal(policyBytes, &policies)
-    if err != nil {
+    if err != nil || policies.Policies == nil {
         // Try array of polcies
         var pols []hexapolicy.PolicyInfo
         err = json.Unmarshal(policyBytes, &pols)
         if err != nil {
-            return nil, err
+            var pol hexapolicy.PolicyInfo
+            err = json.Unmarshal(policyBytes, &pol)
+            if err != nil {
+                return nil, err
+            }
+            return []hexapolicy.PolicyInfo{pol}, nil
         }
         return pols, nil
     }

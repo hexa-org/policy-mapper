@@ -7,7 +7,7 @@ import (
     "os"
 
     "github.com/hexa-org/policy-mapper/api/policyprovider"
-    "github.com/hexa-org/policy-mapper/models/formats/awsCedar"
+    "github.com/hexa-org/policy-mapper/models/formats/cedar"
     "github.com/hexa-org/policy-mapper/models/formats/gcpBind"
     "github.com/hexa-org/policy-mapper/providers/aws/avpProvider"
     "github.com/hexa-org/policy-mapper/providers/aws/awsapigwProvider"
@@ -164,11 +164,11 @@ func newAvpProvider(options Options) (policyprovider.Provider, error) {
             fmt.Println("Warning, unexpected ProviderOpts (use awscommon.AWSClientOptions)")
         }
     }
-    var mapper *awsCedar.CedarPolicyMapper
+    var mapper *cedar.CedarMapper
     if options.AttributeMap != nil {
-        mapper = awsCedar.New(options.AttributeMap)
+        mapper = cedar.NewCedarMapper(options.AttributeMap)
     } else {
-        mapper = awsCedar.New(map[string]string{})
+        mapper = cedar.NewCedarMapper(map[string]string{})
     }
 
     return &avpProvider.AmazonAvpProvider{

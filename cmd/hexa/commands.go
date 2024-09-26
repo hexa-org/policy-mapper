@@ -16,7 +16,7 @@ import (
 
     "github.com/alecthomas/kong"
     "github.com/hexa-org/policy-mapper/api/policyprovider"
-    "github.com/hexa-org/policy-mapper/models/formats/awsCedar"
+    "github.com/hexa-org/policy-mapper/models/formats/cedar"
     "github.com/hexa-org/policy-mapper/models/formats/gcpBind"
     "github.com/hexa-org/policy-mapper/pkg/hexapolicy"
     "github.com/hexa-org/policy-mapper/pkg/hexapolicysupport"
@@ -756,18 +756,15 @@ func (m *MapToCmd) Run(cli *CLI) error {
         _ = MarshalJsonNoEscape(bindings, outWriter.GetOutput())
         outWriter.Close()
     case "cedar":
-        cMapper := awsCedar.New(map[string]string{})
+        cMapper := cedar.NewCedarMapper(map[string]string{})
 
-        cedar, err := cMapper.MapPoliciesToCedar(policies)
+        cedarPoliciesString, err := cMapper.MapHexaPolicies(m.File, policies)
         if err != nil {
             return err
         }
 
-        for _, v := range cedar.Policies {
-            policy := v.String()
-            fmt.Println(policy)
-            cli.GetOutputWriter().WriteString(policy, false)
-        }
+        fmt.Println(cedarPoliciesString)
+        cli.GetOutputWriter().WriteString(cedarPoliciesString, false)
         cli.GetOutputWriter().Close()
     }
     return nil
@@ -802,9 +799,12 @@ func (m *MapFromCmd) Run(cli *CLI) error {
         }
 
     case "cedar":
-        cMapper := awsCedar.New(map[string]string{})
-
-        pols, err := cMapper.ParseFile(m.File)
+        cMapper := cedar.NewCedarMapper(map[string]string{})
+        policyBytes, err := os.ReadFile(m.File)
+        if err != nil {
+            return err
+        }
+        pols, err := cMapper.MapCedarPolicyBytes(m.File, policyBytes)
         if err != nil {
             return err
         }

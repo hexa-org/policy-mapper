@@ -9,7 +9,7 @@ import (
     "github.com/aws/aws-sdk-go-v2/service/verifiedpermissions"
     "github.com/aws/aws-sdk-go-v2/service/verifiedpermissions/types"
     "github.com/hexa-org/policy-mapper/api/policyprovider"
-    "github.com/hexa-org/policy-mapper/models/formats/awsCedar"
+    "github.com/hexa-org/policy-mapper/models/formats/cedar"
     "github.com/hexa-org/policy-mapper/models/schema"
     "github.com/hexa-org/policy-mapper/pkg/hexapolicy"
     "github.com/hexa-org/policy-mapper/providers/aws/avpProvider/avpClient"
@@ -55,10 +55,12 @@ func MapAvpTemplate(item *verifiedpermissions.GetPolicyTemplateOutput) hexapolic
     }
 }
 
-type AmazonAvpProvider struct {
-    AwsClientOpts awscommon.AWSClientOptions
-    CedarMapper   *awsCedar.CedarPolicyMapper
-}
+type (
+    AmazonAvpProvider struct {
+        AwsClientOpts awscommon.AWSClientOptions
+        CedarMapper   *cedar.CedarMapper
+    }
+)
 
 func (a AmazonAvpProvider) Name() string {
     return ProviderTypeAvp
@@ -66,7 +68,7 @@ func (a AmazonAvpProvider) Name() string {
 
 func (a AmazonAvpProvider) initCedarMapper() {
     if a.CedarMapper == nil {
-        a.CedarMapper = awsCedar.New(map[string]string{})
+        a.CedarMapper = cedar.NewCedarMapper(map[string]string{})
     }
 }
 
@@ -107,7 +109,7 @@ func (a AmazonAvpProvider) mapAvpPolicyToHexa(avpPolicy types.PolicyItem, client
         policyDefinition := output.Definition
         policyStatic := policyDefinition.(*types.PolicyDefinitionDetailMemberStatic).Value
         cedarPolicy := policyStatic.Statement
-        mapPols, err := a.CedarMapper.ParseAndMapCedarToHexa([]byte(*cedarPolicy))
+        mapPols, err := a.CedarMapper.MapCedarPolicyBytes(applicationInfo.ObjectID, []byte(*cedarPolicy))
         if err != nil {
             return nil, err
         }
@@ -135,7 +137,10 @@ func (a AmazonAvpProvider) mapAvpPolicyToHexa(avpPolicy types.PolicyItem, client
         //    resource == ?resource
         // );
         policyString := *output.Statement
-        mapPols, err := a.CedarMapper.ParseAndMapCedarToHexa([]byte(policyString))
+        policyString = strings.Replace(policyString, "?principal", "Template::\"principal\"", -1)
+        policyString = strings.Replace(policyString, "?resource", "Template::\"resource\"", -1)
+
+        mapPols, err := a.CedarMapper.MapCedarPolicyBytes(applicationInfo.ObjectID, []byte(policyString))
         if err != nil {
             return nil, err
         }
@@ -375,18 +380,10 @@ func (a AmazonAvpProvider) SetPolicyInfo(info policyprovider.IntegrationInfo, ap
 }
 
 func (a AmazonAvpProvider) convertCedarStatement(hexaPolicy hexapolicy.PolicyInfo) (*string, error) {
-    cedarPolicies, err := a.CedarMapper.MapPolicyToCedar(hexaPolicy)
-    if err != nil {
-        return nil, err
-    }
-    var cedarDefinition string
-    for i, cedarPolicy := range cedarPolicies {
-        if i != 0 {
-            cedarDefinition = cedarDefinition + "\n"
-        }
-        cedarDefinition = cedarDefinition + cedarPolicy.String()
-    }
-    return &cedarDefinition, nil
+    cedarPolicies, err := a.CedarMapper.MapHexaPolicies("", []hexapolicy.PolicyInfo{hexaPolicy})
+    cedarPolicies = strings.Replace(cedarPolicies, "Template::\"principal\"", "?principal", -1)
+    cedarPolicies = strings.Replace(cedarPolicies, "Template::\"resource\"", "?resource", -1)
+    return &cedarPolicies, err
 }
 
 func (a AmazonAvpProvider) prepareCreatePolicy(hexaPolicy hexapolicy.PolicyInfo, app policyprovider.ApplicationInfo) (*verifiedpermissions.CreatePolicyInput, error) {

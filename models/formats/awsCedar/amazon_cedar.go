@@ -1,3 +1,8 @@
+// Package awsCedar provides parsing and mapping to and from an earlier version of AWS Cedar Policy Language
+//
+// Deprecated: This package has been deprecated and is replaced by /models/formats/cedar.
+//
+// This package will be removed shortly in a future update.
 package awsCedar
 
 import (
@@ -17,6 +22,9 @@ type CedarPolicyMapper struct {
     Parser          *participle.Parser[CedarPolicies]
 }
 
+// New opens an instance of the CedarPolicyMapper. If nameMap is provided attribute
+// names in conditions will be converted in the form [hexaName]cedarName.
+// Deprecated: This mapper has been replaced by the cedar-go version in https://github.com/hexa-org/policy-mapper/models/formats/cedar
 func New(nameMap map[string]string) *CedarPolicyMapper {
     return &CedarPolicyMapper{ConditionMapper: gcpcel.GoogleConditionMapper{NameMapper: policyCond.NewNameMapper(nameMap)},
         Parser: participle.MustBuild[CedarPolicies](participle.CaseInsensitive("permit", "forbid", "unless", "when"))}

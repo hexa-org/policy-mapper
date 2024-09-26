@@ -1,12 +1,14 @@
 package cedarConditions
 
 import (
+    "encoding/json"
     "fmt"
     "reflect"
     "strings"
     "testing"
 
-    "github.com/cedar-policy/cedar-go/x/exp/parser"
+    "github.com/cedar-policy/cedar-go"
+    policyjson "github.com/hexa-org/policy-mapper/models/formats/cedar/json"
     "github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
 )
 
@@ -22,12 +24,16 @@ func TestMapCedar(t *testing.T) {
             Rule:   "resource.owner eq principal",
             Action: conditions.AAllow,
         }, false},
+        {"When not(equal)", "when { !(resource.owner == principal) }", &conditions.ConditionInfo{
+            Rule:   "not (resource.owner eq principal)",
+            Action: conditions.AAllow,
+        }, false},
         {"Precedence ands", "when { ( resource.owner == principal.id ) && resource.id == \"1234\" && principal.type == \"customer\" }", &conditions.ConditionInfo{
-            Rule:   "(resource.owner eq principal.id) and resource.id eq \"1234\" and principal.type eq \"customer\"",
+            Rule:   "resource.owner eq principal.id and resource.id eq \"1234\" and principal.type eq \"customer\"",
             Action: conditions.AAllow,
         }, false},
         {"Precedence ors", "when { ( resource.owner == principal.id ) || resource.id == \"1234\" && principal.type == \"customer\" }", &conditions.ConditionInfo{
-            Rule:   "(resource.owner eq principal.id) or resource.id eq \"1234\" and principal.type eq \"customer\"",
+            Rule:   "resource.owner eq principal.id or resource.id eq \"1234\" and principal.type eq \"customer\"",
             Action: conditions.AAllow,
         }, false},
         {"Nested", "when { resource.owner == principal.id  && (principal.type == \"staff\" || principal.type == \"employee\") || resource.id == \"1234\" && principal.type == \"customer\" }", &conditions.ConditionInfo{
@@ -62,7 +68,19 @@ func TestMapCedar(t *testing.T) {
             Rule:   "resource.\"literal ident\" pr",
             Action: conditions.AAllow,
         }, false},
+        {"Starts with", "when { resource like \"Todo::New*\" }", &conditions.ConditionInfo{
+            Rule:   "resource sw \"Todo::New\"",
+            Action: conditions.AAllow,
+        }, false},
 
+        {"Ends with", "when { resource like \"*NewTodo\" }", &conditions.ConditionInfo{
+            Rule:   "resource ew \"NewTodo\"",
+            Action: conditions.AAllow,
+        }, false},
+        {"Ends with error", "when { resource like \"*New*Todo\" }", &conditions.ConditionInfo{
+            Rule:   "resource ew \"NewTodo\"",
+            Action: conditions.AAllow,
+        }, true},
         {"Is In", "when { principal is User in Group::\"accounting\"}", &conditions.ConditionInfo{
             Rule:   "principal is User and principal in Group::\"accounting\"",
             Action: conditions.AAllow,
@@ -113,13 +131,43 @@ when { resource.owner != "somebody" }
                 Rule:   "principal eq User::\"a1b2c3d4-e5f6-a1b2-c3d4-EXAMPLE11111\"",
                 Action: conditions.AAllow,
             }, false},
-        {"Dot operand test", "when { principal.id.greaterThan(4) || principal.id.greaterThanOrEqual(100) || principal.access.lessThan(4) || principal.name.lessThanOrEqual(\"m\") }",
+        {"Greater test", "when { principal.id.greaterThan(4) }",
             &conditions.ConditionInfo{
-                Rule:   "principal.id gt 4 or principal.id ge 100 or principal.access lt 4 or principal.name le \"m\"",
+                Rule:   "principal.id gt 4",
+                Action: conditions.AAllow,
+            }, false},
+        {"GreaterEqual test", "when { principal.id.greaterThanOrEqual(100) }",
+            &conditions.ConditionInfo{
+                Rule:   "principal.id ge 100",
+                Action: conditions.AAllow,
+            }, false},
+        {"Lessthan test", "when { principal.access.lessThan(4) }",
+            &conditions.ConditionInfo{
+                Rule:   "principal.access lt 4",
+                Action: conditions.AAllow,
+            }, false},
+        {"LessthanEqual test", "when { principal.name <= \"m\" }",
+            &conditions.ConditionInfo{
+                Rule:   "principal.name le \"m\"",
+                Action: conditions.AAllow,
+            }, false},
+        {"Contains string using like", "when { principal.name like \"*test*\" }",
+            &conditions.ConditionInfo{
+                Rule:   "principal.name co \"test\"",
                 Action: conditions.AAllow,
             }, false},
 
+
         // negative tests
+        {"If then error", "when { if principal.numberOfLaptops < 5 then principal.jobLevel > 6 else false }", nil, true},
+        {"Starts with error", "when { resource like \"Todo*::New*\" }", &conditions.ConditionInfo{
+            Rule:   "resource sw \"Todo::New\"",
+            Action: conditions.AAllow,
+        }, true},
+        {"Like error", "when { resource like \"New*Todo\" }", &conditions.ConditionInfo{
+            Rule:   "resource ew \"NewTodo\"",
+            Action: conditions.AAllow,
+        }, true},
         {"primary-if-test-error", "when {\n (if principal has name then principal.name else \"Joe\") == \"Alice\"\n}",
             &conditions.ConditionInfo{}, true},
         {"expression-if-error", "when { principal.id > 4 && (if principal.id == \"1\" then true else false) }",
@@ -130,6 +178,9 @@ when { resource.owner != "somebody" }
                 Rule:   "principal.name co \"smith\"",
                 Action: conditions.AAllow,
             }, true},
+        {"Negate test", "when { - ( 3 + 1) }",
+            nil, true},
+        {"Calculation test", "when { ( 3 + 4 * 2 )}", nil, true},
     }
 
     for _, tt := range tests {
@@ -143,14 +194,25 @@ when { resource.owner != "somebody" }
             sb.WriteString(";")
             policyInput := sb.String()
 
-            tokens, err := parser.Tokenize([]byte(policyInput))
+            pl, err := cedar.NewPolicyListFromBytes("", []byte(policyInput))
             testutilOK(t, err)
-            policies, err := parser.Parse(tokens)
-            testutilOK(t, err)
-            hexaCond, err := doMapCedar(policies)
-            testutilEquals(t, err != nil, tt.err)
-            if err == nil {
-                testutilEquals(t, hexaCond, tt.out)
+
+            for _, policy := range pl {
+                jsonBytes, err := policy.MarshalJSON()
+                testutilOK(t, err)
+                var jsonPolicy policyjson.PolicyJSON
+
+                err = json.Unmarshal(jsonBytes, &jsonPolicy)
+                testutilOK(t, err)
+
+                cedarConds := jsonPolicy.Conditions
+
+                hexaCond, err := MapCedarConditionToHexa(cedarConds)
+                testutilEquals(t, err != nil, tt.err)
+                if err == nil {
+                    testutilEquals(t, hexaCond, tt.out)
+                }
+
             }
 
         })
@@ -167,21 +229,6 @@ func doMapHexa(hexaCondition string) (string, error) {
 
     return mapper.MapConditionToCedar(cond)
 }
-func doMapCedar(policies parser.Policies) (*conditions.ConditionInfo, error) {
-    if len(policies) == 0 {
-        return nil, nil
-    }
-
-    conditions := policies[0].Conditions
-    if conditions == nil {
-        return nil, nil
-    }
-    hexaCond, err := MapCedarConditionToHexa(conditions)
-    if err != nil {
-        return nil, err
-    }
-    return hexaCond, err
-}
 
 func TestMapHexa(t *testing.T) {
     examples := [][3]string{
@@ -191,14 +238,21 @@ func TestMapHexa(t *testing.T) {
         {"Contains", "name.familyName co \"O'Malley\"", "when { name.familyName.contains(\"O'Malley\") }"},
         {"Precedence", "(username eq \"bjensen\")", "when { username == \"bjensen\" }"},
         {"Spacing", "userName   eq  \"bjensen\"", "when { userName == \"bjensen\" }"},
+        {"GreaterThan number", "account.level gt 4", "when { account.level > 4 }"},
+        {"GreaterThan decimal", "account.level gt 4.5", "when { account.level.greaterThan(4.5) }"},
+        {"GreaterThanEqual decimal", "account.level ge 4.5", "when { account.level.greaterThanOrEqual(4.5) }"},
         {"GT Test", "level gt 12", "when { level > 12 }"},
-        {"Numeric", "level gt 12.3", "when { level > 12.3 }"},
+        {"LessThan Dec", "level lt 12.3", "when { level.lessThan(12.3) }"},
+        {"LessThanEqual Dec", "level le 12.3", "when { level.lessThanOrEqual(12.3) }"},
+        {"LessThan int", "level lt 12", "when { level < 12 }"},
+        {"LessThanEqual int", "level le 12", "when { level <= 12 }"},
+
         {"Exponential", "level eq 123.45e-5", "when { level == 123.45e-5 }"},
         {"Embedded chars", "emails.type eq \"w o(rk)\"", "when { emails.type == \"w o(rk)\" }"},
         {"Operator case test", "userName Eq \"bjensen\"", "when { userName == \"bjensen\" }"},
         {"Deep Ors", "((userName eq A) or (username eq \"B\")) or username eq C", "when { (userName == \"A\" || username == \"B\") || username == \"C\" }"},
-        {"Starts with", "userName sw \"J\"", "when { userName.startsWith(\"J\") }"},
-        {"Long Urn", "urn:ietf:params:scim:schemas:core:2.0:User:userName sw \"J\"", "when { urn:ietf:params:scim:schemas:core:2.0:User:userName.startsWith(\"J\") }"},
+        {"Starts with", "userName sw \"J\"", "when { userName like \"J*\" }"},
+        {"Long Urn", "urn:ietf:params:scim:schemas:core:2.0:User:userName sw \"J\"", "when { urn:ietf:params:scim:schemas:core:2.0:User:userName like \"J*\" }"},
 
         {"Nested precedence or", "userType eq \"Employee\" and (emails co \"example.com\" or emails.value co \"example.org\")", "when { userType == \"Employee\" }\nwhen { emails.contains(\"example.com\") || emails.value.contains(\"example.org\") }"},
         {"Nested Not or", "userType eq \"Employee\" and not(emails co \"example.com\" or emails.value co \"example.org\")", "when { userType == \"Employee\" }\nunless { emails.contains(\"example.com\") || emails.value.contains(\"example.org\") }"},
@@ -212,7 +266,12 @@ func TestMapHexa(t *testing.T) {
         {
             "Attribute Expressions",
             "principal.name LT \"z\" or usage le 4 or logincount ge 2 or ( principal.name ew \"smith\" and principal in Groups::\"accounting\" and (account.active eq true or account.enabled ne false ))",
-            "when { principal.name < \"z\" || usage <= 4 || logincount >= 2 || (principal.name.endsWith(\"smith\") && principal in Groups::\"accounting\" && (account.active == true || account.enabled != false)) }",
+            "when { principal.name < \"z\" || usage <= 4 || logincount >= 2 || (principal.name like \"*smith\" && principal in Groups::\"accounting\" && (account.active == true || account.enabled != false)) }",
+        },
+        {
+            "Not / Unless",
+            "not ( principal.name eq \"Smith\" )",
+            "unless { principal.name == \"Smith\" }",
         },
         // {"emails[type eq work and value ew \"h[exa].org\"]", "emails[type eq \"work\" and value ew \"h[exa].org\"]"},
     }
@@ -251,12 +310,4 @@ func testutilOK(t testing.TB, err error) {
         return
     }
     t.Fatalf("got %v want nil", err)
-}
-
-func testutilError(t testing.TB, err error) {
-    t.Helper()
-    if err != nil {
-        return
-    }
-    t.Fatalf("got nil want error")
 }
