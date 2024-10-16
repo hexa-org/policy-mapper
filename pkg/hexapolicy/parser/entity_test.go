@@ -28,7 +28,7 @@ func TestEntityPath(t *testing.T) {
 			want: EntityPath{
 				Type: RelTypeAny,
 			},
-			wantType: "",
+			wantType: RelTypeAny,
 		},
 		{
 			name:  "Authenticated",
@@ -36,7 +36,7 @@ func TestEntityPath(t *testing.T) {
 			want: EntityPath{
 				Type: RelTypeAnyAuthenticated,
 			},
-			wantType: "",
+			wantType: RelTypeAnyAuthenticated,
 		},
 		{
 			name:  "Is User",
@@ -95,6 +95,14 @@ func TestEntityPath(t *testing.T) {
 				Type: RelTypeIn,
 				Id:   nil,
 				In:   &inEntitiesMulti,
+			},
+			wantType: "",
+		},
+		{
+			name:  "Empty",
+			input: "",
+			want: EntityPath{
+				Type: RelTypeEmpty,
 			},
 			wantType: "",
 		},

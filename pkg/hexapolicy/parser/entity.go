@@ -14,7 +14,8 @@ const (
 	RelTypeIs               = "is"               // Matching by type such as `User:`
 	RelTypeIsIn             = "isIn"             // Type is in set such as `User[Group:admins]`
 	RelTypeIn               = "in"               // Matching through membership in a set or entity [Group:admins]
-	RelTypeEquals           = "eq"               // Matches a specific type and identifier e.g. `User:alice@example.co`
+	RelTypeEquals           = "eq"
+	RelTypeEmpty            = "nil" // Matches a specific type and identifier e.g. `User:alice@example.co`
 )
 
 // EntityPath represents a path that points to an entity used in IDQL policy (Subjects, Actions, Object).
@@ -29,6 +30,12 @@ type EntityPath struct {
 // ParseEntityPath takes a string value from an IDQL Subject, Action, or Object parses
 // it into an EntityPath struct.
 func ParseEntityPath(value string) *EntityPath {
+	if value == "" {
+		return &EntityPath{
+			Type: RelTypeEmpty,
+		}
+	}
+
 	var typePath []string
 	var sets []EntityPath
 	var id *string
@@ -154,15 +161,35 @@ func (e *EntityPath) String() string {
 			sb.WriteString(entity.String())
 		}
 		return fmt.Sprintf("[%s]", sb.String())
+	case RelTypeEmpty:
+		return ""
 	}
 	return "unexpected type: " + e.Type
 }
 
-// GetType returns the immediate parent type. For exmaple:  for PhotoApp:User:smith, the type is User
+// GetType returns the immediate parent type. For example:  for PhotoApp:User:smith, the type is User
 // If no parent is defined an empty string "" is returned
 func (e *EntityPath) GetType() string {
+	if e.Type == RelTypeAny {
+		return RelTypeAny
+	}
+	if e.Type == RelTypeAnyAuthenticated {
+		return RelTypeAnyAuthenticated
+	}
 	if len(e.Types) == 0 {
 		return ""
 	}
+	if e.Types == nil {
+		return ""
+	}
 	return e.Types[len(e.Types)-1]
+}
+
+// GetNamespace returns the entity's namespace if it is defined, otherwise returns defaultNamespace.
+// For example, for PhotoApp:Photo:vacation.jpg would return PhotoApp. Photo:vacation.jpg would return the value of defaultNamespace.
+func (e *EntityPath) GetNamespace(defaultNamespace string) string {
+	if len(e.Types) > 1 {
+		return e.Types[0]
+	}
+	return defaultNamespace
 }
