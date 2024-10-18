@@ -1,0 +1,83 @@
+{
+  "policies": [
+    {
+      "meta": {
+        "policyId": "GetUsers",
+        "version": "0.7",
+        "description": "Get information (e.g. email, picture) associated with a user"
+      },
+      "subjects": [
+        "anyAuthenticated"
+      ],
+      "actions": [
+        "can_read_user"
+      ],
+      "object": "User:"
+    },
+    {
+      "meta": {
+        "policyId": "GetTodo:s",
+        "version": "0.7",
+        "description": "Get the list of todos. Always returns true for every user??"
+      },
+      "subjects": [
+        "anyAuthenticated"
+      ],
+      "actions": [
+        "can_read_todos"
+      ],
+      "object": "Todo:"
+    },
+    {
+      "meta": {
+        "version": "0.7",
+        "description": "Create a new Todo",
+        "policyId": "PostTodo"
+      },
+      "subjects": [
+        "Role:admin",
+        "Role:editor"
+      ],
+      "actions": [
+        "can_create_todo"
+      ],
+      "object": "Todo:"
+    },
+    {
+      "meta": {
+        "version": "0.7",
+        "description": "Un(complete) a todo.",
+        "policyId": "PutTodo"
+      },
+      "subjects": [
+        "anyAuthenticated"
+      ],
+      "actions": [
+        "can_update_todo"
+      ],
+      "condition": {
+        "rule": "subject.roles co evil_genius or (subject.roles co editor and resource.properties.ownerID eq subject.claims.email)",
+        "action": "allow"
+      },
+      "object": "Todo:"
+    },
+    {
+      "meta": {
+        "version": "0.7",
+        "description": "Delete a todo if admin or owner of todo",
+        "policyId": "DeleteTodo"
+      },
+      "subjects": [
+        "anyAuthenticated"
+      ],
+      "actions": [
+        "can_delete_todo"
+      ],
+      "condition": {
+        "rule": "subject.roles co admin or (subject.roles co editor and resource.properties.ownerID eq subject.claims.email)",
+        "action": "allow"
+      },
+      "object": "Todo:"
+    }
+  ]
+}
