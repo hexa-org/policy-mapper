@@ -1,0 +1,145 @@
+{
+  "TodoApp": {
+    "entityTypes": {
+      "User": {
+        "memberOfTypes": [
+          "Role"
+        ],
+        "shape": {
+          "attributes": {
+            "id": {
+              "required": false,
+              "type": "String"
+            },
+            "picture": {
+              "type": "String",
+              "required": false
+            },
+            "email": {
+              "type": "String",
+              "required": false
+            },
+            "name": {
+              "type": "String",
+              "required": false
+            }
+          },
+          "type": "Record"
+        }
+      },
+      "Todo": {
+        "shape": {
+          "attributes": {
+            "completed": {
+              "required": true,
+              "type": "Boolean"
+            },
+            "id": {
+              "required": true,
+              "type": "String"
+            },
+            "ownerID": {
+              "type": "String",
+              "required": false
+            },
+            "task": {
+              "required": true,
+              "type": "String"
+            }
+          },
+          "type": "Record"
+        },
+        "memberOfTypes": []
+      },
+      "Role": {
+        "memberOfTypes": [],
+        "shape": {
+          "attributes": {},
+          "type": "Record"
+        }
+      }
+    },
+    "actions": {
+      "can_read_user": {
+        "appliesTo": {
+          "principalTypes": [
+            "Role",
+            "User"
+          ],
+          "resourceTypes": [
+            "User"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        },
+        "memberOf": []
+      },
+      "can_read_todos": {
+        "appliesTo": {
+          "principalTypes": [
+            "Role",
+            "User"
+          ],
+          "resourceTypes": [
+            "Todo"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        },
+        "memberOf": []
+      },
+      "can_create_todo": {
+        "memberOf": [],
+        "appliesTo": {
+          "context": {
+            "attributes": {},
+            "type": "Record"
+          },
+          "resourceTypes": [
+            "Todo"
+          ],
+          "principalTypes": [
+            "Role",
+            "User"
+          ]
+        }
+      },
+      "can_update_todo": {
+        "appliesTo": {
+          "principalTypes": [
+            "Role",
+            "User"
+          ],
+          "resourceTypes": [
+            "Todo"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        },
+        "memberOf": []
+      },
+      "can_delete_todo": {
+        "memberOf": [],
+        "appliesTo": {
+          "principalTypes": [
+            "Role",
+            "User"
+          ],
+          "resourceTypes": [
+            "Todo"
+          ],
+          "context": {
+            "attributes": {},
+            "type": "Record"
+          }
+        }
+      }
+    }
+  }
+}
