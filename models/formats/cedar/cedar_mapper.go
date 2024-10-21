@@ -9,7 +9,7 @@ import (
 
 	"github.com/cedar-policy/cedar-go"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
-	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/parser"
+	hexaTypes "github.com/hexa-org/policy-mapper/pkg/hexapolicy/types"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicysupport"
 
 	"github.com/hexa-org/policy-mapper/models/conditionLangs/cedarConditions"
@@ -233,8 +233,8 @@ func mapCedarScope(verb string, scope policyjson.ScopeJSON) []string {
 	case "==":
 		id := scope.Entity.ID.String()
 		entityType := string(scope.Entity.Type)
-		path := parser.EntityPath{
-			Type:  parser.RelTypeEquals,
+		path := hexaTypes.Entity{
+			Type:  hexaTypes.RelTypeEquals,
 			Types: []string{entityType},
 			Id:    &id,
 		}
@@ -247,17 +247,17 @@ func mapCedarScope(verb string, scope policyjson.ScopeJSON) []string {
 
 			inEntityStr := fmt.Sprintf("%s:%s", scope.In.Entity.Type, scope.In.Entity.ID)
 
-			inEntity := parser.ParseEntityPath(inEntityStr)
-			inEntities := []parser.EntityPath{*inEntity}
-			path := parser.EntityPath{
-				Type:  parser.RelTypeIsIn,
+			inEntity := hexaTypes.ParseEntity(inEntityStr)
+			inEntities := []hexaTypes.Entity{*inEntity}
+			path := hexaTypes.Entity{
+				Type:  hexaTypes.RelTypeIsIn,
 				Types: []string{scope.EntityType},
 				In:    &inEntities,
 			}
 			return []string{path.String()}
 		} else {
-			path := parser.EntityPath{
-				Type:  parser.RelTypeIs,
+			path := hexaTypes.Entity{
+				Type:  hexaTypes.RelTypeIs,
 				Types: []string{scope.EntityType}}
 			return []string{path.String()}
 
@@ -267,24 +267,24 @@ func mapCedarScope(verb string, scope policyjson.ScopeJSON) []string {
 		if scope.Entity != nil {
 			eType := string(scope.Entity.Type)
 			id := scope.Entity.ID.String()
-			inEntity := parser.EntityPath{
-				Type:  parser.RelTypeEquals,
+			inEntity := hexaTypes.Entity{
+				Type:  hexaTypes.RelTypeEquals,
 				Types: []string{eType},
 				Id:    &id,
 			}
-			inEntities := []parser.EntityPath{inEntity}
-			path := parser.EntityPath{
-				Type: parser.RelTypeIn,
+			inEntities := []hexaTypes.Entity{inEntity}
+			path := hexaTypes.Entity{
+				Type: hexaTypes.RelTypeIn,
 				In:   &inEntities,
 			}
 			return []string{path.String()}
 		} else {
-			items := make([]parser.EntityPath, len(scope.Entities))
+			items := make([]hexaTypes.Entity, len(scope.Entities))
 
 			for i, entity := range scope.Entities {
 				id := entity.ID.String()
-				pathItem := parser.EntityPath{
-					Type:  parser.RelTypeEquals,
+				pathItem := hexaTypes.Entity{
+					Type:  hexaTypes.RelTypeEquals,
 					Id:    &id,
 					Types: []string{string(entity.Type)},
 				}
@@ -297,8 +297,8 @@ func mapCedarScope(verb string, scope policyjson.ScopeJSON) []string {
 				}
 				return vals
 			}
-			path := parser.EntityPath{
-				Type: parser.RelTypeIn,
+			path := hexaTypes.Entity{
+				Type: hexaTypes.RelTypeIn,
 				In:   &items,
 			}
 			return []string{path.String()}
@@ -336,19 +336,19 @@ func mapHexaValue(verb string, member string) string {
 	if member == "" {
 		return fmt.Sprintf("%s%s", verb, comma)
 	}
-	path := parser.ParseEntityPath(member)
+	path := hexaTypes.ParseEntity(member)
 	switch path.Type {
-	case parser.RelTypeEquals:
+	case hexaTypes.RelTypeEquals:
 		types := strings.Join(path.Types, "::")
 		id := strconv.Quote(*path.Id)
 		if verb == "action" {
 			return fmt.Sprintf("%s::%s", types, id)
 		}
 		return fmt.Sprintf("%s == %s::%s%s", verb, types, id, comma)
-	case parser.RelTypeIs:
+	case hexaTypes.RelTypeIs:
 		types := strings.Join(path.Types, "::")
 		return fmt.Sprintf("%s is %s%s", verb, types, comma)
-	case parser.RelTypeIn:
+	case hexaTypes.RelTypeIn:
 		if len(*path.In) == 1 {
 			// if only one entity, no square brackets
 			inset := *path.In
@@ -373,7 +373,7 @@ func mapHexaValue(verb string, member string) string {
 		}
 		sb.WriteString("]")
 		return fmt.Sprintf("%s in %s%s", verb, sb.String(), comma)
-	case parser.RelTypeIsIn:
+	case hexaTypes.RelTypeIsIn:
 		sb := strings.Builder{}
 		if len(*path.In) == 1 {
 			// if only one entity, no square brackets

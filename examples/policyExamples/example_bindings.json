@@ -4,7 +4,7 @@
     "bindings": [
       {
         "condition": {
-          "expression": "req.ip.startsWith(\"127\") \u0026\u0026 req.method == \"POST\""
+          "expression": "req.ip.startsWith(\"127\") && req.method == \"POST\""
         },
         "members": [
           "allusers",
@@ -35,7 +35,7 @@
     "bindings": [
       {
         "condition": {
-          "expression": "req.ip.startsWith(\"127\") \u0026\u0026 req.method == \"POST\""
+          "expression": "req.ip.startsWith(\"127\") && req.method == \"POST\""
         },
         "members": [
           "accounting@hexaindustries.io"
