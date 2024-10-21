@@ -7,7 +7,7 @@ import (
 
 	"github.com/hexa-org/policy-mapper/models/policyInfoModel"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
-	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/parser"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/types"
 )
 
 type Validator struct {
@@ -78,7 +78,7 @@ func (v *Validator) checkSubject(subject hexapolicy.SubjectInfo) []error {
 	entities := subject.EntityPaths()
 	for _, entity := range *entities {
 		// ignore the special case of "any" or "anyAuthenticated"
-		if entity.Type == parser.RelTypeAny || entity.Type == parser.RelTypeAnyAuthenticated {
+		if entity.Type == types.RelTypeAny || entity.Type == types.RelTypeAnyAuthenticated {
 			continue
 		}
 
@@ -103,7 +103,7 @@ func (v *Validator) checkObject(resource hexapolicy.ObjectInfo) error {
 		return nil
 	}
 
-	entity := resource.EntityPath()
+	entity := resource.Entity()
 	namespace := entity.GetNamespace(v.defNamespace)
 	entityType := entity.GetType()
 	schema, ok := v.namespaces[namespace]
@@ -159,7 +159,7 @@ func (v *Validator) checkAppliesTo(actionNamespace string, appliesTo policyInfoM
 		for _, entity := range *entities {
 			namespace := entity.GetNamespace(v.defNamespace)
 
-			if entity.Type == parser.RelTypeAny || entity.Type == parser.RelTypeAnyAuthenticated || entity.Type == parser.RelTypeEmpty {
+			if entity.Type == types.RelTypeAny || entity.Type == types.RelTypeAnyAuthenticated || entity.Type == types.RelTypeEmpty {
 				continue // skip validation for any or anyauthenticated or empty
 			}
 			contains := false
@@ -185,8 +185,8 @@ func (v *Validator) checkAppliesTo(actionNamespace string, appliesTo policyInfoM
 	// Check Object
 	resourceTypes := appliesTo.ResourceTypes
 	if resourceTypes != nil {
-		entity := policy.Object.EntityPath()
-		if entity.Type != parser.RelTypeEmpty {
+		entity := policy.Object.Entity()
+		if entity.Type != types.RelTypeEmpty {
 			namespace := entity.GetNamespace(v.defNamespace)
 			resTypes := *resourceTypes
 			contains := false
