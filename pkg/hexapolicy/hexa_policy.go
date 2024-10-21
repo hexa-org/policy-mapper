@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
-	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/parser"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/types"
 	"github.com/hhsnopek/etag"
 	log "golang.org/x/exp/slog"
 )
@@ -325,8 +325,8 @@ func (a ActionInfo) String() string {
 	return string(a)
 }
 
-func (a ActionInfo) EntityPath() *parser.EntityPath {
-	return parser.ParseEntityPath(a.String())
+func (a ActionInfo) EntityPath() *types.Entity {
+	return types.ParseEntity(a.String())
 }
 
 func (a ActionInfo) Equals(action ActionInfo) bool {
@@ -362,10 +362,10 @@ func (s SubjectInfo) Equals(subjects SubjectInfo) bool {
 	return true
 }
 
-func (s SubjectInfo) EntityPaths() *[]parser.EntityPath {
-	ret := make([]parser.EntityPath, len(s))
+func (s SubjectInfo) EntityPaths() *[]types.Entity {
+	ret := make([]types.Entity, len(s))
 	for i, subject := range s {
-		path := parser.ParseEntityPath(subject)
+		path := types.ParseEntity(subject)
 		if path != nil {
 			ret[i] = *path
 		}
@@ -383,8 +383,8 @@ func (o *ObjectInfo) String() string {
 	return string(*o)
 }
 
-func (o *ObjectInfo) EntityPath() *parser.EntityPath {
-	return parser.ParseEntityPath(o.String())
+func (o *ObjectInfo) Entity() *types.Entity {
+	return types.ParseEntity(o.String())
 }
 
 func (o *ObjectInfo) equals(object *ObjectInfo) bool {
