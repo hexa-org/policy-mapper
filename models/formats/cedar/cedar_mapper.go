@@ -231,7 +231,7 @@ func mapCedarScope(verb string, scope policyjson.ScopeJSON) []string {
 		}
 		return []string{}
 	case "==":
-		id := scope.Entity.ID.String()
+		id := strconv.Quote(scope.Entity.ID.String())
 		entityType := string(scope.Entity.Type)
 		path := hexaTypes.Entity{
 			Type:  hexaTypes.RelTypeEquals,
@@ -245,7 +245,7 @@ func mapCedarScope(verb string, scope policyjson.ScopeJSON) []string {
 		if scope.In != nil {
 			// is in
 
-			inEntityStr := fmt.Sprintf("%s:%s", scope.In.Entity.Type, scope.In.Entity.ID)
+			inEntityStr := fmt.Sprintf("%s:%s", scope.In.Entity.Type, strconv.Quote(string(scope.In.Entity.ID)))
 
 			inEntity := hexaTypes.ParseEntity(inEntityStr)
 			inEntities := []hexaTypes.Entity{*inEntity}
@@ -266,7 +266,7 @@ func mapCedarScope(verb string, scope policyjson.ScopeJSON) []string {
 	case "in":
 		if scope.Entity != nil {
 			eType := string(scope.Entity.Type)
-			id := scope.Entity.ID.String()
+			id := strconv.Quote(scope.Entity.ID.String())
 			inEntity := hexaTypes.Entity{
 				Type:  hexaTypes.RelTypeEquals,
 				Types: []string{eType},
@@ -282,7 +282,7 @@ func mapCedarScope(verb string, scope policyjson.ScopeJSON) []string {
 			items := make([]hexaTypes.Entity, len(scope.Entities))
 
 			for i, entity := range scope.Entities {
-				id := entity.ID.String()
+				id := strconv.Quote(entity.ID.String())
 				pathItem := hexaTypes.Entity{
 					Type:  hexaTypes.RelTypeEquals,
 					Id:    &id,

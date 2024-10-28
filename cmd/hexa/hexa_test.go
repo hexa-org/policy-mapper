@@ -487,8 +487,8 @@ func (suite *testSuite) Test08_MapFromCmd() {
 	command = "map from cedar ../../examples/policyExamples/cedarAlice.txt"
 	res, err = suite.executeCommand(command, 0)
 	assert.NoError(suite.T(), err, "Should be successful map of cedar")
-	assert.Contains(suite.T(), string(res), "Photo:VacationPhoto94.jpg")
-	assert.Contains(suite.T(), string(res), "\"Rule\": \"resource in Account::\\\"stacey\\\"\"")
+	assert.Contains(suite.T(), string(res), "\"Photo:\\\"VacationPhoto94.jpg\\\"")
+	assert.Contains(suite.T(), string(res), " \"Rule\": \"resource in Account:\\\"stacey\\\"\",")
 
 	command = "map from gcp ../../examples/policyExamples/example_bindings.json"
 	res, err = suite.executeCommand(command, 0)

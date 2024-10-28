@@ -94,7 +94,9 @@ func mapCedarRelationComparator(node cedarjson.NodeJSON) (string, error) {
 		case types.String:
 			return strconv.Quote(val.String()), nil
 		case types.EntityUID:
-			return fmt.Sprintf("%s::\"%s\"", item.Type, item.ID), nil
+			iType := strings.Replace(string(item.Type), "::", ":", -1)
+
+			return fmt.Sprintf("%s:\"%s\"", iType, item.ID), nil
 		default:
 			return val.String(), nil
 		}

@@ -5,6 +5,7 @@ package types
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -28,7 +29,7 @@ type Entity struct {
 }
 
 func (e Entity) OperandType() int {
-	return RelTypeVariable
+	return TypeVariable
 }
 
 // ParseEntity takes a string value from an IDQL Subject, Action, or Object parses
@@ -135,6 +136,24 @@ func ParseEntity(value string) *Entity {
 		Types: typePath,
 		Id:    id,
 	}
+}
+
+// IsPath returns true if the id is unquoted. A quoted item is considered an entity Id
+func (e Entity) IsPath() bool {
+	return !strings.HasPrefix(*e.Id, "\"")
+}
+
+// GetId returns the main id with quotes removed
+func (e Entity) GetId() string {
+	if e.Id == nil {
+		return ""
+	}
+	val := *e.Id
+	if !strings.HasPrefix(val, "\"") {
+		return val
+	}
+	ret, _ := strconv.Unquote(*e.Id)
+	return ret
 }
 
 func (e Entity) String() string {

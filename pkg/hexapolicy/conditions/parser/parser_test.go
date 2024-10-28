@@ -65,7 +65,7 @@ func TestNegParseTests(t *testing.T) {
 	ast, err := ParseFilter("username == blah")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid IDQL idqlCondition: Unsupported comparison operator: ==")
+		assert.EqualError(t, err, "invalid condition: Unsupported comparison operator: ==")
 	}
 
 	assert.Nil(t, ast, "No idqlCondition should be parsed")
@@ -73,7 +73,7 @@ func TestNegParseTests(t *testing.T) {
 	ast, err = ParseFilter("((username pr or quota eq 0) and black eq white")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid IDQL idqlCondition: Missing close ')' bracket")
+		assert.EqualError(t, err, "invalid condition: Missing close ')' bracket")
 	}
 
 	assert.Nil(t, ast, "No idqlCondition should be parsed")
@@ -81,42 +81,42 @@ func TestNegParseTests(t *testing.T) {
 	ast, err = ParseFilter("username pr or quota eq \"none\") and black eq white")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid IDQL idqlCondition: Missing open '(' bracket")
+		assert.EqualError(t, err, "invalid condition: Missing open '(' bracket")
 	}
 	assert.Nil(t, ast, "No idqlCondition should be parsed")
 
 	ast, err = ParseFilter("username eq \"none\")")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid IDQL idqlCondition: Missing open '(' bracket")
+		assert.EqualError(t, err, "invalid condition: Missing open '(' bracket")
 	}
 	assert.Nil(t, ast, "No idqlCondition should be parsed")
 
 	ast, err = ParseFilter("username eq \"none\" and")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid IDQL idqlCondition: Incomplete expression")
+		assert.EqualError(t, err, "invalid condition: Incomplete expression")
 	}
 	assert.Nil(t, ast, "No idqlCondition should be parsed")
 
 	ast, err = ParseFilter("username eq \"none\" or abc")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid IDQL idqlCondition: Incomplete expression")
+		assert.EqualError(t, err, "invalid condition: Incomplete expression")
 	}
 	assert.Nil(t, ast, "No idqlCondition should be parsed")
 
 	ast, err = ParseFilter("emails[type eq work and value ew \"hexa.org\"")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid IDQL idqlCondition: Missing close ']' bracket")
+		assert.EqualError(t, err, "invalid condition: Missing close ']' bracket")
 	}
 	assert.Nil(t, ast, "No idqlCondition should be parsed")
 
 	ast, err = ParseFilter("emails[type[sub eq val] eq work and value ew \"hexa.org\"")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid IDQL idqlCondition: A second '[' was detected while looking for a ']' in a value path idqlCondition")
+		assert.EqualError(t, err, "invalid condition: A second '[' was detected while looking for a ']' in a value path idqlCondition")
 	}
 	assert.Nil(t, ast, "No idqlCondition should be parsed")
 
@@ -124,28 +124,28 @@ func TestNegParseTests(t *testing.T) {
 	ast, err = ParseFilter("(username == \"malformed\")")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid IDQL idqlCondition: Unsupported comparison operator: ==")
+		assert.EqualError(t, err, "invalid condition: Unsupported comparison operator: ==")
 	}
 	assert.Nil(t, ast, "No idqlCondition should be parsed")
 
 	ast, err = ParseFilter("emails.type] eq work")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid IDQL idqlCondition: Missing open '[' bracket")
+		assert.EqualError(t, err, "invalid condition: Missing open '[' bracket")
 	}
 	assert.Nil(t, ast, "No idqlCondition should be parsed")
 
 	ast, err = ParseFilter("emails.type) eq work and a eq b")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid IDQL idqlCondition: Missing open '(' bracket")
+		assert.EqualError(t, err, "invalid condition: Missing open '(' bracket")
 	}
 	assert.Nil(t, ast, "No idqlCondition should be parsed")
 
 	ast, err = ParseFilter("emails[type == work] and a eq b")
 	if err != nil {
 		fmt.Println(err.Error())
-		assert.EqualError(t, err, "invalid IDQL idqlCondition: Unsupported comparison operator: ==")
+		assert.EqualError(t, err, "invalid condition: Unsupported comparison operator: ==")
 	}
 	assert.Nil(t, ast, "No idqlCondition should be parsed")
 }

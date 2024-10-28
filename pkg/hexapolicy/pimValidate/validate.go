@@ -3,10 +3,13 @@ package pimValidate
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/hexa-org/policy-mapper/models/policyInfoModel"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions/parser"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/types"
 )
 
@@ -44,6 +47,11 @@ func (v *Validator) ValidatePolicy(policy hexapolicy.PolicyInfo) []error {
 	}
 
 	tErrs = v.checkAction(policy)
+	if tErrs != nil {
+		errs = append(errs, tErrs...)
+	}
+
+	tErrs = v.checkConditions(policy)
 	if tErrs != nil {
 		errs = append(errs, tErrs...)
 	}
@@ -86,7 +94,7 @@ func (v *Validator) checkSubject(subject hexapolicy.SubjectInfo) []error {
 		entityType := entity.GetType()
 		schema, ok := v.namespaces[namespace]
 		if !ok {
-			errs = append(errs, errors.New(fmt.Sprintf("invalid subject PIM namespace (%s)", namespace)))
+			errs = append(errs, errors.New(fmt.Sprintf("invalid subject namespace \"%s\"", namespace)))
 			continue
 		}
 		_, ok = schema.EntityTypes[entityType]
@@ -108,7 +116,7 @@ func (v *Validator) checkObject(resource hexapolicy.ObjectInfo) error {
 	entityType := entity.GetType()
 	schema, ok := v.namespaces[namespace]
 	if !ok {
-		return errors.New(fmt.Sprintf("invalid object PIM namespace (%s)", namespace))
+		return errors.New(fmt.Sprintf("invalid object namespace \"%s\"", namespace))
 	}
 	if entityType == "" {
 		return errors.New(fmt.Sprintf("missing object entity type: %s:<type>:%s", namespace, *entity.Id))
@@ -128,13 +136,13 @@ func (v *Validator) checkAction(policy hexapolicy.PolicyInfo) []error {
 		namespace := entity.GetNamespace(v.defNamespace)
 		schema, ok := v.namespaces[namespace]
 		if !ok {
-			errs = append(errs, errors.New(fmt.Sprintf("invalid PIM namespace (%s)", namespace)))
+			errs = append(errs, errors.New(fmt.Sprintf("invalid namespace \"%s\"", namespace)))
 			continue
 		}
 		// Check that the action exists:
-		actionType, ok := schema.Actions[*entity.Id]
+		actionType, ok := schema.Actions[entity.GetId()]
 		if !ok {
-			errs = append(errs, errors.New(fmt.Sprintf("invalid action type: %s:Action:%s", namespace, *entity.Id)))
+			errs = append(errs, errors.New(fmt.Sprintf("invalid action \"%s\"", entity.String())))
 			continue
 		}
 
@@ -143,6 +151,125 @@ func (v *Validator) checkAction(policy hexapolicy.PolicyInfo) []error {
 			errs = append(errs, terrs...)
 		}
 	}
+	return errs
+}
+
+var specialEntities []string = []string{"subject", "action", "resource", "principal"}
+
+func (v *Validator) checkOperand(operand types.Value) (string, error) {
+	switch value := operand.(type) {
+	case types.Entity:
+		namespace := value.GetNamespace(v.defNamespace)
+		schema, ok := v.namespaces[namespace]
+		if !ok {
+			return "error", errors.New(fmt.Sprintf("invalid namespace \"%s\" for %s", namespace, value.String()))
+		}
+
+		eTypeId := value.GetType()
+		if !slices.Contains(specialEntities, strings.ToLower(*value.Id)) { // checks for subject, principal, action, resource
+			_, ok = schema.EntityTypes[eTypeId]
+			if !ok {
+				return "error", errors.New(fmt.Sprintf("invalid condition entity type: %s", value.String()))
+			}
+
+			if value.IsPath() {
+				attr := schema.FindAttrType(value)
+				if attr == nil {
+					return "error", errors.New(fmt.Sprintf("invalid condition attribute: %s", value.String()))
+				}
+				return attr.Type, nil
+			}
+		}
+		return policyInfoModel.TypeRecord, nil
+
+	case types.String:
+		return policyInfoModel.TypeString, nil
+	case types.Boolean:
+		return policyInfoModel.TypeBool, nil
+	case types.Date:
+		return policyInfoModel.TypeDate, nil
+	case types.Numeric:
+		return policyInfoModel.TypeLong, nil
+	}
+	return "error", errors.New("invalid operand")
+}
+
+func (v *Validator) checkExpression(expression parser.Expression) []error {
+	var errs []error
+	switch exp := expression.(type) {
+	case parser.AttributeExpression:
+		lType, err := v.checkOperand(exp.AttributePath)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		rType := "na"
+		if exp.CompareValue != nil {
+			rType, err = v.checkOperand(exp.CompareValue)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+		if errs != nil {
+			break
+		}
+
+		switch exp.Operator {
+		case parser.PR:
+			// do nothing
+		case parser.EQ, parser.NE, parser.GT, parser.GE, parser.LT, parser.LE:
+			// can only compare like types
+			if !strings.EqualFold(lType, rType) {
+				errs = append(errs, errors.New(fmt.Sprintf("expression \"%s\" has mis-matched attribute types: %s and %s", expression.String(), lType, rType)))
+			}
+		case parser.SW, parser.EW:
+			if !strings.EqualFold(lType, policyInfoModel.TypeString) {
+				errs = append(errs, errors.New(fmt.Sprintf("expression \"%s\" requires String comparators (%s is %s)", expression.String(), exp.AttributePath.String(), lType)))
+			}
+			if !strings.EqualFold(rType, policyInfoModel.TypeString) {
+				errs = append(errs, errors.New(fmt.Sprintf("expression \"%s\" requires String comparators (%s is %s)", expression.String(), exp.CompareValue.String(), rType)))
+			}
+		case parser.CO, parser.IN:
+			if !strings.EqualFold(lType, policyInfoModel.TypeRecord) && !strings.EqualFold(rType, policyInfoModel.TypeString) {
+				errs = append(errs, errors.New(fmt.Sprintf("expression \"%s\" requires an Entity or String comparator (%s is %s)", expression.String(), exp.AttributePath.String(), lType)))
+			}
+			if !strings.EqualFold(rType, policyInfoModel.TypeRecord) && !strings.EqualFold(lType, policyInfoModel.TypeString) {
+				errs = append(errs, errors.New(fmt.Sprintf("expression \"%s\" requires an Entity or String comparator (%s is %s)", expression.String(), exp.CompareValue.String(), rType)))
+			}
+
+		}
+
+	case parser.ValuePathExpression:
+		// TODO Need to verify
+		// 1. Main attribute is valid
+		// 2. Each attribute in the filter is valid
+		// 3. if specified, the sub-attribute is valid
+		// 4. The comparison is valid.
+		errs = append(errs, errors.New(fmt.Sprintf("valuePath expressions \"%s\" are not supported", exp.String())))
+
+	}
+	return errs
+}
+
+func (v *Validator) checkConditions(policy hexapolicy.PolicyInfo) []error {
+	var errs []error
+	if policy.Condition == nil {
+		return nil
+	}
+
+	ast, err := policy.Condition.Ast()
+	if err != nil {
+		errs = append(errs, err)
+	} else {
+		expressions := conditions.FindEntityUses(ast)
+		for _, exp := range expressions {
+
+			expressionErrs := v.checkExpression(exp)
+			if expressionErrs != nil {
+				errs = append(errs, expressionErrs...)
+			}
+		}
+	}
+
 	return errs
 }
 
@@ -176,7 +303,7 @@ func (v *Validator) checkAppliesTo(actionNamespace string, appliesTo policyInfoM
 				}
 			}
 			if !contains {
-				errs = append(errs, errors.New(fmt.Sprintf("invalid principal type (%s:%s), must be one of %+q", namespace, entity.GetType(), principals)))
+				errs = append(errs, errors.New(fmt.Sprintf("policy cannot be applied to subject \"%s\", must be one of %+q", entity.String(), principals)))
 			}
 		}
 
@@ -203,7 +330,7 @@ func (v *Validator) checkAppliesTo(actionNamespace string, appliesTo policyInfoM
 				}
 			}
 			if !contains {
-				errs = append(errs, errors.New(fmt.Sprintf("invalid object type (%s:%s), must be one of %+q", namespace, entity.GetType(), resTypes)))
+				errs = append(errs, errors.New(fmt.Sprintf("policy cannot be applied to object type \"%s\", must be one of %+q", policy.Object.String(), resTypes)))
 			}
 		}
 

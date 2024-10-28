@@ -120,12 +120,12 @@ func TestNegToProvider(t *testing.T) {
 		Rule: "bleh is bad",
 	}
 	celString, err := mapper.MapConditionToProvider(condition)
-	assert.Errorf(t, err, "invalid IDQL idqlCondition: Unsupported comparison operator: is")
+	assert.Errorf(t, err, "invalid condition: Unsupported comparison operator: is")
 	assert.Equal(t, "", celString, "Should be empty string")
 
 	valuePath := conditions.ConditionInfo{Rule: "emails[type eq \"work\" and value ew \"strata.io\""}
 	celString, err = mapper.MapConditionToProvider(valuePath)
-	assert.Errorf(t, err, "invalid IDQL idqlCondition: Missing close ']' bracket")
+	assert.Errorf(t, err, "invalid condition: Missing close ']' bracket")
 	assert.Equal(t, "", celString, "Should be empty string")
 
 	valuePath = conditions.ConditionInfo{Rule: "emails[type eq \"work\" and value ew \"strata.io\"]"}
@@ -145,7 +145,7 @@ func TestNegToProvider(t *testing.T) {
 
 	badCompare := conditions.ConditionInfo{Rule: "level GT 3 and abc GR 2"}
 	celString, err = mapper.MapConditionToProvider(badCompare)
-	assert.Errorf(t, err, "invalid IDQL idqlCondition: Unsupported comparison operator: GR")
+	assert.Errorf(t, err, "invalid condition: Unsupported comparison operator: GR")
 	assert.Equal(t, "", celString, "Should be empty string")
 
 }

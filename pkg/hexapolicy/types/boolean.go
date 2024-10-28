@@ -14,7 +14,7 @@ func NewBoolean(value string) Value {
 }
 
 func (e Boolean) OperandType() int {
-	return RelTypeBool
+	return TypeBool
 }
 
 func (e Boolean) Value() interface{} {
