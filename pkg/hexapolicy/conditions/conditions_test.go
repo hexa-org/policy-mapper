@@ -160,33 +160,39 @@ func TestEquals(t *testing.T) {
 
 func TestFindEntities(t *testing.T) {
 	tests := []struct {
-		Name      string
-		Filter    string
-		WantCount int
+		Name        string
+		Filter      string
+		EntityCount int
+		ExpCount    int
 	}{
 		{
 			"Multi logic",
 			"(level gt 5 or test eq \"abc\" or level lt 10) and (username sw \"emp\" or username eq \"guest\")",
+			5,
 			5,
 		},
 		{
 			"Multi Entity expression",
 			"level gt account.number",
 			2,
+			1,
 		},
 		{
 			"No entities",
 			"5 gt 2",
+			0,
 			0,
 		},
 		{
 			"Not expression",
 			"not(name.surname eq \"smith\")",
 			1,
+			1,
 		},
 		{
 			"Value Path",
 			"mail[type eq \"work\"] ew \"@example.com\"",
+			1,
 			1,
 		},
 	}
@@ -197,12 +203,14 @@ func TestFindEntities(t *testing.T) {
 			ast, err := conditions.ParseExpressionAst(test.Filter)
 			assert.NoErrorf(t, err, "error parsing expression")
 
+			exps := conditions.FindEntityUses(ast)
+			assert.Equal(t, test.ExpCount, len(exps))
 			entities := conditions.FindEntities(ast)
 
-			if test.WantCount == 0 {
+			if test.EntityCount == 0 {
 				assert.Nil(t, entities, "expected no entities")
 			} else {
-				assert.Equal(t, test.WantCount, len(entities), "Check expected result matches: %d", test.WantCount)
+				assert.Equal(t, test.EntityCount, len(entities), "Check expected result matches: %d", test.EntityCount)
 
 			}
 		})

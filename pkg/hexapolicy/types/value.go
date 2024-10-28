@@ -8,11 +8,11 @@ import (
 )
 
 const (
-	RelTypeVariable = iota
-	RelTypeString
-	RelTypeNumber
-	RelTypeDate
-	RelTypeBool
+	TypeVariable = iota
+	TypeString
+	TypeNumber
+	TypeDate
+	TypeBool
 )
 
 type Value interface {

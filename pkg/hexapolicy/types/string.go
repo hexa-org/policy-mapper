@@ -17,7 +17,7 @@ func NewString(value string) Value {
 }
 
 func (s String) OperandType() int {
-	return RelTypeString
+	return TypeString
 }
 
 func (s String) Value() interface{} {

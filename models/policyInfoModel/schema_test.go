@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	hexaTypes "github.com/hexa-org/policy-mapper/pkg/hexapolicy/types"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/stretchr/testify/assert"
 )
@@ -38,6 +39,52 @@ func TestParsePhotoSchema(t *testing.T) {
 	personType := app.CommonTypes["PersonType"]
 	assert.NotNil(t, personType)
 	assert.Equal(t, "Long", personType.Attributes["age"].Type)
+}
+
+func TestParseCmvSchema(t *testing.T) {
+	_, file, _, _ := runtime.Caller(0)
+	fileBytes, err := os.ReadFile(filepath.Join(file, "../test", "cmvSchemaTest.json"))
+	assert.NoError(t, err)
+
+	namespaces, err := ParseSchemaFile(fileBytes)
+	assert.NoError(t, err)
+	assert.NotNil(t, namespaces)
+
+	schemas := *namespaces
+	app, ok := schemas["PhotoApp"]
+	if !ok {
+		assert.Fail(t, "Expected PhotoApp Schema")
+	}
+	assert.NotNil(t, app)
+
+	entity := hexaTypes.ParseEntity("User:userId")
+	aType := app.FindAttrType(*entity)
+
+	assert.NotNil(t, aType)
+	assert.Equal(t, TypeString, aType.Type)
+
+	entityEmails := hexaTypes.ParseEntity("User:emails.primary")
+	aType = app.FindAttrType(*entityEmails)
+	assert.NotNil(t, aType)
+	assert.Equal(t, TypeBool, aType.Type)
+
+	entityUserName := hexaTypes.ParseEntity("User:name")
+	aType = app.FindAttrType(*entityUserName)
+	assert.NotNil(t, aType)
+	assert.Equal(t, TypeRecord, aType.Type)
+
+	entityNameFamily := hexaTypes.ParseEntity("User:name.familyName")
+	aType = app.FindAttrType(*entityNameFamily)
+	assert.NotNil(t, aType)
+	assert.Equal(t, TypeString, aType.Type)
+
+	entityBad := hexaTypes.ParseEntity("User:name.bad")
+	aType = app.FindAttrType(*entityBad)
+	assert.Nil(t, aType)
+
+	entityBadType := hexaTypes.ParseEntity("Bad:name")
+	aType = app.FindAttrType(*entityBadType)
+	assert.Nil(t, aType)
 }
 
 func TestParseHealthSchema(t *testing.T) {

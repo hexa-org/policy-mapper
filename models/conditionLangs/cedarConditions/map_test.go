@@ -53,7 +53,7 @@ func TestMapCedar(t *testing.T) {
 			Action: conditions.AAllow,
 		}, false},
 		{"In test", "when { resource in Album::\"alice_vacation\" }", &conditions.ConditionInfo{
-			Rule:   "resource in Album::\"alice_vacation\"",
+			Rule:   "resource in Album:\"alice_vacation\"",
 			Action: conditions.AAllow,
 		}, false},
 		{"In set", "when { resource.id in [\"a\",\"b\"] }", &conditions.ConditionInfo{
@@ -82,7 +82,7 @@ func TestMapCedar(t *testing.T) {
 			Action: conditions.AAllow,
 		}, true},
 		{"Is In", "when { principal is User in Group::\"accounting\"}", &conditions.ConditionInfo{
-			Rule:   "principal is User and principal in Group::\"accounting\"",
+			Rule:   "principal is User and principal in Group:\"accounting\"",
 			Action: conditions.AAllow,
 		}, false},
 		{"Multi-or", "when { principal.id > 4 || principal.type >= \"c\" || resource.id < 100 || resource.name <= \"m\" }",
@@ -128,7 +128,7 @@ when { resource.owner != "somebody" }
 			}, false},
 		{"Entity addressing", "when { principal == User::\"a1b2c3d4-e5f6-a1b2-c3d4-EXAMPLE11111\" }",
 			&conditions.ConditionInfo{
-				Rule:   "principal eq User::\"a1b2c3d4-e5f6-a1b2-c3d4-EXAMPLE11111\"",
+				Rule:   "principal eq User:\"a1b2c3d4-e5f6-a1b2-c3d4-EXAMPLE11111\"",
 				Action: conditions.AAllow,
 			}, false},
 		{"Greater test", "when { principal.id.greaterThan(4) }",
