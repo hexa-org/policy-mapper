@@ -21,6 +21,10 @@ type ConditionInfo struct {
 	Action string `json:"Action,omitempty"`                   // allow/deny/audit default is allow
 }
 
+func (c *ConditionInfo) Ast() (conditionparser.Expression, error) {
+	return conditionparser.ParseFilter(c.Rule)
+}
+
 // Equals performs an AST level compare to test filters are equivalent. NOTE: does not test equivalent attribute expressions at this time
 // e.g. level < 5 vs. not(level >= 5) will return as unequal though logically equal.  So while a true is always correct, some equivalent expressions will report false
 func (c *ConditionInfo) Equals(compare *ConditionInfo) bool {
@@ -201,30 +205,58 @@ func compareWalkRecursively(e conditionparser.Expression, ch chan string) {
 	return
 }
 
-func FindEntities(ast conditionparser.Expression) []types.Entity {
-	var ret []types.Entity
+// FindEntityUses returns all AttributeExpression or ValuePathExpression elements where one or more of the operands
+// is an Entity that can be validated against schema.
+func FindEntityUses(ast conditionparser.Expression) []conditionparser.Expression {
+	var ret []conditionparser.Expression
 	switch exp := ast.(type) {
 	case conditionparser.PrecedenceExpression:
-		entities := FindEntities(exp.Expression)
+		entities := FindEntityUses(exp.Expression)
 		ret = append(ret, entities...)
 	case conditionparser.LogicalExpression:
-		left := FindEntities(exp.Left)
-		right := FindEntities(exp.Right)
+		left := FindEntityUses(exp.Left)
+		right := FindEntityUses(exp.Right)
 		ret = append(ret, left...)
 		ret = append(ret, right...)
 	case conditionparser.NotExpression:
-		ret = append(ret, FindEntities(exp.Expression)...)
+		ret = append(ret, FindEntityUses(exp.Expression)...)
 	case conditionparser.AttributeExpression:
 		value := exp.AttributePath
-		if value != nil && value.OperandType() == types.RelTypeVariable {
-			ret = append(ret, value.(types.Entity))
-		}
-		value = exp.CompareValue
-		if value != nil && value.OperandType() == types.RelTypeVariable {
-			ret = append(ret, value.(types.Entity))
+		compValue := exp.CompareValue
+		if (value != nil && value.OperandType() == types.TypeVariable) ||
+			(compValue != nil && compValue.OperandType() == types.TypeVariable) {
+			ret = append(ret, exp)
 		}
 	case conditionparser.ValuePathExpression:
-		ret = append(ret, exp.Attribute)
+		ret = append(ret, exp)
+	}
+	return ret
+}
+
+func FindEntities(ast conditionparser.Expression) []types.Entity {
+	var ret []types.Entity
+	exps := FindEntityUses(ast)
+	for _, exp := range exps {
+		switch v := exp.(type) {
+		case conditionparser.AttributeExpression:
+			if v.AttributePath != nil && v.AttributePath.OperandType() == types.TypeVariable {
+				ret = append(ret, v.AttributePath.(types.Entity))
+			}
+
+			// todo Need to add the sub-attributes here  (e.g. emails[type eq \"work\"])
+
+			if v.CompareValue != nil && v.CompareValue.OperandType() == types.TypeVariable {
+				ret = append(ret, v.CompareValue.(types.Entity))
+			}
+		case conditionparser.ValuePathExpression:
+			if v.Attribute.OperandType() == types.TypeVariable {
+				ret = append(ret, v.Attribute)
+
+			}
+			if v.CompareValue != nil && v.CompareValue.OperandType() == types.TypeVariable {
+				ret = append(ret, v.CompareValue.(types.Entity))
+			}
+		}
 	}
 	return ret
 }

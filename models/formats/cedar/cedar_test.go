@@ -58,10 +58,10 @@ permit (
    "version": "0.7"
   },
  "subjects": [
-   "User:alice"
+   "User:\"alice\""
   ],
- "actions": [ "Action:viewPhoto" ],
- "object": "Photo:VacationPhoto.jpg"
+ "actions": [ "Action:\"viewPhoto\"" ],
+ "object": "Photo:\"VacationPhoto.jpg\""
 }`,
 			err: false},
 		{
@@ -74,14 +74,14 @@ permit (
 			idql: `{
  "meta": {"version": "0.7"},
  "subjects": [
-   "User[Group:AVTeam]"
+   "User[Group:\"AVTeam\"]"
   ],
  "actions": [
-    "PhotoOp:view",
-    "PhotoOp:edit",
-    "PhotoOp:delete"
+    "PhotoOp:\"view\"",
+    "PhotoOp:\"edit\"",
+    "PhotoOp:\"delete\""
  ],
- "object": "Photo:VacationPhoto.jpg"
+ "object": "Photo:\"VacationPhoto.jpg\""
 }`, err: false},
 		{
 			name: "Conditions",
@@ -95,12 +95,12 @@ unless { principal has parents };`,
 			idql: `{
  "meta": {"version": "0.7"},
  "subjects": [
-   "[UserGroup:AVTeam]"
+   "[UserGroup:\"AVTeam\"]"
   ],
- "actions": [ "Action:viewPhoto" ],
+ "actions": [ "Action:\"viewPhoto\"" ],
  "object": "Photo:",
  "Condition": {
-  "Rule": "resource in PhotoApp::Account::\"stacey\" and not (principal.parents pr)",
+  "Rule": "resource in PhotoApp:Account:\"stacey\" and not (principal.parents pr)",
   "Action": "allow"
  }
 }`,
@@ -118,10 +118,10 @@ when { resource in PhotoShop::"Photo" };`,
  "subjects": [
    "User:"
   ],
- "actions": [ "Action:viewPhoto" ],
+ "actions": [ "Action:\"viewPhoto\"" ],
  "object": "",
  "Condition": {
-  "Rule": "resource in PhotoShop::\"Photo\"",
+  "Rule": "resource in PhotoShop:\"Photo\"",
   "Action": "allow"
  }
 }`,

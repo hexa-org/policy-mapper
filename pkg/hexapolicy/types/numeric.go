@@ -26,5 +26,5 @@ func (n Numeric) String() string {
 }
 
 func (n Numeric) OperandType() int {
-	return RelTypeNumber
+	return TypeNumber
 }

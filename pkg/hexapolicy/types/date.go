@@ -15,7 +15,7 @@ func NewDate(value string) (Value, error) {
 }
 
 func (d Date) OperandType() int {
-	return RelTypeDate
+	return TypeDate
 }
 
 func (d Date) Value() interface{} {

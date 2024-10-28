@@ -127,7 +127,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 						break
 					}
 					if valPathCnt >= 1 {
-						return nil, errors.New("invalid IDQL idqlCondition: A second '[' was detected while looking for a ']' in a value path idqlCondition")
+						return nil, errors.New("invalid condition: A second '[' was detected while looking for a ']' in a value path idqlCondition")
 					}
 					valPathCnt++
 					break
@@ -178,7 +178,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 				}
 			}
 			if charPos == len(expression) && valPathCnt > 0 {
-				return nil, errors.New("invalid IDQL idqlCondition: Missing close ']' bracket")
+				return nil, errors.New("invalid condition: Missing close ']' bracket")
 			}
 			break
 
@@ -221,7 +221,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 						if isValue {
 							value = phrase
 							if strings.HasSuffix(value, ")") && bracketCount == 0 {
-								return nil, errors.New("invalid IDQL idqlCondition: Missing open '(' bracket")
+								return nil, errors.New("invalid condition: Missing open '(' bracket")
 							}
 							/*
 							   if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
@@ -258,7 +258,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 				break
 			}
 			if bracketCount == 0 {
-				return nil, errors.New("invalid IDQL idqlCondition: Missing open '(' bracket")
+				return nil, errors.New("invalid condition: Missing open '(' bracket")
 			}
 			break
 		case ']':
@@ -266,7 +266,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 				break
 			}
 			if valPathCnt == 0 {
-				return nil, errors.New("invalid IDQL idqlCondition: Missing open '[' bracket")
+				return nil, errors.New("invalid condition: Missing open '[' bracket")
 			}
 		case 'n', 'N':
 			if !isValue {
@@ -334,10 +334,10 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 	}
 
 	if bracketCount > 0 {
-		return nil, errors.New("invalid IDQL idqlCondition: Missing close ')' bracket")
+		return nil, errors.New("invalid condition: Missing close ')' bracket")
 	}
 	if valPathCnt > 0 {
-		return nil, errors.New("invalid IDQL idqlCondition: Missing ']' bracket")
+		return nil, errors.New("invalid condition: Missing ']' bracket")
 	}
 	if wordIndex > -1 && charPos == len(expression) {
 		filterAttr := attr
@@ -345,12 +345,12 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 			filterAttr = parentAttr + "." + attr
 		}
 		if filterAttr == "" {
-			return nil, errors.New("invalid IDQL idqlCondition: Incomplete expression")
+			return nil, errors.New("invalid condition: Incomplete expression")
 		}
 		if isAttr && cond != "" {
 			value = expression[wordIndex:]
 			if strings.HasSuffix(value, ")") && bracketCount == 0 {
-				return nil, errors.New("invalid IDQL idqlCondition: Missing open '(' bracket")
+				return nil, errors.New("invalid condition: Missing open '(' bracket")
 			}
 			/*  No need to remote quotes
 			    if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
@@ -402,7 +402,7 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 		return clauses[0], nil
 	}
 
-	return nil, errors.New("invalid IDQL idqlCondition: Missing and/or clause")
+	return nil, errors.New("invalid condition: Missing and/or clause")
 }
 
 func createExpression(attribute string, cond string, value string, vpe *ValuePathExpression) (Expression, error) {
@@ -426,6 +426,6 @@ func createExpression(attribute string, cond string, value string, vpe *ValuePat
 		return NewAttributeExpression(attribute, CompareOperator(lCond), value)
 
 	default:
-		return nil, errors.New("invalid IDQL idqlCondition: Unsupported comparison operator: " + cond)
+		return nil, errors.New("invalid condition: Unsupported comparison operator: " + cond)
 	}
 }
