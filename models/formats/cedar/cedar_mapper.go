@@ -233,9 +233,10 @@ func mapCedarScope(verb string, scope policyjson.ScopeJSON) []string {
 	case "==":
 		id := strconv.Quote(scope.Entity.ID.String())
 		entityType := string(scope.Entity.Type)
+		types := strings.Split(entityType, "::")
 		path := hexaTypes.Entity{
 			Type:  hexaTypes.RelTypeEquals,
-			Types: []string{entityType},
+			Types: types,
 			Id:    &id,
 		}
 		return []string{path.String()}
