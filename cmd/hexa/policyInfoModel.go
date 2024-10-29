@@ -167,12 +167,15 @@ func (s *ShowModelCmd) Run(cli *CLI) error {
 }
 
 type ValidatePolicyCmd struct {
-	Namespace string `arg:"" help:"Default namespace for the policy (e.g. PhotoApp)"`
+	Namespace string `arg:"" required:"" help:"Default namespace for the policy (e.g. PhotoApp)"`
 	File      string `arg:"" required:"" type:"path" help:"A json file containing an IDQL Policy to be validated"`
 }
 
 func (v *ValidatePolicyCmd) Run(cli *CLI) error {
 	ow := cli.GetOutputWriter()
+	if cli.Namespaces == nil {
+		return errors.New("no namespaces loaded. Use the `load model` command")
+	}
 	validator := pimValidate.GetValidator(*cli.Namespaces, v.Namespace)
 
 	policies, err := hexapolicysupport.ParsePolicyFile(v.File)

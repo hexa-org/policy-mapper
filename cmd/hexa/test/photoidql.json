@@ -1,0 +1,30 @@
+[
+  {
+    "meta": {
+      "version": "0.7"
+    },
+    "subjects": [
+      "PhotoApp:User:\"alice\""
+    ],
+    "actions": [
+      "PhotoApp:Action:\"viewPhoto\""
+    ],
+    "object": "PhotoApp:Photo:\"vacationPhoto.jpg\""
+  },
+  {
+    "meta": {
+      "version": "0.7"
+    },
+    "subjects": [
+      "PhotoApp:User:\"stacey\""
+    ],
+    "actions": [
+      "PhotoApp:Action:\"viewPhoto\""
+    ],
+    "object": "",
+    "condition": {
+      "Rule": "resource in PhotoApp:BadAccount:\"stacey\"",
+      "Action": "allow"
+    }
+  }
+]

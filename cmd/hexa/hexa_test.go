@@ -546,6 +546,43 @@ func (suite *testSuite) Test10_Export() {
 	_ = os.Remove("test10.json")
 }
 
+func (suite *testSuite) Test11_LoadShowAndValidateModel() {
+
+	cmdLoad := "load model ./test/photoSchema.json"
+	cmdShow := "show model PhotoApp"
+	cmdValidate := "validate policy PhotoApp ./test/photoidql.json"
+
+	// First try show and validate. They should return errors
+	res, err := suite.executeCommand(cmdShow, 0)
+	assert.Error(suite.T(), err, "no namespaces loaded. Use the `load model` command")
+
+	res, err = suite.executeCommand(cmdValidate, 0)
+	assert.Error(suite.T(), err, "no namespaces loaded. Use the `load model` command")
+
+	// Now perform the load
+	res, err = suite.executeCommand(cmdLoad, 0)
+	assert.NoError(suite.T(), err, "Check no error after load model")
+	testLog.Println(string(res))
+	assert.Contains(suite.T(), string(res), "PhotoApp")
+
+	// Perform show
+	res, err = suite.executeCommand(cmdShow, 0)
+	assert.NoError(suite.T(), err, "Check no error after show model")
+	testLog.Println(string(res))
+
+	match := `listPhotos, applies to
+ Subjects:	User, UserGroup
+ Objects:	Photo`
+	assert.Contains(suite.T(), string(res), match)
+
+	// Perform validate
+	res, err = suite.executeCommand(cmdValidate, 0)
+	assert.NoError(suite.T(), err, "Check no error after validate policy")
+	testLog.Println(string(res))
+	assert.Contains(suite.T(), string(res), ".Valid")
+	assert.Contains(suite.T(), string(res), "invalid condition entity type: PhotoApp:BadAccount:\"stacey\"")
+}
+
 func (suite *testSuite) Test99_ConfigSave() {
 
 	config := suite.pd.cli.Data
