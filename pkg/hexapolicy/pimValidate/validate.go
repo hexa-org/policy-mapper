@@ -18,6 +18,13 @@ type Validator struct {
 	defNamespace string
 }
 
+func GetValidator(namespaces policyInfoModel.Namespaces, defNamespace string) *Validator {
+	return &Validator{
+		namespaces:   namespaces,
+		defNamespace: defNamespace,
+	}
+}
+
 func NewValidator(pimBytes []byte, defaultNamespace string) (*Validator, error) {
 	namespaces, err := policyInfoModel.ParseSchemaFile(pimBytes)
 	if err != nil {
