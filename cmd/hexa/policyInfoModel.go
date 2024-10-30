@@ -65,31 +65,37 @@ func printAttrs(ow *OutputWriter, amap map[string]policyInfoModel.AttrType) {
 		return
 	}
 
-	line := "Attributes:\n"
-	fmt.Print(line)
-	ow.WriteString(line, false)
+	var line string
 	for key, attr := range amap {
 		line = fmt.Sprintf("%-20s\t%s\n", key, attr.Type)
 		fmt.Print(line)
 		ow.WriteString(line, false)
 	}
+	fmt.Print("\n")
+	ow.WriteString("\n", false)
 }
 
 func displayNamespace(ow *OutputWriter, name string, schema policyInfoModel.SchemaType) {
-	line := fmt.Sprintf("\nNamespace: %s\n\n", name)
+	line := fmt.Sprintf("\nNamespace: %s\n", name)
+	divider := strings.Repeat("=", len(line)-2) + "\n\n"
 	fmt.Print(line)
+	fmt.Print(divider)
 	ow.WriteString(line, false)
+	ow.WriteString(divider, false)
 
-	fmt.Print("Entities\n")
+	fmt.Print("Entities:\n")
 	ow.WriteString("Entities\n", false)
 	for k, e := range schema.EntityTypes {
 		memberof := e.MemberOfTypes
-		line := fmt.Sprintf("\nName: %s\n", k)
+		line := fmt.Sprintf("%s\n", k)
 		if memberof != nil || len(memberof) > 0 {
-			line = fmt.Sprintf("Name: %s\tMemberOf: %v\n", k, memberof)
+			line = fmt.Sprintf("%s MemberOf: %v\n", k, memberof)
 		}
+		divider = strings.Repeat("-", len(line)-1) + "\n"
 		fmt.Print(line)
+		fmt.Print(divider)
 		ow.WriteString(line, false)
+		ow.WriteString(divider, false)
 
 		attrs := e.Shape.Attributes
 		printAttrs(ow, attrs)
@@ -97,12 +103,15 @@ func displayNamespace(ow *OutputWriter, name string, schema policyInfoModel.Sche
 	}
 
 	if len(schema.CommonTypes) > 0 {
-		fmt.Print("\nCommon Types\n\n")
-		ow.WriteString("\nCommon Types\n\n", false)
+		fmt.Print("Common Types:\n\n")
+		ow.WriteString("Common Types:\n\n", false)
 		for k, e := range schema.CommonTypes {
-			line := fmt.Sprintf("Name: %s\n", k)
+			line := fmt.Sprintf("%s\n", k)
+			divider = strings.Repeat("-", len(line)-1) + "\n"
 			fmt.Print(line)
 			ow.WriteString(line, false)
+			fmt.Print(divider)
+			ow.WriteString(divider, false)
 			attrs := e.Attributes
 			printAttrs(ow, attrs)
 		}
@@ -112,8 +121,8 @@ func displayNamespace(ow *OutputWriter, name string, schema policyInfoModel.Sche
 	}
 
 	if len(schema.Actions) > 0 {
-		fmt.Print("\nActions\n\n")
-		ow.WriteString("\nActions\n\n", false)
+		fmt.Print("Actions:\n\n")
+		ow.WriteString("Actions:\n\n", false)
 		for k, e := range schema.Actions {
 			memberof := e.MemberOf
 			line := fmt.Sprintf("%s, ", k)
@@ -128,13 +137,13 @@ func displayNamespace(ow *OutputWriter, name string, schema policyInfoModel.Sche
 			ow.WriteString(line, false)
 			if e.AppliesTo.PrincipalTypes != nil {
 				types := strings.Join(*e.AppliesTo.PrincipalTypes, ", ")
-				line = fmt.Sprintf(" Subjects:\t%s\n", types)
+				line = fmt.Sprintf(" Subjects ->\t%s\n", types)
 				fmt.Print(line)
 				ow.WriteString(line, false)
 			}
 			if e.AppliesTo.ResourceTypes != nil {
 				types := strings.Join(*e.AppliesTo.ResourceTypes, ", ")
-				line = fmt.Sprintf(" Objects:\t%s\n", types)
+				line = fmt.Sprintf(" Objects ->\t%s\n", types)
 				fmt.Print(line)
 				ow.WriteString(line, false)
 			}
