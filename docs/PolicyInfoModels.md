@@ -2,27 +2,25 @@
 
 ## Introduction
 
-A Policy Information Model (*PIM*) is a JSON description of an application, it's entities and entity relationships, and the
-actions that may be performed against those entities. A *PIM* can be used by the pimValidate package to
+A Policy Information Model (*PIM*) is description (in JSON form) of an application, it's entities, entity relationships, and the
+actions that may be performed against those entities. A *PIM* can be used by the `pimValidate` package to
 validate IDQL JSON policy statements for conformance to a model. This can be useful for:
 * Building a policy editor that reports both JSON syntax and policy errors in real time
 * Validating policy before provisioning via Hexa
-* Enumerate valid values (e.g. schema) for all parts of an IDQL policy statement.
+* Looking up valid entities, attributes (e.g. schema) for all parts of an IDQL policy statement.
 
-The format for a PIM file is borrowed from [Cedar Policy Language Schema](https://docs.cedarpolicy.com/schema/human-readable-schema.html).
+The format for a PIM file is based on [Cedar Policy Language Schema](https://docs.cedarpolicy.com/schema/human-readable-schema.html).
 See also, [JSON Schema Grammar](https://docs.cedarpolicy.com/schema/json-schema-grammar.html) and [JSON Schema format](https://docs.cedarpolicy.com/schema/json-schema.html).
 
 > [!Note]
-> As [JSON Schema](https://json-schema.org) is a well-used term to define the format of a JSON structure, the Hexa Project will refer
-> to policy schema as a Policy Information Model since this use of schema does not describe a JSON format but rather an 
-> entity relationship model and the relevant attributes and relationships.
+> [JSON Schema](https://json-schema.org) is a well-used term to define the format of a JSON document. Because Cedar JSON Schema has
+> nothing to do with JSON Schema, the Hexa Project refers policy schema as **Policy Information Models**.  
 
-The code for the implementation of PIM can be found in three packages:
+The code for the implementation of Hexa PIM can be found in these packages:
 * `models/policyInfoModel` - contains structs and functions to parse a PIM (schema) json file
 * `pkg/hexapolicy/pimValidate` - contains functions validate a `hexaPolicy.PolicyInfo` against a `policyInfoModel.SchemaType`
 
-Note that while we've adopted Cedar Schema under the APL license, this project does not necessarily use
-all the possible features available in the specification. For now, validation of policy is limited to:
+Note that the implementation of Cedar schema is preliminary and not all features are supported. For now, policy validation is limited to:
 * Entity types (e.g. `User`) that are valid for use as Subjects or Objects (e.g. `Photo`).
 * Valid actions methods
 * Which actions may be applied by what entities against which objects.
@@ -33,6 +31,9 @@ Other differences:
 * IDQL allows multiple subjects while Cedar allows only 1
 * The Hexa-OPA implementation currently does not support the full set of subject relation operations (is User in Group::"admins") even though the the validator will validate. This allows policy to be validated for provisioning against AVP.
 
+Interoperability:
+* Hexa is able to parse Cedar Schema files directly
+* Cedar Policy that is mapped to IDQL will validate against the original Cedar Schema (e.g. try the [Cedar Playground Apps](https://www.cedarpolicy.com/en/playground))
 ## Playing with Models
 
 The Hexa CLI tool has been extended to load and show policy models as well as to validate policy.
