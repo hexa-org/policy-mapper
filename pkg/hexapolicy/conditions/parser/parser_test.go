@@ -11,6 +11,8 @@ func TestParseFilter(t *testing.T) {
 	examples := [][2]string{
 		{"title pr"},
 		{"name pr and userName pr and title pr"},
+		{"[\"a\", \"b\"] co subject.role"},
+		{"subject.role in [\"a\", \"b\"]"},
 		{"name.familyName co O'Malley"},
 		{"(userName eq bjensen)"},
 		{"userName   eq  bjensen", "userName eq bjensen"},

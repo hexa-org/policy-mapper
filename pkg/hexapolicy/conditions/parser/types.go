@@ -127,10 +127,10 @@ func NewAttributeExpression(attributePath string, operator CompareOperator, comp
 // attribute is detected. If detected, the parsed Entity value is returned for the operand
 func (e AttributeExpression) GetEntityPaths() []types.Entity {
 	var paths []types.Entity
-	if e.AttributePath.OperandType() == types.TypeVariable {
+	if e.AttributePath.ValueType() == types.TypeVariable {
 		paths = append(paths, e.AttributePath.(types.Entity))
 	}
-	if e.CompareValue.OperandType() == types.TypeVariable {
+	if e.CompareValue.ValueType() == types.TypeVariable {
 		paths = append(paths, e.CompareValue.(types.Entity))
 	}
 	return paths
@@ -166,7 +166,7 @@ func (e ValuePathExpression) GetEntityPaths() []types.Entity {
 
 	paths = append(paths, e.Attribute)
 
-	if e.CompareValue.OperandType() == types.TypeVariable {
+	if e.CompareValue.ValueType() == types.TypeVariable {
 		paths = append(paths, e.CompareValue.(types.Entity))
 	}
 	return paths

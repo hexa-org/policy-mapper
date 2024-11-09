@@ -223,8 +223,8 @@ func FindEntityUses(ast conditionparser.Expression) []conditionparser.Expression
 	case conditionparser.AttributeExpression:
 		value := exp.AttributePath
 		compValue := exp.CompareValue
-		if (value != nil && value.OperandType() == types.TypeVariable) ||
-			(compValue != nil && compValue.OperandType() == types.TypeVariable) {
+		if (value != nil && value.ValueType() == types.TypeVariable) ||
+			(compValue != nil && compValue.ValueType() == types.TypeVariable) {
 			ret = append(ret, exp)
 		}
 	case conditionparser.ValuePathExpression:
@@ -239,21 +239,21 @@ func FindEntities(ast conditionparser.Expression) []types.Entity {
 	for _, exp := range exps {
 		switch v := exp.(type) {
 		case conditionparser.AttributeExpression:
-			if v.AttributePath != nil && v.AttributePath.OperandType() == types.TypeVariable {
+			if v.AttributePath != nil && v.AttributePath.ValueType() == types.TypeVariable {
 				ret = append(ret, v.AttributePath.(types.Entity))
 			}
 
 			// todo Need to add the sub-attributes here  (e.g. emails[type eq \"work\"])
 
-			if v.CompareValue != nil && v.CompareValue.OperandType() == types.TypeVariable {
+			if v.CompareValue != nil && v.CompareValue.ValueType() == types.TypeVariable {
 				ret = append(ret, v.CompareValue.(types.Entity))
 			}
 		case conditionparser.ValuePathExpression:
-			if v.Attribute.OperandType() == types.TypeVariable {
+			if v.Attribute.ValueType() == types.TypeVariable {
 				ret = append(ret, v.Attribute)
 
 			}
-			if v.CompareValue != nil && v.CompareValue.OperandType() == types.TypeVariable {
+			if v.CompareValue != nil && v.CompareValue.ValueType() == types.TypeVariable {
 				ret = append(ret, v.CompareValue.(types.Entity))
 			}
 		}
