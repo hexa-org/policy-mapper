@@ -1,11 +1,11 @@
 package hexaPolicy
 
-# Rego Hexa Policy Interpreter v0.7.1
+# Rego Hexa Policy Interpreter v0.7.2
 import rego.v1
 
 import data.bundle.policies
 
-hexa_rego_version := "0.7.1"
+hexa_rego_version := "0.8.0"
 
 policies_evaluated := count(policies)
 
@@ -51,11 +51,11 @@ allow_set contains policy_id if {
 	# return id of the policy
 	policy_id := sprintf("%s", [policy.meta.policyId])
 
-	subject_match(policy.subjects, input.subject, input.req)
+	subject_match(policy, input.subject, input.req)
 
-	actions_match(policy.actions, input.req)
+	actions_match(policy, input.req)
 
-	is_object_match(policy.object, input.req)
+	is_object_match(policy, input.req)
 
 	condition_match(policy, input)
 }
@@ -67,7 +67,7 @@ allow_set contains policy_id if {
 	# return id of the policy
 	policy_id := sprintf("%s", [policy.meta.policyId])
 
-	subject_match(policy.subjects, input.subject, input.req)
+	subject_match(policy, input.subject, input.req)
 
 	not policy.actions
 
@@ -109,14 +109,19 @@ allow if {
 	count(allow_set) > 0
 }
 
-subject_match(subject, _, _) if {
-	# Match if no value specified - treat as wildcard
-	not subject
+subject_match(policy, inputsubject, req) if {
+    # Equivalent to "any"
+    not policy.subjects
 }
 
-subject_match(subject, inputsubject, req) if {
+subject_match(policy, _, _) if {
+	# Equivalent to "any"
+	count(policy.subjects) == 0
+}
+
+subject_match(policy, inputsubject, req) if {
 	# Match if a member matches
-	some member in subject
+	some member in policy.subjects
 	subject_member_match(member, inputsubject, req)
 }
 
@@ -159,13 +164,18 @@ subject_member_match(member, _, req) if {
 	net.cidr_contains(cidr, addr[0])
 }
 
-actions_match(actions, _) if {
+actions_match(policy, _) if {
 	# no actions is a match
-	count(actions) == 0
+	not policy.actions
 }
 
-actions_match(actions, req) if {
-	some action in actions
+actions_match(policy, _) if {
+	# no actions is a match
+	count(policy.actions) == 0
+}
+
+actions_match(policy, req) if {
+	some action in policy.actions
 	action_match(action, req)
 }
 
@@ -202,15 +212,19 @@ check_http_match(actionUri, req) if {
 	check_path(path, req)
 }
 
-is_object_match(resource, _) if {
-	not resource
+is_object_match(policy, _) if {
+	not policy.object
 }
 
-is_object_match(resource, req) if {
-	resource
+is_object_match(policy, _) if {
+	policy.object == ""
+}
+
+is_object_match(policy, req) if {
+	policy.object != ""
 
 	some request_uri in req.resourceIds
-	lower(resource) == lower(request_uri)
+	lower(policy.object) == lower(request_uri)
 }
 
 check_http_method(allowMask, _) if {
