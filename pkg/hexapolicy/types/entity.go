@@ -28,7 +28,7 @@ type Entity struct {
 	//  *string
 }
 
-func (e Entity) OperandType() int {
+func (e Entity) ValueType() int {
 	return TypeVariable
 }
 
