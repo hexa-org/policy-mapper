@@ -137,38 +137,64 @@ func parseFilterSub(expression string, parentAttr string) (Expression, error) {
 					}
 					valPathCnt--
 					if valPathCnt == 0 {
-						name := expression[wordIndex:vPathStartIndex]
-						valueFilterStr := expression[vPathStartIndex+1 : charPos]
-						subExpression, err := parseFilterSub(valueFilterStr, "")
-						if err != nil {
-							return nil, err
-						}
-						// var filter Expression
-						mainAttr := types.ParseEntity(name)
-						vpe = &ValuePathExpression{
-							Attribute:   *mainAttr,
-							VPathFilter: subExpression,
-						}
-						// clauses = append(clauses, filter)
+						if wordIndex == -1 {
+							charPos++ // this is a value or attribute (not a valuepath)
+							if !isAttr {
+								isAttr = true
+								attr = expression[vPathStartIndex:charPos]
+							} else {
+								isValue = true
+								value = expression[vPathStartIndex:charPos]
+								wordIndex = charPos
 
-						if charPos+1 < len(expRunes) {
-							cc := expRunes[charPos+1]
-							if cc == '.' {
-								charPos++
-								subAttrStart := charPos + 1
-								for charPos < len(expRunes) && expRunes[charPos] != ' ' {
-									charPos++
+								arrayExp, err := createExpression(attr, cond, value, nil)
+								if err != nil {
+									return nil, err
 								}
-								subAttr := string(expRunes[subAttrStart:charPos])
-								vpe.SubAttr = &subAttr
-								charPos-- // reset back to space
+								attr = ""
+								isAttr = false
+								cond = ""
+								isExpr = false
+								isValue = false
+								clauses = append(clauses, arrayExp)
 							}
+							vPathStartIndex = -1
+
+						} else {
+							name := expression[wordIndex:vPathStartIndex]
+							valueFilterStr := expression[vPathStartIndex+1 : charPos]
+							subExpression, err := parseFilterSub(valueFilterStr, "")
+							if err != nil {
+								return nil, err
+							}
+							// var filter Expression
+							mainAttr := types.ParseEntity(name)
+							vpe = &ValuePathExpression{
+								Attribute:   *mainAttr,
+								VPathFilter: subExpression,
+							}
+							// clauses = append(clauses, filter)
+
+							if charPos+1 < len(expRunes) {
+								cc := expRunes[charPos+1]
+								if cc == '.' {
+									charPos++
+									subAttrStart := charPos + 1
+									for charPos < len(expRunes) && expRunes[charPos] != ' ' {
+										charPos++
+									}
+									subAttr := string(expRunes[subAttrStart:charPos])
+									vpe.SubAttr = &subAttr
+									charPos-- // reset back to space
+								}
+							}
+							attr = name // this is just a place holder to trigger parsing operator next
+							// reset for rest of phrase
+							vPathStartIndex = -1
+							wordIndex = -1
+							isAttr = true
 						}
-						attr = name // this is just a place holder to trigger parsing operator next
-						// reset for rest of phrase
-						vPathStartIndex = -1
-						wordIndex = -1
-						isAttr = true
+
 					}
 				default:
 				}
