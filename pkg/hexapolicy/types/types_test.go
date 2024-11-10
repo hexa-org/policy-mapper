@@ -61,7 +61,7 @@ func TestTypes(t *testing.T) {
 		{
 			"Arrays",
 			"[\"a\", \"b\", \"c\"]",
-			Array{[]Value{String{"a"}, String{"b"}, String{"c"}}},
+			Array{[]ComparableValue{String{"a"}, String{"b"}, String{"c"}}},
 			"",
 			"",
 			false,
@@ -239,8 +239,8 @@ func TestArray(t *testing.T) {
 	assert.NoError(t, err)
 	assert.IsType(t, Array{}, value)
 	assert.Equal(t, TypeArray, value.ValueType())
-	assert.IsType(t, []Value{}, value.Value())
-	vals := value.Value().([]Value)
+	assert.IsType(t, []ComparableValue{}, value.Value())
+	vals := value.Value().([]ComparableValue)
 	val2 := vals[1]
 	assert.Equal(t, float64(2), val2.Value())
 }
