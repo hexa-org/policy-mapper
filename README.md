@@ -23,7 +23,10 @@ This project provides:
 Policy Mapper supports the following capabilities:
 
 Syntactical Mapping
-: Policy formats that have a parsable format or language, and can be represented in a "tuple" (subject, action, resource, conditions, scope) are considered "syntactical". Policy-Mapper can map these formats to and from IDQL JSON format. Examples include: IDQL, Cedar, GCP Bind among others.
+: Policy formats that have a parsable format or language, and can be represented in a "tuple" (subject, action, resource, conditions, scope) are considered "syntactical". Policy-Mapper can map these formats to and from IDQL JSON format. Examples include: IDQL, Cedar, GCP Bind among others. Syntactical Mapping support is provided for:
+
+    * Google Bind Policy and Google Conditional Expression Language (CEL)
+    * AWS Verified Permissions and Cedar policy language including support for CEL
 
 RBAC API Mapping
 : Some systems do not directly have a policy language but support role or group based access control settings through an API.
@@ -31,9 +34,12 @@ RBAC API Mapping
 Policy Provisioning
 : Policy Mapper combines a set of Providers that call APIs to retrieve and map access policy as well as be able to set policy.
 
-Syntactical Mapping support is provided for:
-* Google Bind Policy and Google Conditional Expression Language (CEL)
-* AWS Verified Permissions and Cedar policy language including support for CEL
+Policy Validation
+: IDQL Policies may be validated against a [Policy Information Model](docs/PolicyInfoModels.md) which specifies entities (subjects, resources), their schema,
+and how actions may be applied by subject entities against resource entities.
+
+Policy Entity Syntax
+: New [policy syntax is available](docs/EntityValueFormat.md) that may be used in conjunction with Policy Validation. This is also useful when mapping to and from Cedar Policy Language.
 
 Provisioning support is provided for:
 * Google [Policy for IAP Secured Resources](https://cloud.google.com/iap/docs/managing-access) (Application Engine and Compute Engine)

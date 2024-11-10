@@ -571,8 +571,8 @@ func (suite *testSuite) Test11_LoadShowAndValidateModel() {
 	testLog.Println(string(res))
 
 	match := `listPhotos, applies to
- Subjects:	User, UserGroup
- Objects:	Photo`
+ Subjects ->	User, UserGroup
+ Objects ->	Photo`
 	assert.Contains(suite.T(), string(res), match)
 
 	// Perform validate
