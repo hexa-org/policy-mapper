@@ -13,7 +13,7 @@ import (
 const (
 	AAllow string = "allow"
 	ADeny  string = "deny"
-	AAudit string = "audit"
+	// AAudit string = "audit"
 )
 
 type ConditionInfo struct {
