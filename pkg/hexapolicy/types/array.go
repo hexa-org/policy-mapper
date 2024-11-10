@@ -1,12 +1,15 @@
 package types
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type Array struct {
-	values []Value
+	values []ComparableValue
 }
 
-func NewArray(values []Value) Value {
+func NewArray(values []ComparableValue) Value {
 	return Array{values}
 }
 
@@ -31,13 +34,19 @@ func ParseArray(s string) (Value, error) {
 	val = strings.TrimSuffix(val, "]")
 
 	vals := strings.Split(val, ",")
-	values := make([]Value, len(vals))
+	values := make([]ComparableValue, len(vals))
 	for i, item := range vals {
 		iValue, err := ParseValue(item)
 		if err != nil {
 			return nil, err
 		}
-		values[i] = iValue
+		switch v := iValue.(type) {
+		case ComparableValue:
+			values[i] = v
+		default:
+			return nil, fmt.Errorf("arrays cannot contain sub-arrays or objects: %s", s)
+		}
+
 	}
 	return NewArray(values), nil
 }
