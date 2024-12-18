@@ -2,7 +2,7 @@ module github.com/hexa-org/policy-mapper
 
 go 1.23
 
-toolchain go1.23.2
+toolchain go1.23.4
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.16.0
@@ -14,13 +14,13 @@ require (
 	github.com/alecthomas/participle/v2 v2.1.1
 	github.com/alexedwards/scs/v2 v2.8.0
 	github.com/aws/aws-sdk-go-v2 v1.32.6
-	github.com/aws/aws-sdk-go-v2/config v1.28.3
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.44
-	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.15.15
-	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.46.5
-	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.36.5
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.66.3
-	github.com/aws/aws-sdk-go-v2/service/verifiedpermissions v1.20.1
+	github.com/aws/aws-sdk-go-v2/config v1.28.6
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.47
+	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.15.21
+	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.48.1
+	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.38.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.71.0
+	github.com/aws/aws-sdk-go-v2/service/verifiedpermissions v1.20.3
 	github.com/cedar-policy/cedar-go v0.4.0
 	github.com/chzyer/readline v1.5.1
 	github.com/coreos/go-oidc/v3 v3.11.0
@@ -36,17 +36,17 @@ require (
 	github.com/prometheus/client_golang v1.20.5
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/exp v0.0.0-20241210194714-1829a127f884
+	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
 	golang.org/x/oauth2 v0.24.0
-	google.golang.org/api v0.211.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20241209162323-e6fa225c2576
+	google.golang.org/api v0.212.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20241216192217-9240e9c98484
 )
 
 require (
 	cel.dev/expr v0.19.1 // indirect
-	cloud.google.com/go/auth v0.12.1 // indirect
+	cloud.google.com/go/auth v0.13.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.6 // indirect
-	cloud.google.com/go/compute/metadata v0.5.2 // indirect
+	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.3.2 // indirect
 	github.com/alecthomas/repr v0.4.0 // indirect
@@ -106,6 +106,6 @@ require (
 	golang.org/x/time v0.8.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241209162323-e6fa225c2576 // indirect
 	google.golang.org/grpc v1.68.1 // indirect
-	google.golang.org/protobuf v1.35.2 // indirect
+	google.golang.org/protobuf v1.36.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

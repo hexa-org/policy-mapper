@@ -5,7 +5,7 @@ import rego.v1
 
 import data.bundle.policies
 
-hexa_rego_version := "0.8.0"
+hexa_rego_version := "0.8.2"
 
 policies_evaluated := count(policies)
 
@@ -44,6 +44,23 @@ diag_error_version(policy) := diag if {
 	}
 }
 
+deny_set contains policy_id if {
+	some policy in policies
+
+	# return id of the policy
+	policy_id := sprintf("%s", [policy.meta.policyId])
+
+	subject_match(policy, input.subject, input.req)
+
+	actions_match(policy, input.req)
+
+	is_object_match(policy, input.req)
+
+	condition_rule_match(policy, input)
+
+	action_disallow(policy)
+}
+
 # Returns the list of matching policy names based on current request
 allow_set contains policy_id if {
 	some policy in policies
@@ -57,23 +74,9 @@ allow_set contains policy_id if {
 
 	is_object_match(policy, input.req)
 
-	condition_match(policy, input)
-}
+	condition_rule_match(policy, input)
 
-# Returns the list of matching policy names based on current request with no actions
-allow_set contains policy_id if {
-	some policy in policies
-
-	# return id of the policy
-	policy_id := sprintf("%s", [policy.meta.policyId])
-
-	subject_match(policy, input.subject, input.req)
-
-	not policy.actions
-
-	is_object_match(policy.object, input.req)
-
-	condition_match(policy, input)
+	action_allow(policy)
 }
 
 scopes contains scope if {
@@ -106,6 +109,7 @@ action_rights contains name if {
 
 # Returns whether the current operation is allowed
 allow if {
+    count(deny_set) == 0  # if any denys are matched the request is denied
 	count(allow_set) > 0
 }
 
@@ -251,30 +255,32 @@ check_path(path, _) if {
 	not path # if path not specified, it will not be matched
 }
 
-condition_match(policy, _) if {
+condition_rule_match(policy, _) if {
 	not policy.condition # Most policies won't have a condition
 }
 
-condition_match(policy, inreq) if {
+condition_rule_match(policy, inreq) if {
 	policy.condition
-	not policy.condition.action # Default is to allow
+	policy.condition.rule
 	hexaFilter(policy.condition.rule, inreq) # HexaFilter evaluations the rule for a match against input
 }
 
-condition_match(policy, inreq) if {
+condition_rule_match(policy, inreq) if {
 	policy.condition
-	action_allow(policy.condition.action) # if defined, action must be "allow"
-	hexaFilter(policy.condition.rule, inreq) # HexaFilter evaluations the rule for a match against input
-}
-
-condition_match(policy, inreq) if {
-	# If action is deny, then hexaFilter must be false
-	policy.condition
-	not action_allow(policy.condition.action)
-	not hexaFilter(policy.condition.rule, inreq) # HexaFilter evaluations the rule for a match against input
+	not policy.condition.rule
 }
 
 # Evaluate whether the condition is set to allow
-action_allow(val) if {
-    lower(val) == "allow"
+action_allow(policy) if {
+    policy.condition.action
+    lower(policy.condition.action) == "allow"
+}
+
+action_allow(policy) if {
+    not policy.condition.action
+}
+
+action_disallow(policy) if {
+    policy.condition.action
+    not  lower(policy.condition.action) == "allow"
 }
