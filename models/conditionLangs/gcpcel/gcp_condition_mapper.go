@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"strconv"
 
-	celv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/access_loggers/filters/cel/v3"
 	"github.com/google/cel-go/cel"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions/parser"
@@ -22,18 +21,6 @@ var (
 
 type GoogleConditionMapper struct {
 	NameMapper *conditions.AttributeMap
-}
-
-type CelConditionType struct {
-	Title       string
-	Description string
-	Expression  celv3.ExpressionFilter
-}
-
-type GcpConditionType struct {
-	Title       string
-	Description string
-	Expression  string
 }
 
 func (mapper *GoogleConditionMapper) MapConditionToProvider(condition conditions.ConditionInfo) (string, error) {
