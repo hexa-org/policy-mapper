@@ -5,7 +5,7 @@ import rego.v1
 
 import data.bundle.policies
 
-hexa_rego_version := "0.8.2"
+hexa_rego_version := "0.8.4"
 
 policies_evaluated := count(policies)
 
@@ -140,18 +140,39 @@ subject_member_match(member, inputsubject, _) if {
 	lower(member) == "anyauthenticated"
 }
 
-# Check for match based on user:<sub>
-subject_member_match(member, inputsubject, _) if {
-	startswith(lower(member), "user:")
-	user := substring(member, 5, -1)
-	lower(user) == lower(inputsubject.sub)
-}
-
 # Check for match if sub ends with domain
 subject_member_match(member, inputsubject, _) if {
 	startswith(lower(member), "domain:")
 	domain := lower(substring(member, 7, -1))
 	endswith(lower(inputsubject.sub), domain)
+}
+
+# Check for match based on policy user:<sub> and sub with no type (this is the defaults to User entity type case)
+subject_member_match(member, inputsubject, _) if {
+	startswith(lower(member), "user:")
+	user := substring(member, 5, -1)
+	not contains(inputsubject.sub,":")
+	lower(user) == lower(inputsubject.sub)
+}
+
+# Check for match based on <entityType>:<name> - Entity Equality
+subject_member_match(member, inputsubject, _) if {
+    contains(member,":")
+    not endswith(member,":")
+    contains(inputsubject.sub,":")
+	lower(member) == lower(inputsubject.sub)
+}
+
+# Check for Entity Type Is  (subjects = ["User:", "Customer:"] )
+subject_member_match(member, inputsubject, _) if {
+    endswith(member,":")
+    colon_index := indexof(inputsubject.sub,":")
+    not colon_index < 1
+    # get the entity_type including the colon
+    entity_type = substring(inputsubject.sub,0,colon_index+1)
+
+    # compare the member with colon and entity type with colon
+	lower(member) == lower(entity_type)
 }
 
 # Check for match based on role
