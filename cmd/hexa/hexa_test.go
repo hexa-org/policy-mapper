@@ -41,7 +41,7 @@ func (suite *testSuite) initializeParser() error {
 
 	suite.pd, err = initParser(cli) // calls the main init parser
 	if err != nil {
-		testLog.Printf(err.Error())
+		testLog.Println(err.Error())
 	}
 
 	return nil

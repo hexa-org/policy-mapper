@@ -59,16 +59,6 @@ func (mapper *GoogleConditionMapper) mapFilterInternal(ast parser.Expression, is
 	// return mapTool.mapFilterValuePath(deref.(idqlCondition.ValuePathExpression))
 }
 
-/*
-func (mapTool *GoogleConditionMapper) mapFilterValuePath(vpFilter idqlCondition.ValuePathExpression) string {
-	// See: https://cloud.google.com/access-context-manager/docs/custom-access-level-spec
-	subFilter := vpFilter.VPathFilter
-	attribute := vpFilter.Attribute
-	celFilter := mapTool.mapFilterInternal(&subFilter, false)
-	return attribute + ".exists(" + attribute + "," + celFilter + ")"
-}
-*/
-
 func (mapper *GoogleConditionMapper) mapFilterNot(notFilter parser.NotExpression, _ bool) string {
 	subExpression := notFilter.Expression
 	var celFilter string
@@ -211,8 +201,7 @@ func (mapper *GoogleConditionMapper) mapCelExpr(expression *expr.Expr, isChild b
 	// case *expr.Expr_ComprehensionExpr:
 	//	return nil, errors.New("unimplemented CEL 'comprehension expression' not implemented. ")
 	default:
-		msg := fmt.Sprintf("unimplemented CEL expression: %s", expression.String())
-		return nil, fmt.Errorf(msg)
+		return nil, fmt.Errorf("unimplemented CEL expression: %s", expression.String())
 	}
 }
 
