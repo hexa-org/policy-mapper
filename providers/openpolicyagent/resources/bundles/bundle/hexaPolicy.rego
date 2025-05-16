@@ -5,7 +5,7 @@ import rego.v1
 
 import data.bundle.policies
 
-hexa_rego_version := "0.8.4"
+hexa_rego_version := "0.8.5"
 
 policies_evaluated := count(policies)
 
@@ -109,13 +109,13 @@ action_rights contains name if {
 
 # Returns whether the current operation is allowed
 allow if {
-    count(deny_set) == 0  # if any denys are matched the request is denied
+	count(deny_set) == 0  # if any denys are matched the request is denied
 	count(allow_set) > 0
 }
 
 subject_match(policy, inputsubject, req) if {
-    # Equivalent to "any"
-    not policy.subjects
+	# Equivalent to "any"
+	not policy.subjects
 }
 
 subject_match(policy, _, _) if {
@@ -167,11 +167,11 @@ subject_member_match(member, inputsubject, _) if {
 subject_member_match(member, inputsubject, _) if {
     endswith(member,":")
     colon_index := indexof(inputsubject.sub,":")
-    not colon_index < 1
-    # get the entity_type including the colon
+	not colon_index < 1
+	# get the entity_type including the colon
     entity_type = substring(inputsubject.sub,0,colon_index+1)
 
-    # compare the member with colon and entity type with colon
+	# compare the member with colon and entity type with colon
 	lower(member) == lower(entity_type)
 }
 
@@ -293,15 +293,15 @@ condition_rule_match(policy, inreq) if {
 
 # Evaluate whether the condition is set to allow
 action_allow(policy) if {
-    policy.condition.action
-    lower(policy.condition.action) == "allow"
+	policy.condition.action
+	lower(policy.condition.action) == "allow"
 }
 
 action_allow(policy) if {
-    not policy.condition.action
+	not policy.condition.action
 }
 
 action_disallow(policy) if {
-    policy.condition.action
+	policy.condition.action
     not  lower(policy.condition.action) == "allow"
 }
