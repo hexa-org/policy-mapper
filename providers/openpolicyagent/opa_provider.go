@@ -273,7 +273,7 @@ func (o *OpaProvider) credentials(key []byte) (Credentials, error) {
         return Credentials{}, fmt.Errorf("invalid integration key: %w", err)
     }
     // if foundCredentials.ProjectID == "" {
-    // 	foundCredentials.ProjectID = "package authz"
+    //  foundCredentials.ProjectID = "package authz"
     // }
     return foundCredentials, nil
 }
@@ -365,4 +365,11 @@ func (o *OpaProvider) ConfigureClient(key []byte) (BundleClient, error) {
         HttpClient:      o.HttpClient,
         Authorization:   authorization,
     }, nil
+}
+
+const bundleTemplate = `{ "bundle": %s }`
+
+func BundleBytes(data []byte) ([]byte, []byte) {
+    bundleStr := fmt.Sprintf(bundleTemplate, data)
+    return []byte(bundleStr), hexaRego
 }

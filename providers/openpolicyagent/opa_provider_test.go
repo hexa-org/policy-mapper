@@ -86,7 +86,7 @@ func TestDiscoverApplications(t *testing.T) {
   "aws": {
     "bucket_name": "opa-bundles",
     "object_name": "bundle.tar.gz",
-	"key": {
+    "key": {
       "region": "us-west-1"
     }
   }
@@ -104,8 +104,8 @@ func TestDiscoverApplications(t *testing.T) {
   "github": {
     "account": "hexa-org",
     "repo": "opa-bundles",
-	"bundlePath": "bundle.tar.gz",
-	"key": {
+    "bundlePath": "bundle.tar.gz",
+    "key": {
       "accessToken": "some_github_access_token"
     }
   }
@@ -181,7 +181,7 @@ func TestOpaProvider_EnsureClientIsAvailable(t *testing.T) {
   "aws": {
     "bucket_name": "opa-bundles",
     "object_name": "bundle.tar.gz",
-	"key": {
+    "key": {
       "region": "us-west-1"
     }
   }
@@ -197,8 +197,8 @@ func TestOpaProvider_EnsureClientIsAvailable(t *testing.T) {
   "github": {
     "account": "hexa-org",
     "repo": "opa-bundles",
-	"bundlePath": "bundle.tar.gz",
-	"key": {
+    "bundlePath": "bundle.tar.gz",
+    "key": {
       "accessToken": "some_github_access_token"
     }
   }
@@ -330,7 +330,7 @@ func TestSetPolicyInfo(t *testing.T) {
     // readFile, _ := os.ReadFile(path + "/bundle/data.json")
 
     /*
-    	{"policies":[{"meta":{"version":"0.5","created":"2024-03-29T13:18:17.869827-07:00","modified":"2024-03-29T13:18:17.869827-07:00","policyId":"aResourceId_wRa","papId":"anotherResourceId","providerType":"opa"},"subject":{"members":["allusers"]},"actions":[{"actionUri":"http:GET"}],"object":{"resource_id":"aResourceId"}}]}
+       {"policies":[{"meta":{"version":"0.5","created":"2024-03-29T13:18:17.869827-07:00","modified":"2024-03-29T13:18:17.869827-07:00","policyId":"aResourceId_wRa","papId":"anotherResourceId","providerType":"opa"},"subject":{"members":["allusers"]},"actions":[{"actionUri":"http:GET"}],"object":{"resource_id":"aResourceId"}}]}
     */
     policies, err := hexapolicysupport.ParsePolicyFile(path + "/bundle/data.json")
     assert.NoError(t, err, "Check policy parses")
@@ -443,7 +443,7 @@ func TestMakeDefaultBundle(t *testing.T) {
   "policies": [
     {
       "meta": {
-		"version": "0.7"
+        "version": "0.7"
       },
       "actions": [ "http:GET" ],
       "subjects": [
@@ -491,8 +491,8 @@ func TestMakeDefaultBundle(t *testing.T) {
     assert.Equal(t, hexapolicy.IdqlVersion, meta.Version, "check version")
 
     /*
-       	dcreated, _ := os.ReadFile(filepath.Join(path, "/bundle/data.json"))
-       	assert.Equal(t, `{
+        dcreated, _ := os.ReadFile(filepath.Join(path, "/bundle/data.json"))
+        assert.Equal(t, `{
          "policies": [
            {
              "version": "0.5",
@@ -612,4 +612,40 @@ func (b *BundleServer) HandleBundle(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "application/gzip")
     _ = compressionsupport.Gzip(w, tar)
     w.Header()
+}
+
+func TestBundleBytes(t *testing.T) {
+    data := []byte(`{
+  "policies": [
+    {
+      "meta": {
+        "version": "0.7"
+      },
+      "actions": [ "http:GET" ],
+      "subjects": [
+          "anyauthenticated"
+        ],
+      "object": "aResourceId"
+    }
+  ]
+}`)
+
+    bundle, rego := openpolicyagent.BundleBytes(data)
+    expectedBundle := []byte(`{ "bundle": {
+  "policies": [
+    {
+      "meta": {
+        "version": "0.7"
+      },
+      "actions": [ "http:GET" ],
+      "subjects": [
+          "anyauthenticated"
+        ],
+      "object": "aResourceId"
+    }
+  ]
+} }`)
+
+    assert.Equal(t, expectedBundle, bundle, "Bundle output does not match expected value")
+    assert.NotNil(t, rego, "Rego policy should not be nil")
 }
