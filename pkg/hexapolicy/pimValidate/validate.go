@@ -172,20 +172,28 @@ func (v *Validator) checkOperand(operand types.Value) (string, error) {
 			return "error", errors.New(fmt.Sprintf("invalid namespace \"%s\" for %s", namespace, value.String()))
 		}
 
-		eTypeId := value.GetType()
-		if !slices.Contains(specialEntities, strings.ToLower(*value.Id)) { // checks for subject, principal, action, resource
-			_, ok = schema.EntityTypes[eTypeId]
-			if !ok {
-				return "error", errors.New(fmt.Sprintf("invalid condition entity type: %s", value.String()))
-			}
+		if slices.Contains(specialEntities, strings.ToLower(*value.Id)) { // checks for subject, principal, action, resource
+			return policyInfoModel.TypeRecord, nil
+		}
 
-			if value.IsPath() {
-				attr := schema.FindAttrType(value)
-				if attr == nil {
-					return "error", errors.New(fmt.Sprintf("invalid condition attribute: %s", value.String()))
-				}
-				return attr.Type, nil
+		for _, t := range specialEntities {
+			if strings.HasPrefix(*value.Id, fmt.Sprintf("%s%s", t, ".")) { // checks for attributes on special entities
+				return policyInfoModel.TypeRecord, nil
 			}
+		}
+
+		eTypeId := value.GetType()
+		_, ok = schema.EntityTypes[eTypeId]
+		if !ok {
+			return "error", errors.New(fmt.Sprintf("invalid condition entity type: %s", value.String()))
+		}
+
+		if value.IsPath() {
+			attr := schema.FindAttrType(value)
+			if attr == nil {
+				return "error", errors.New(fmt.Sprintf("invalid condition attribute: %s", value.String()))
+			}
+			return attr.Type, nil
 		}
 		return policyInfoModel.TypeRecord, nil
 
@@ -236,13 +244,12 @@ func (v *Validator) checkExpression(expression parser.Expression) []error {
 				errs = append(errs, errors.New(fmt.Sprintf("expression \"%s\" requires String comparators (%s is %s)", expression.String(), exp.CompareValue.String(), rType)))
 			}
 		case parser.CO, parser.IN:
-			if !strings.EqualFold(lType, policyInfoModel.TypeRecord) && !strings.EqualFold(rType, policyInfoModel.TypeString) {
-				errs = append(errs, errors.New(fmt.Sprintf("expression \"%s\" requires an Entity or String comparator (%s is %s)", expression.String(), exp.AttributePath.String(), lType)))
+			errFmt := "expression \"%s\" requires an Entity or String comparator (%s is %s)"
+			if !strings.EqualFold(lType, policyInfoModel.TypeRecord) && !strings.EqualFold(lType, policyInfoModel.TypeString) {
+				errs = append(errs, errors.New(fmt.Sprintf(errFmt, expression.String(), exp.AttributePath.String(), lType)))
+			} else if !strings.EqualFold(rType, policyInfoModel.TypeRecord) && !strings.EqualFold(rType, policyInfoModel.TypeString) {
+				errs = append(errs, errors.New(fmt.Sprintf(errFmt, expression.String(), exp.CompareValue.String(), rType)))
 			}
-			if !strings.EqualFold(rType, policyInfoModel.TypeRecord) && !strings.EqualFold(lType, policyInfoModel.TypeString) {
-				errs = append(errs, errors.New(fmt.Sprintf("expression \"%s\" requires an Entity or String comparator (%s is %s)", expression.String(), exp.CompareValue.String(), rType)))
-			}
-
 		}
 
 	case parser.ValuePathExpression:
@@ -269,7 +276,6 @@ func (v *Validator) checkConditions(policy hexapolicy.PolicyInfo) []error {
 	} else {
 		expressions := conditions.FindEntityUses(ast)
 		for _, exp := range expressions {
-
 			expressionErrs := v.checkExpression(exp)
 			if expressionErrs != nil {
 				errs = append(errs, expressionErrs...)
