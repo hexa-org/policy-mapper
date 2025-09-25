@@ -5,7 +5,7 @@ import rego.v1
 
 import data.bundle.policies
 
-hexa_rego_version := "0.8.5"
+hexa_rego_version := "0.8.6"
 
 policies_evaluated := count(policies)
 
@@ -250,6 +250,19 @@ is_object_match(policy, req) if {
 
 	some request_uri in req.resourceIds
 	lower(policy.object) == lower(request_uri)
+}
+
+# Check for match based on object type Is ("object": "user:")
+is_object_match(policy, req) if {
+	endswith(policy.object, ":")
+	colon_index := indexof(policy.object, ":")
+	not colon_index < 1
+
+	# resource_type without colon
+	resource_type = substring(policy.object, 0, colon_index)
+	some request_uri in req.resourceIds
+
+	lower(resource_type) == lower(request_uri)
 }
 
 check_http_method(allowMask, _) if {
