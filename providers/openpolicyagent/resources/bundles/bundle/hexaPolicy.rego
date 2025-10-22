@@ -5,7 +5,7 @@ import rego.v1
 
 import data.bundle.policies
 
-hexa_rego_version := "0.8.6"
+hexa_rego_version := "0.8.7"
 
 policies_evaluated := count(policies)
 
