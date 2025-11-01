@@ -220,7 +220,7 @@ func (v *ValidatePolicyCmd) Run(cli *CLI) error {
 				fmt.Print(line)
 				ow.WriteString(line, false)
 				for _, err := range report.Errs {
-					line := fmt.Sprintf("\n  %s", err.Error())
+					line := fmt.Sprintf("  %s\n", err.Error())
 					fmt.Print(line)
 					ow.WriteString(line, false)
 				}
