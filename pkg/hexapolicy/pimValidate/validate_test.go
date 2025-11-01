@@ -105,7 +105,7 @@ func TestValidate_Policy(t *testing.T) {
 		 "object": "Photo:VacationPhoto.jpg"
 		}`,
 			wantErrs: []error{
-				errors.New("invalid subject entity type: PhotoApp:Admins"),
+				errors.New("invalid subject entity type: \"PhotoApp:Admins\""),
 				errors.New("policy cannot be applied to subject \"Admins:alice\", must be one of [\"User\" \"UserGroup\"]"),
 			},
 		},
@@ -156,6 +156,7 @@ func TestValidate_Policy(t *testing.T) {
 		}`,
 			wantErrs: []error{
 				errors.New("invalid subject namespace \"BadApp\""),
+				errors.New("invalid subject entity type: \"BadApp:User\""),
 				errors.New("invalid object namespace \"BadApp\""),
 				errors.New("policy cannot be applied to subject \"BadApp:User:alice\", must be one of [\"User\" \"UserGroup\"]"),
 				errors.New("policy cannot be applied to object type \"BadApp:Photo:VacationPhoto.jpg\", must be one of [\"Photo\"]"),
@@ -176,6 +177,7 @@ func TestValidate_Policy(t *testing.T) {
 			wantErrs: []error{
 				errors.New(fmt.Sprintf("invalid action \"%s\"", "Action:badAction")),
 				errors.New(fmt.Sprintf("invalid namespace \"%s\"", "BadNamespace")),
+				errors.New(fmt.Sprintf("invalid action \"BadNamespace:Action:invalid\"")),
 			},
 		},
 		{
@@ -192,7 +194,7 @@ func TestValidate_Policy(t *testing.T) {
 		}`,
 			wantErrs: nil,
 		},
-		{name: "Condition ", //here
+		{name: "Condition ", // here
 			idql: `{
 		  "meta": {
 		    "version": "0.7"
@@ -449,8 +451,10 @@ func TestValidate_Policy(t *testing.T) {
 			}
 			assert.NotNil(t, policy, "Check test policy was parsed")
 			assert.NotNil(t, policy.Subjects, "Test policy should have subjects if valid")
-			errs := validator.ValidatePolicy(policy)
+			vErrs := validator.ValidatePolicy(policy, 0)
+			errs := convertToErrs(vErrs)
 			if tt.wantErrs == nil {
+
 				if errs != nil {
 					for _, err := range errs {
 						fmt.Println(err.Error())
@@ -463,6 +467,19 @@ func TestValidate_Policy(t *testing.T) {
 			}
 		})
 	}
+}
+
+func convertToErrs(vErrs []ValidationError) []error {
+	if vErrs == nil {
+		return nil
+	}
+	var errs []error
+	for _, vErr := range vErrs {
+		if vErr.Errs != nil {
+			errs = append(errs, vErr.Errs...)
+		}
+	}
+	return errs
 }
 
 func TestPolicySet(t *testing.T) {
@@ -485,17 +502,20 @@ func TestPolicySet(t *testing.T) {
 	validator, err := NewValidator(photoSchemaBytes, "PhotoApp")
 	assert.NoError(t, err)
 
-	var report map[string][]error
+	var report []ValidationError
 	report = validator.ValidatePolicies(*idql)
 	assert.Nil(t, report)
 
 	idql.Policies[0].Subjects = hexapolicy.SubjectInfo{"Admins:alice"}
 
 	report = validator.ValidatePolicies(*idql)
+	errs := convertToErrs(report)
 	assert.NotNil(t, report)
-	perrs, ok := report["Policy-"+testId]
-	assert.True(t, ok)
-	assert.Equal(t, 2, len(perrs))
+	assert.Equal(t, 2, len(errs))
+	assert.Equal(t, 2, len(report))
+	assert.Equal(t, report[0].PolIndex, report[1].PolIndex, "Errors should be from same policy")
+	assert.Equal(t, "invalid subject entity type: \"PhotoApp:Admins\"", errs[0].Error())
+	assert.Equal(t, "policy cannot be applied to subject \"Admins:alice\", must be one of [\"User\" \"UserGroup\"]", errs[1].Error())
 }
 
 func TestTodoPolicy(t *testing.T) {
@@ -621,7 +641,8 @@ func TestTodoPolicy(t *testing.T) {
 			}
 			assert.NotNil(t, policy, "Check test policy was parsed")
 			assert.NotNil(t, policy.Subjects, "Test policy should have subjects if valid")
-			errs := validator.ValidatePolicy(policy)
+			verrs := validator.ValidatePolicy(policy, 0)
+			errs := convertToErrs(verrs)
 			if tt.wantErrs == nil {
 				if errs != nil {
 					for _, err := range errs {

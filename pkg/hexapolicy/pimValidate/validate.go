@@ -13,6 +13,18 @@ import (
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/types"
 )
 
+type ValidationError struct {
+	PolIndex    int
+	ValIndex    int
+	ElementName string
+	Value       string
+	Errs        []error
+}
+
+func (e *ValidationError) Errors() []error {
+	return e.Errs
+}
+
 type Validator struct {
 	namespaces   policyInfoModel.Namespaces
 	defNamespace string
@@ -36,31 +48,35 @@ func NewValidator(pimBytes []byte, defaultNamespace string) (*Validator, error) 
 	return &Validator{namespaces: *namespaces, defNamespace: defaultNamespace}, nil
 }
 
-// ValidatePolicy checks `policy` (PolicyInfo) against the loaded Policy Information Model.
-// When provided, appNamespace is used to default the main namespace for entities referenced in policy. For example
+// ValidatePolicy checks `policy` (PolicyInfo) against the loaded Policy Information Model,
+// `index` is the 0-based index of the policy within a set of policies. Index is used in ValidationError for positional
+// indication in editors.
+// When provided, appNamespace is used to default the main namespace for entities referenced the policy.
+// For example
 // if appNamespace is `PhotoApp`, an entity of `Photo:myphoto.jpg` will be located under `PhotoApp`
-// If appNamespace is not provided, then each EntityPaths must contain the namespace as part of the type (e.g. PhotoApp:Photo:myphoto.jpg)
-func (v *Validator) ValidatePolicy(policy hexapolicy.PolicyInfo) []error {
-	var errs []error
+// If appNamespace is not provided, then each EntityPaths must contain the namespace as part of the type
+// (e.g. PhotoApp:Photo:myphoto.jpg)
+func (v *Validator) ValidatePolicy(policy hexapolicy.PolicyInfo, index int) []ValidationError {
+	var errs []ValidationError
 
-	tErrs := v.checkSubject(policy.Subjects)
+	tErrs := v.checkSubject(policy.Subjects, index)
 	if tErrs != nil {
 		errs = append(errs, tErrs...)
 	}
 
-	err := v.checkObject(policy.Object)
-	if err != nil {
-		errs = append(errs, err)
+	vErr := v.checkObject(policy.Object, index)
+	if vErr != nil {
+		errs = append(errs, *vErr)
 	}
 
-	tErrs = v.checkAction(policy)
+	tErrs = v.checkAction(policy, index)
 	if tErrs != nil {
 		errs = append(errs, tErrs...)
 	}
 
-	tErrs = v.checkConditions(policy)
-	if tErrs != nil {
-		errs = append(errs, tErrs...)
+	vErr = v.checkConditions(policy, index)
+	if vErr != nil {
+		errs = append(errs, *vErr)
 	}
 
 	return errs
@@ -68,30 +84,25 @@ func (v *Validator) ValidatePolicy(policy hexapolicy.PolicyInfo) []error {
 
 // ValidatePolicies validates a set of policies and returns a map whose index is as string containing either
 // the policyId of a policy with errors or an index number of the policies original index in Policies
-func (v *Validator) ValidatePolicies(policies hexapolicy.Policies) map[string][]error {
-	var res map[string][]error
+func (v *Validator) ValidatePolicies(policies hexapolicy.Policies) []ValidationError {
+	var res []ValidationError
 
 	for i, policy := range policies.Policies {
-		id := fmt.Sprintf("Policy-%d", i)
-		if policy.Meta.PolicyId != nil && *policy.Meta.PolicyId != "" {
-			id = fmt.Sprintf("Policy-%s", *policy.Meta.PolicyId)
-		}
-		errs := v.ValidatePolicy(policy)
+		errs := v.ValidatePolicy(policy, i)
 		if errs != nil {
-			if res == nil {
-				res = make(map[string][]error)
-			}
-			res[id] = errs
+			res = append(res, errs...)
 		}
 	}
 	return res
 }
 
-func (v *Validator) checkSubject(subject hexapolicy.SubjectInfo) []error {
-	var errs []error
+func (v *Validator) checkSubject(subject hexapolicy.SubjectInfo, polIndex int) []ValidationError {
+	var vErrs []ValidationError
 	// Check that the subject entity type is valid
 	entities := subject.EntityPaths()
-	for _, entity := range *entities {
+	for i, entity := range *entities {
+		var errs []error
+		val := entity.String()
 		// ignore the special case of "any" or "anyAuthenticated"
 		if entity.Type == types.RelTypeAny || entity.Type == types.RelTypeAnyAuthenticated {
 			continue
@@ -102,17 +113,27 @@ func (v *Validator) checkSubject(subject hexapolicy.SubjectInfo) []error {
 		schema, ok := v.namespaces[namespace]
 		if !ok {
 			errs = append(errs, errors.New(fmt.Sprintf("invalid subject namespace \"%s\"", namespace)))
-			continue
 		}
 		_, ok = schema.EntityTypes[entityType]
 		if !ok {
-			errs = append(errs, errors.New(fmt.Sprintf("invalid subject entity type: %s:%s", namespace, entityType)))
+			errs = append(errs, errors.New(fmt.Sprintf("invalid subject entity type: \"%s:%s\"", namespace, entityType)))
 		}
+		if len(errs) > 0 {
+			verr := ValidationError{
+				PolIndex:    polIndex,
+				ValIndex:    i,
+				ElementName: "Subjects",
+				Value:       val,
+				Errs:        errs,
+			}
+			vErrs = append(vErrs, verr)
+		}
+
 	}
-	return errs
+	return vErrs
 }
 
-func (v *Validator) checkObject(resource hexapolicy.ObjectInfo) error {
+func (v *Validator) checkObject(resource hexapolicy.ObjectInfo, polIndex int) *ValidationError {
 	// If no object or just the appName (namespace) then object is valid
 	if resource.String() == "" || strings.EqualFold(resource.String(), v.defNamespace) {
 		return nil
@@ -123,42 +144,68 @@ func (v *Validator) checkObject(resource hexapolicy.ObjectInfo) error {
 	entityType := entity.GetType()
 	schema, ok := v.namespaces[namespace]
 	if !ok {
-		return errors.New(fmt.Sprintf("invalid object namespace \"%s\"", namespace))
+		return &ValidationError{
+			PolIndex:    polIndex,
+			ValIndex:    0,
+			ElementName: "Object",
+			Value:       resource.String(),
+			Errs:        []error{errors.New(fmt.Sprintf("invalid object namespace \"%s\"", namespace))},
+		}
 	}
 	if entityType == "" {
-		return errors.New(fmt.Sprintf("missing object entity type: %s:<type>:%s", namespace, *entity.Id))
+		return &ValidationError{
+			PolIndex:    polIndex,
+			ValIndex:    0,
+			ElementName: "Object",
+			Value:       resource.String(),
+			Errs:        []error{errors.New(fmt.Sprintf("missing object entity type: %s:<type>:%s", namespace, *entity.Id))},
+		}
 	}
 	_, ok = schema.EntityTypes[entityType]
 	if !ok {
-		return errors.New(fmt.Sprintf("invalid object entity type: %s:%s", namespace, entityType))
+		return &ValidationError{
+			PolIndex:    polIndex,
+			ValIndex:    0,
+			ElementName: "Object",
+			Value:       resource.String(),
+			Errs:        []error{errors.New(fmt.Sprintf("invalid object entity type: %s:%s", namespace, entityType))},
+		}
 	}
 
 	return nil
 }
 
-func (v *Validator) checkAction(policy hexapolicy.PolicyInfo) []error {
-	var errs []error
-	for _, action := range policy.Actions {
+func (v *Validator) checkAction(policy hexapolicy.PolicyInfo, polIndex int) []ValidationError {
+	var vErrs []ValidationError
+	for i, action := range policy.Actions {
+		var errs []error
 		entity := action.EntityPath()
 		namespace := entity.GetNamespace(v.defNamespace)
 		schema, ok := v.namespaces[namespace]
 		if !ok {
 			errs = append(errs, errors.New(fmt.Sprintf("invalid namespace \"%s\"", namespace)))
-			continue
 		}
 		// Check that the action exists:
 		actionType, ok := schema.Actions[entity.GetId()]
 		if !ok {
 			errs = append(errs, errors.New(fmt.Sprintf("invalid action \"%s\"", entity.String())))
-			continue
 		}
 
 		terrs := v.checkAppliesTo(namespace, actionType.AppliesTo, policy)
 		if terrs != nil {
 			errs = append(errs, terrs...)
 		}
+		if len(errs) > 0 {
+			vErrs = append(vErrs, ValidationError{
+				PolIndex:    polIndex,
+				ValIndex:    i,
+				ElementName: "Actions",
+				Value:       action.String(),
+				Errs:        errs,
+			})
+		}
 	}
-	return errs
+	return vErrs
 }
 
 var specialEntities []string = []string{"subject", "action", "resource", "principal"}
@@ -264,8 +311,9 @@ func (v *Validator) checkExpression(expression parser.Expression) []error {
 	return errs
 }
 
-func (v *Validator) checkConditions(policy hexapolicy.PolicyInfo) []error {
+func (v *Validator) checkConditions(policy hexapolicy.PolicyInfo, polIndex int) *ValidationError {
 	var errs []error
+	var vErr *ValidationError
 	if policy.Condition == nil {
 		return nil
 	}
@@ -283,7 +331,16 @@ func (v *Validator) checkConditions(policy hexapolicy.PolicyInfo) []error {
 		}
 	}
 
-	return errs
+	if len(errs) > 0 {
+		vErr = &ValidationError{
+			PolIndex:    polIndex,
+			ValIndex:    0,
+			ElementName: "Condition",
+			Value:       policy.Condition.Rule,
+			Errs:        errs,
+		}
+	}
+	return vErr
 }
 
 func (v *Validator) checkAppliesTo(actionNamespace string, appliesTo policyInfoModel.AppliesType, policy hexapolicy.PolicyInfo) []error {

@@ -27,11 +27,14 @@ func TestSchema(t *testing.T) {
 
 	policies, err := hexapolicysupport.ParsePolicies(policyBytes)
 
-	for _, policy := range policies {
-		reporterrs := validator.ValidatePolicy(policy)
-		if reporterrs != nil {
-			for _, report := range reporterrs {
-				fmt.Println(report.Error())
+	for i, policy := range policies {
+		validationErrs := validator.ValidatePolicy(policy, i)
+		if validationErrs != nil {
+			for _, report := range validationErrs {
+				for _, err := range report.Errs {
+					fmt.Println(err.Error())
+				}
+
 			}
 		}
 	}

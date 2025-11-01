@@ -25,8 +25,8 @@ const (
 )
 
 type Policies struct {
-	Policies []PolicyInfo `json:"policies"`
-	App      *string      `json:"app,omitempty"`
+	Policies []PolicyInfo `json:"policies"`      // Policies is the set of IDQL policies associated with the namespace.
+	App      *string      `json:"app,omitempty"` // App is the application namespace (e.g., PhotoApp for PhotoApp:Photo:<id>)
 }
 
 func (p *Policies) CalculateEtags() {

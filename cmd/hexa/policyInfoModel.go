@@ -203,19 +203,31 @@ func (v *ValidatePolicyCmd) Run(cli *CLI) error {
 		fmt.Print(pid)
 		ow.WriteString(pid, false)
 
-		errs := validator.ValidatePolicy(policy)
-		if errs == nil {
+		validationErrors := validator.ValidatePolicy(policy, i)
+		if validationErrors == nil {
 			line := "...Valid\n\n"
 			fmt.Print(line)
 			ow.WriteString(line, false)
 			continue
 
 		}
-		for _, err := range errs {
-			line := fmt.Sprintf("\n  %s", err.Error())
+		if len(validationErrors) > 0 {
+			line := "...Errors:\n "
 			fmt.Print(line)
 			ow.WriteString(line, false)
+			for _, report := range validationErrors {
+				line := fmt.Sprintf("  Element: %s, Value: %s\n", report.ElementName, report.Value)
+				fmt.Print(line)
+				ow.WriteString(line, false)
+				for _, err := range report.Errs {
+					line := fmt.Sprintf("\n  %s", err.Error())
+					fmt.Print(line)
+					ow.WriteString(line, false)
+				}
+
+			}
 		}
+
 		fmt.Print("\n")
 		ow.WriteString("\n", false)
 	}
