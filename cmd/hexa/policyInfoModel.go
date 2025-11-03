@@ -47,7 +47,7 @@ func (m *LoadModelCmd) Run(cli *CLI) error {
 	}
 
 	fmt.Println("Namespaces loaded:")
-	for k, _ := range *ns {
+	for k := range *ns {
 		fmt.Println(fmt.Sprintf("\t%s", k))
 	}
 	return nil
@@ -216,15 +216,9 @@ func (v *ValidatePolicyCmd) Run(cli *CLI) error {
 			fmt.Print(line)
 			ow.WriteString(line, false)
 			for _, report := range validationErrors {
-				line := fmt.Sprintf("  Element: %s, Value: %s\n", report.ElementName, report.Value)
+				line := report.String()
 				fmt.Print(line)
 				ow.WriteString(line, false)
-				for _, err := range report.Errs {
-					line := fmt.Sprintf("  %s\n", err.Error())
-					fmt.Print(line)
-					ow.WriteString(line, false)
-				}
-
 			}
 		}
 

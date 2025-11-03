@@ -4,18 +4,23 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/hexa-org/policy-mapper/models/policyInfoModel"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/ast"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/conditions/parser"
 	"github.com/hexa-org/policy-mapper/pkg/hexapolicy/types"
+	"github.com/hexa-org/policy-mapper/pkg/hexapolicysupport"
 )
 
 type ValidationError struct {
 	PolIndex    int
 	ValIndex    int
+	Start       ast.Position
+	End         ast.Position
 	ElementName string
 	Value       string
 	Errs        []error
@@ -23,6 +28,14 @@ type ValidationError struct {
 
 func (e *ValidationError) Errors() []error {
 	return e.Errs
+}
+
+func (e *ValidationError) String() string {
+	resp := fmt.Sprintf("%15s [%d:%d] %s", e.ElementName, e.Start.Line, e.Start.Column, e.Value)
+	for _, err := range e.Errs {
+		resp += "\n" + err.Error()
+	}
+	return resp
 }
 
 type Validator struct {
@@ -74,9 +87,9 @@ func (v *Validator) ValidatePolicy(policy hexapolicy.PolicyInfo, index int) []Va
 		errs = append(errs, tErrs...)
 	}
 
-	vErr = v.checkConditions(policy, index)
-	if vErr != nil {
-		errs = append(errs, *vErr)
+	tErrs = v.checkConditions(policy, index)
+	if tErrs != nil {
+		errs = append(errs, tErrs...)
 	}
 
 	return errs
@@ -94,6 +107,107 @@ func (v *Validator) ValidatePolicies(policies hexapolicy.Policies) []ValidationE
 		}
 	}
 	return res
+}
+
+// ValidatePolicyByAst validates policies provided as raw JSON bytes and populates
+// ValidationError Start/End positions using the AST of the original document.
+// It produces similar output to ValidatePolicies but includes positional info
+// for the element that caused the error.
+func (v *Validator) ValidatePolicyByAst(policyBytes []byte) []ValidationError {
+	// Parse both the policies and the AST of the same bytes
+	pols, err := hexapolicysupport.ParsePolicies(policyBytes)
+	if err != nil {
+		// On parse error we cannot proceed with validation; return a single error without positions
+		return []ValidationError{{
+			PolIndex:    0,
+			ValIndex:    0,
+			ElementName: "document",
+			Value:       "",
+			Errs:        []error{err},
+		}}
+	}
+	doc, _ := ast.ParseAST(policyBytes)
+
+	var result []ValidationError
+	for i, policy := range pols {
+		errs := v.ValidatePolicy(policy, i)
+		if len(errs) == 0 {
+			continue
+		}
+		// Determine the AST policy node for this index, if available
+		var pnode *ast.PolicyNode
+		if doc != nil && i < len(doc.Policies) {
+			pnode = doc.Policies[i]
+		}
+		// decorate each error with positions
+		for _, e := range errs {
+			if pnode == nil {
+				result = append(result, e)
+				continue
+			}
+			// choose field by element name
+			var f *ast.FieldNode
+			elemName := strings.ToLower(e.ElementName)
+			switch elemName {
+			case "subjects":
+				f = pnode.Subjects
+			case "actions":
+				f = pnode.Actions
+			case "object":
+				f = pnode.Object
+			case "condition", "condition-action":
+				f = pnode.Condition
+			default:
+				// leave nil to fall back to policy span
+			}
+			if f != nil && f.Value != nil {
+				// Prefer precise positioning when arrays/objects expose children
+				switch elemName {
+				case "subjects", "actions":
+					// For arrays (subjects/actions), if ValIndex matches an element, use that element span
+					if f.Value.Kind == "array" && e.ValIndex >= 0 && e.ValIndex < len(f.Value.Elements) {
+						el := f.Value.Elements[e.ValIndex]
+						e.Start = el.Pos()
+						e.End = el.End()
+						break
+					}
+					// fallback to entire value span
+					e.Start = f.Value.Pos()
+					e.End = f.Value.End()
+				case "condition-action":
+					// Try to locate the specific 'action' field inside condition object
+					if pnode.ConditionAction() != nil && pnode.ConditionAction().Value != nil {
+						e.Start = pnode.ConditionAction().Value.Pos()
+						e.End = pnode.ConditionAction().Value.End()
+						break
+					}
+					// fallback to condition value span
+					e.Start = f.Value.Pos()
+					e.End = f.Value.End()
+				case "condition":
+					// Prefer the specific rule field when available
+					if pnode.ConditionRule() != nil && pnode.ConditionRule().Value != nil {
+						e.Start = pnode.ConditionRule().Value.Pos()
+						e.End = pnode.ConditionRule().Value.End()
+						break
+					}
+					// fallback to condition value span
+					e.Start = f.Value.Pos()
+					e.End = f.Value.End()
+				default:
+					// object generic: use the field value span
+					e.Start = f.Value.Pos()
+					e.End = f.Value.End()
+				}
+			} else {
+				// fallback to the whole policy span
+				e.Start = pnode.Pos()
+				e.End = pnode.End()
+			}
+			result = append(result, e)
+		}
+	}
+	return result
 }
 
 func (v *Validator) checkSubject(subject hexapolicy.SubjectInfo, polIndex int) []ValidationError {
@@ -122,7 +236,7 @@ func (v *Validator) checkSubject(subject hexapolicy.SubjectInfo, polIndex int) [
 			verr := ValidationError{
 				PolIndex:    polIndex,
 				ValIndex:    i,
-				ElementName: "Subjects",
+				ElementName: "subjects",
 				Value:       val,
 				Errs:        errs,
 			}
@@ -147,7 +261,7 @@ func (v *Validator) checkObject(resource hexapolicy.ObjectInfo, polIndex int) *V
 		return &ValidationError{
 			PolIndex:    polIndex,
 			ValIndex:    0,
-			ElementName: "Object",
+			ElementName: "object",
 			Value:       resource.String(),
 			Errs:        []error{errors.New(fmt.Sprintf("invalid object namespace \"%s\"", namespace))},
 		}
@@ -156,7 +270,7 @@ func (v *Validator) checkObject(resource hexapolicy.ObjectInfo, polIndex int) *V
 		return &ValidationError{
 			PolIndex:    polIndex,
 			ValIndex:    0,
-			ElementName: "Object",
+			ElementName: "object",
 			Value:       resource.String(),
 			Errs:        []error{errors.New(fmt.Sprintf("missing object entity type: %s:<type>:%s", namespace, *entity.Id))},
 		}
@@ -166,7 +280,7 @@ func (v *Validator) checkObject(resource hexapolicy.ObjectInfo, polIndex int) *V
 		return &ValidationError{
 			PolIndex:    polIndex,
 			ValIndex:    0,
-			ElementName: "Object",
+			ElementName: "object",
 			Value:       resource.String(),
 			Errs:        []error{errors.New(fmt.Sprintf("invalid object entity type: %s:%s", namespace, entityType))},
 		}
@@ -199,7 +313,7 @@ func (v *Validator) checkAction(policy hexapolicy.PolicyInfo, polIndex int) []Va
 			vErrs = append(vErrs, ValidationError{
 				PolIndex:    polIndex,
 				ValIndex:    i,
-				ElementName: "Actions",
+				ElementName: "actions",
 				Value:       action.String(),
 				Errs:        errs,
 			})
@@ -311,11 +425,30 @@ func (v *Validator) checkExpression(expression parser.Expression) []error {
 	return errs
 }
 
-func (v *Validator) checkConditions(policy hexapolicy.PolicyInfo, polIndex int) *ValidationError {
+func (v *Validator) checkConditions(policy hexapolicy.PolicyInfo, polIndex int) []ValidationError {
 	var errs []error
-	var vErr *ValidationError
+	var vErrs []ValidationError
 	if policy.Condition == nil {
 		return nil
+	}
+
+	if policy.Condition.Action != "" {
+		match := false
+		for _, element := range []string{"allow", "deny", "ALLOW", "DENY"} {
+			if element == policy.Condition.Action {
+				match = true
+			}
+		}
+		if !match {
+			vErr := ValidationError{
+				PolIndex:    polIndex,
+				ValIndex:    0,
+				ElementName: "condition-action",
+				Value:       policy.Condition.Action,
+				Errs:        []error{errors.New(fmt.Sprintf("invalid condition action: %s, must be one of allow|deny", policy.Condition.Action))},
+			}
+			vErrs = append(vErrs, vErr)
+		}
 	}
 
 	ast, err := policy.Condition.Ast()
@@ -332,15 +465,16 @@ func (v *Validator) checkConditions(policy hexapolicy.PolicyInfo, polIndex int) 
 	}
 
 	if len(errs) > 0 {
-		vErr = &ValidationError{
+		vErr := ValidationError{
 			PolIndex:    polIndex,
 			ValIndex:    0,
-			ElementName: "Condition",
-			Value:       policy.Condition.Rule,
+			ElementName: "condition",
+			Value:       strconv.Quote(policy.Condition.Rule),
 			Errs:        errs,
 		}
+		vErrs = append(vErrs, vErr)
 	}
-	return vErr
+	return vErrs
 }
 
 func (v *Validator) checkAppliesTo(actionNamespace string, appliesTo policyInfoModel.AppliesType, policy hexapolicy.PolicyInfo) []error {

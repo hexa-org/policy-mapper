@@ -1,0 +1,187 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "Policy Information Model (PIM) Schema",
+  "description": "JSON Schema definition for application Policy Information Model based on Cedar Schema",
+  "patternProperties": {
+    ".*": {
+      "$ref": "#/$defs/SchemaType"
+    }
+  },
+  "$defs": {
+    "SchemaType": {
+      "type": "object",
+      "properties": {
+        "entityTypes": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/EntityType"
+            }
+          },
+          "description": "Map of entity type names to their definitions"
+        },
+        "actions": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/ActionType"
+            }
+          },
+          "description": "Map of action names to their definitions"
+        },
+        "commonTypes": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/ContextType"
+            }
+          },
+          "description": "Map of common type names to their definitions"
+        }
+      },
+      "description": "Schema definition for a namespace"
+    },
+    "EntityType": {
+      "type": "object",
+      "properties": {
+        "memberOfTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of parent entity types"
+        },
+        "shape": {
+          "$ref": "#/$defs/ShapeTypes",
+          "description": "Shape definition for the entity"
+        }
+      },
+      "description": "Entity type definition"
+    },
+    "ShapeTypes": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Type identifier for the shape"
+        },
+        "attributes": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/AttrType"
+            }
+          },
+          "description": "Map of attribute names to their type definitions"
+        }
+      },
+      "required": ["type"],
+      "description": "Shape type definition with attributes"
+    },
+    "ActionType": {
+      "type": "object",
+      "properties": {
+        "memberOf": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of parent action names"
+        },
+        "appliesTo": {
+          "$ref": "#/$defs/AppliesType",
+          "description": "Defines what principals, resources, and context the action applies to"
+        }
+      },
+      "description": "Action type definition"
+    },
+    "AppliesType": {
+      "type": "object",
+      "properties": {
+        "principalTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of principal types this action applies to"
+        },
+        "resourceTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of resource types this action applies to"
+        },
+        "context": {
+          "$ref": "#/$defs/ContextType",
+          "description": "Context type definition for the action"
+        }
+      },
+      "description": "Applies to definition specifying principals, resources, and context"
+    },
+    "ContextType": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Type identifier, typically 'RecordType'"
+        },
+        "attributes": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/AttrType"
+            }
+          },
+          "description": "Map of attribute names to their type definitions"
+        }
+      },
+      "required": ["type"],
+      "description": "Context type definition with attributes"
+    },
+    "AttrType": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "String",
+            "Bool",
+            "Date",
+            "Numeric",
+            "Long",
+            "Extension",
+            "Record",
+            "Set",
+            "PersonType"
+          ],
+          "description": "Type of the attribute (built-in types or custom type name)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Optional name for the attribute"
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this attribute is required"
+        },
+        "element": {
+          "$ref": "#/$defs/AttrType",
+          "description": "Element type for Set types"
+        },
+        "attributes": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/AttrType"
+            }
+          },
+          "description": "Map of nested attributes for Record types"
+        }
+      },
+      "required": ["type", "required"],
+      "description": "Attribute type definition supporting primitive types, sets, and records"
+    }
+  }
+}
