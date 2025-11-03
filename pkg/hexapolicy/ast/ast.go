@@ -279,12 +279,6 @@ func findField(text, name string, objStart, objEnd int) *FieldNode {
 	return fn
 }
 
-func indexOfKey(text, name string) int {
-	needle := "\"" + name + "\""
-	idx := strings.Index(text, needle)
-	return idx
-}
-
 func indexOfKeyInRange(text, name string, start, end int) int {
 	if start < 0 {
 		start = 0
@@ -333,11 +327,11 @@ func findMatching(text string, start int) (int, bool) {
 		return -1, false
 	}
 	open := text[start]
-	var close byte
+	var closeBlock byte
 	if open == '{' {
-		close = '}'
+		closeBlock = '}'
 	} else if open == '[' {
-		close = ']'
+		closeBlock = ']'
 	} else {
 		return -1, false
 	}
@@ -363,7 +357,7 @@ func findMatching(text string, start int) (int, bool) {
 			depth++
 			continue
 		}
-		if c == close {
+		if c == closeBlock {
 			depth--
 			if depth == 0 {
 				return i, true

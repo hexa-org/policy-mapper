@@ -451,11 +451,11 @@ func (v *Validator) checkConditions(policy hexapolicy.PolicyInfo, polIndex int) 
 		}
 	}
 
-	ast, err := policy.Condition.Ast()
+	tree, err := policy.Condition.Ast()
 	if err != nil {
 		errs = append(errs, err)
 	} else {
-		expressions := conditions.FindEntityUses(ast)
+		expressions := conditions.FindEntityUses(tree)
 		for _, exp := range expressions {
 			expressionErrs := v.checkExpression(exp)
 			if expressionErrs != nil {
